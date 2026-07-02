@@ -1,0 +1,12 @@
+pandas
+numpy
+scikit-learn
+xgboost
+rdkit
+joblib
+requests
+pubchempy
+fastapi
+uvicorn
+pydantic
+python-multipart
