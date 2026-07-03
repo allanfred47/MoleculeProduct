@@ -12,24 +12,31 @@ except Exception as e:
     RDKIT_OK = False
     print(f"RDKit not available: {e}")
 
-# Toxicity model
-TOXICITY_MODEL = None
-try:
-    import joblib
-    import numpy as np
-    tox_path = os.path.join(os.path.dirname(__file__), "toxicity_model.pkl")
-    if os.path.exists(tox_path):
-        TOXICITY_MODEL = joblib.load(tox_path)
-        print(f"Toxicity model loaded from {tox_path}")
-    else:
-        print(f"Toxicity model not found at {tox_path}")
-except Exception as e:
-    print(f"Could not load toxicity model: {e}")
+# Load models
+import joblib
+import numpy as np
+
+def load_model(filename):
+    try:
+        path = os.path.join(os.path.dirname(__file__), filename)
+        if os.path.exists(path):
+            m = joblib.load(path)
+            print(f"Loaded {filename}")
+            return m
+        else:
+            print(f"Not found: {path}")
+            return None
+    except Exception as e:
+        print(f"Could not load {filename}: {e}")
+        return None
+
+TOXICITY_MODEL = load_model("toxicity_model.pkl")
+VISCOSITY_MODEL = load_model("viscosity_model.pkl")
 
 app = FastAPI(
     title="MoleculeProduct API",
-    description="Predict molecular properties and drug-likeness from SMILES strings.",
-    version="3.0.0"
+    description="Predict molecular properties, drug-likeness, toxicity, solubility, and viscosity from SMILES strings.",
+    version="4.0.0"
 )
 
 app.add_middleware(
@@ -50,19 +57,18 @@ class PredictRequest(BaseModel):
     }
 
 
+def get_features(mw, logp, tpsa, hbd, hba, rot, ring_count, aromatic_rings, heavy_atom_count, fraction_csp3, molar_refractivity):
+    return [mw, logp, tpsa, hbd, hba, rot, ring_count, aromatic_rings, heavy_atom_count, fraction_csp3, molar_refractivity]
+
+
 def estimate_solubility(mw, logp, hbd, tpsa):
     log_s = 0.16 - 0.63 * logp - 0.0062 * mw + 0.066 * hbd - 0.74 * (tpsa / 100)
     log_s = round(log_s, 3)
-    if log_s > 0:
-        sol_class = "Highly Soluble"
-    elif log_s > -1:
-        sol_class = "Soluble"
-    elif log_s > -2:
-        sol_class = "Moderately Soluble"
-    elif log_s > -4:
-        sol_class = "Poorly Soluble"
-    else:
-        sol_class = "Insoluble"
+    if log_s > 0: sol_class = "Highly Soluble"
+    elif log_s > -1: sol_class = "Soluble"
+    elif log_s > -2: sol_class = "Moderately Soluble"
+    elif log_s > -4: sol_class = "Poorly Soluble"
+    else: sol_class = "Insoluble"
     return log_s, sol_class
 
 
@@ -80,24 +86,18 @@ def estimate_melting_point(mw, ring_count, aromatic_rings, hbd):
 
 def estimate_density(mol, mw):
     heavy = mol.GetNumHeavyAtoms()
-    if heavy == 0:
-        return None
+    if heavy == 0: return None
     molar_volume = 10.0 + 10.5 * heavy
-    density = mw / molar_volume
-    return round(density, 3)
+    return round(mw / molar_volume, 3)
 
 
 def get_pka_class(mol):
-    smarts_acid = ["[OH][CX3](=O)", "[OH][SX4](=O)(=O)", "[OH][PX4](=O)"]
-    smarts_base = ["[NX3;H2,H1;!$(NC=O)]", "[NX3;H0;!$(NC=O)]", "n"]
-    for s in smarts_acid:
+    for s in ["[OH][CX3](=O)", "[OH][SX4](=O)(=O)", "[OH][PX4](=O)"]:
         patt = Chem.MolFromSmarts(s)
-        if patt and mol.HasSubstructMatch(patt):
-            return "Acidic"
-    for s in smarts_base:
+        if patt and mol.HasSubstructMatch(patt): return "Acidic"
+    for s in ["[NX3;H2,H1;!$(NC=O)]", "[NX3;H0;!$(NC=O)]", "n"]:
         patt = Chem.MolFromSmarts(s)
-        if patt and mol.HasSubstructMatch(patt):
-            return "Basic"
+        if patt and mol.HasSubstructMatch(patt): return "Basic"
     return "Neutral"
 
 
@@ -105,21 +105,34 @@ def predict_toxicity(features):
     if TOXICITY_MODEL is None:
         return None, "Model not loaded"
     try:
-        import numpy as np
         X = np.array([features])
         pred = TOXICITY_MODEL.predict(X)[0]
         proba = TOXICITY_MODEL.predict_proba(X)[0]
         tox_prob = round(float(proba[1]) * 100, 1)
-        if pred == 1:
-            tox_class = "Potentially Toxic"
-        else:
-            if tox_prob > 30:
-                tox_class = "Low Toxicity Risk"
-            else:
-                tox_class = "Non-toxic"
+        if pred == 1: tox_class = "Potentially Toxic"
+        elif tox_prob > 30: tox_class = "Low Toxicity Risk"
+        else: tox_class = "Non-toxic"
         return tox_prob, tox_class
     except Exception as e:
-        print(f"Toxicity prediction error: {e}")
+        print(f"Toxicity error: {e}")
+        return None, "Prediction error"
+
+
+def predict_viscosity(features):
+    if VISCOSITY_MODEL is None:
+        return None, "Model not loaded"
+    try:
+        X = np.array([features])
+        log_visc = float(VISCOSITY_MODEL.predict(X)[0])
+        viscosity = round(10 ** log_visc, 3)
+        if viscosity < 0.5: visc_class = "Very Low"
+        elif viscosity < 2.0: visc_class = "Low"
+        elif viscosity < 10.0: visc_class = "Moderate"
+        elif viscosity < 100.0: visc_class = "High"
+        else: visc_class = "Very High"
+        return viscosity, visc_class
+    except Exception as e:
+        print(f"Viscosity error: {e}")
         return None, "Prediction error"
 
 
@@ -129,8 +142,9 @@ def root():
         "message": "MoleculeProduct API is running",
         "docs": "/docs",
         "rdkit_ok": RDKIT_OK,
-        "toxicity_model_loaded": TOXICITY_MODEL is not None,
-        "version": "3.0.0"
+        "toxicity_model": TOXICITY_MODEL is not None,
+        "viscosity_model": VISCOSITY_MODEL is not None,
+        "version": "4.0.0"
     }
 
 
@@ -194,9 +208,9 @@ def predict(req: PredictRequest):
     stereocenters = len(Chem.FindMolChiralCenters(mol, includeUnassigned=True))
     formal_charge = sum(atom.GetFormalCharge() for atom in mol.GetAtoms())
 
-    features = [mw, logp, tpsa, hbd, hba, rot, ring_count, aromatic_rings,
-                heavy_atom_count, fraction_csp3, molar_refractivity]
+    features = get_features(mw, logp, tpsa, hbd, hba, rot, ring_count, aromatic_rings, heavy_atom_count, fraction_csp3, molar_refractivity)
     toxicity_probability, toxicity_class = predict_toxicity(features)
+    viscosity, viscosity_class = predict_viscosity(features)
 
     return {
         "smiles": smiles,
@@ -223,5 +237,7 @@ def predict(req: PredictRequest):
         "stereocenters": stereocenters,
         "formal_charge": formal_charge,
         "toxicity_probability": toxicity_probability,
-        "toxicity_class": toxicity_class
+        "toxicity_class": toxicity_class,
+        "viscosity": viscosity,
+        "viscosity_class": viscosity_class
     }
