@@ -57,7 +57,7 @@ except Exception as e:
 app = FastAPI(
     title="MoleculeProduct API",
     description="Predict molecular properties and drug-likeness from SMILES strings.",
-    version="8.0.0"
+    version="9.0.0"
 )
 
 app.add_middleware(
@@ -79,6 +79,7 @@ UI_PATH = os.path.join(os.path.dirname(__file__), "..", "molecule_ui.html")
 @app.get("/ui", response_class=HTMLResponse, include_in_schema=False)
 @app.get("/app", response_class=HTMLResponse, include_in_schema=False)
 def serve_ui():
+    """Serve the MoleculeProduct web interface."""
     try:
         with open(UI_PATH, "r", encoding="utf-8") as f:
             html = f.read()
@@ -86,19 +87,33 @@ def serve_ui():
     except FileNotFoundError:
         return HTMLResponse(content="<h1>UI not found</h1><p>molecule_ui.html missing.</p>", status_code=404)
 
-
 # ─── Serve the Designer HTML ──────────────────────────────────────────────────
 DESIGNER_PATH = os.path.join(os.path.dirname(__file__), "..", "molecule_designer.html")
 
 @app.get("/designer", response_class=HTMLResponse, include_in_schema=False)
 @app.get("/design", response_class=HTMLResponse, include_in_schema=False)
 def serve_designer():
+    """Serve the Generative Molecular Designer interface."""
     try:
         with open(DESIGNER_PATH, "r", encoding="utf-8") as f:
             html = f.read()
         return HTMLResponse(content=html)
     except FileNotFoundError:
         return HTMLResponse(content="<h1>Designer not found</h1><p>molecule_designer.html missing.</p>", status_code=404)
+
+# ─── Serve the Process Optimizer HTML ─────────────────────────────────────────
+PROCESS_PATH = os.path.join(os.path.dirname(__file__), "..", "process_optimizer.html")
+
+@app.get("/process", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/optimizer", response_class=HTMLResponse, include_in_schema=False)
+def serve_process():
+    """Serve the Industrial Process Optimizer interface."""
+    try:
+        with open(PROCESS_PATH, "r", encoding="utf-8") as f:
+            html = f.read()
+        return HTMLResponse(content=html)
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Process Optimizer not found</h1><p>process_optimizer.html missing.</p>", status_code=404)
 
 
 # ─── ESOL Solubility ──────────────────────────────────────────────────────────
@@ -162,14 +177,15 @@ def estimate_bp_mp(mol):
 def root():
     return {
         "service":           "MoleculeProduct API",
-        "version":           "8.0.0",
+        "version":           "9.0.0",
         "ui":                "/ui",
         "designer":          "/designer",
+        "process":           "/process",
         "rdkit":             RDKIT_OK,
         "toxicity2_loaded":  TOXICITY2_MODELS is not None,
         "viscosity_loaded":  VISCOSITY_MODEL is not None,
         "co2_loaded":        CO2_MODEL is not None,
-        "endpoints":         ["/ui", "/designer", "/predict", "/structure", "/lookup", "/docs"]
+        "endpoints":         ["/ui", "/designer", "/process", "/predict", "/structure", "/lookup", "/docs"]
     }
 
 

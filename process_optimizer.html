@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoleculeProduct — Process Optimizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #060810;
+      --surface:  #0b0f1a;
+      --surface2: #111827;
+      --surface3: #1a2235;
+      --border:   #1e2d45;
+      --border2:  #2a3f5f;
+      --text:     #e2e8f5;
+      --muted:    #64748b;
+      --dim:      #334155;
+      --orange:   #f97316;
+      --amber:    #f59e0b;
+      --yellow:   #eab308;
+      --red:      #ef4444;
+      --green:    #22c55e;
+      --cyan:     #06b6d4;
+      --blue:     #3b82f6;
+      --violet:   #8b5cf6;
+      --pink:     #ec4899;
+      --teal:     #14b8a6;
+      --radius:   14px;
+      --radius-sm: 8px;
+    }
+    html.light {
+      --bg: #f1f5f9; --surface: #ffffff; --surface2: #f8fafc;
+      --surface3: #f1f5f9; --border: #e2e8f0; --border2: #cbd5e1;
+      --text: #0f172a; --muted: #64748b; --dim: #94a3b8;
+    }
+
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; transition:background .3s,color .3s; }
+
+    #bg-canvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; opacity:.4; }
+
+    /* ── Keyframes ── */
+    @keyframes headerFlow  { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    @keyframes waveShift   { 0%{background-position:0%} 100%{background-position:300%} }
+    @keyframes spin        { to{transform:rotate(360deg)} }
+    @keyframes spinR       { to{transform:rotate(-360deg)} }
+    @keyframes titleFire   { 0%,100%{color:#f97316} 25%{color:#f59e0b} 50%{color:#ef4444} 75%{color:#06b6d4} }
+    @keyframes fadeUp      { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn      { from{opacity:0} to{opacity:1} }
+    @keyframes shimmer     { 0%{left:-200%} 60%,100%{left:200%} }
+    @keyframes scanLine    { 0%{left:-100%} 100%{left:200%} }
+    @keyframes pulse       { 0%,100%{opacity:1} 50%{opacity:.25} }
+    @keyframes dotBlink    { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+    @keyframes barGrow     { from{width:0} }
+    @keyframes popIn       { 0%{transform:scale(.3);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+    @keyframes gaugeFill   { from{stroke-dashoffset:339} }
+    @keyframes tempRise    { 0%{height:0} 100%{height:var(--h,60%)} }
+    @keyframes flowPulse   { 0%,100%{transform:scaleX(1)} 50%{transform:scaleX(1.04)} }
+    @keyframes float       { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    @keyframes borderRain  { 0%{background-position:0%} 100%{background-position:300%} }
+    @keyframes countUp     { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(270deg,#060810,#1a0a00,#0a1a00,#001020,#10001a,#060810);
+      background-size:400% 400%; animation:headerFlow 16s ease infinite;
+      padding:14px 28px; display:flex; align-items:center; gap:14px;
+      position:sticky; top:0; z-index:200; border-bottom:1px solid var(--border);
+    }
+    html.light header { background:linear-gradient(270deg,#fff7ed,#fef3c7,#f0fdf4,#eff6ff,#fdf4ff,#fff7ed); background-size:400% 400%; }
+    header::after {
+      content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+      background:linear-gradient(90deg,#f97316,#f59e0b,#22c55e,#06b6d4,#8b5cf6,#ec4899,#f97316);
+      background-size:300%; animation:waveShift 5s linear infinite;
+    }
+    .hdr-gear { animation:spin 12s linear infinite; flex-shrink:0; }
+    .hdr-gear2 { animation:spinR 8s linear infinite; flex-shrink:0; }
+    .hdr-center { flex:1; text-align:center; }
+    .hdr-center h1 { font-size:15px; font-weight:900; animation:titleFire 8s ease-in-out infinite; letter-spacing:.03em; }
+    .hdr-center p  { font-size:11px; color:var(--muted); margin-top:2px; }
+    .hdr-nav { display:flex; gap:8px; align-items:center; }
+    .nav-btn {
+      padding:6px 13px; border-radius:8px; border:1px solid var(--border2);
+      background:var(--surface2); color:var(--muted); font-size:11px; font-weight:600;
+      text-decoration:none; cursor:pointer; transition:color .15s,background .15s;
+    }
+    .nav-btn:hover { color:var(--orange); background:var(--surface3); }
+    .theme-btn { width:36px; height:36px; border-radius:50%; border:1px solid var(--border2); background:var(--surface2); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:transform .2s; flex-shrink:0; }
+    .theme-btn:hover { transform:rotate(20deg); }
+
+    /* ── Layout ── */
+    main { position:relative; z-index:1; max-width:1040px; margin:0 auto; padding:28px 18px 60px; display:flex; flex-direction:column; gap:22px; }
+
+    /* ── Section head ── */
+    .sec-head { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+    .sec-head h2 { font-size:10px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.12em; white-space:nowrap; }
+    .sec-line { flex:1; height:1px; background:linear-gradient(90deg,#f97316,#f59e0b,#22c55e,#06b6d4,#8b5cf6,#f97316); background-size:200%; animation:waveShift 8s linear infinite; }
+
+    /* ── Panel ── */
+    .panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; position:relative; overflow:hidden; }
+    .panel::before { content:''; position:absolute; top:0; left:-100%; width:55%; height:1px; background:linear-gradient(90deg,transparent,#f97316,#06b6d4,transparent); animation:scanLine 6s linear infinite; }
+    .panel-title { font-size:13px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+    .panel-title::before { content:''; width:3px; height:15px; border-radius:2px; background:linear-gradient(to bottom,#f97316,#f59e0b); flex-shrink:0; }
+
+    /* ── Form ── */
+    .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .form-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+    .form-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    @media(max-width:700px){ .form-grid-3,.form-grid-4 { grid-template-columns:1fr 1fr; } }
+    @media(max-width:500px){ .form-grid-2,.form-grid-3,.form-grid-4 { grid-template-columns:1fr; } }
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-group label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+    .form-hint { font-size:10px; color:var(--dim); }
+    input[type=text], input[type=number], select, textarea {
+      width:100%; height:42px; background:var(--bg); border:1px solid var(--border2);
+      border-radius:var(--radius-sm); padding:0 12px; font-family:'JetBrains Mono',monospace;
+      font-size:12px; color:var(--text); outline:none; transition:border-color .15s,box-shadow .15s;
+    }
+    textarea { height:auto; padding:10px 12px; resize:vertical; font-size:12px; }
+    input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus { border-color:var(--orange); box-shadow:0 0 0 3px rgba(249,115,22,.12); }
+    select { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:30px; }
+
+    /* sliders */
+    .slider-row { display:flex; align-items:center; gap:8px; }
+    input[type=range] { flex:1; height:4px; border-radius:99px; cursor:pointer; -webkit-appearance:none; appearance:none; background:linear-gradient(90deg,#f97316 var(--pct,50%),var(--surface3) var(--pct,50%)); outline:none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#f97316; border:2px solid var(--bg); cursor:pointer; box-shadow:0 0 8px rgba(249,115,22,.7); }
+    .slider-val { font-size:12px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--orange); min-width:52px; text-align:right; }
+
+    /* toggles */
+    .toggle-row { display:flex; align-items:center; gap:10px; }
+    .toggle-lbl { font-size:12px; color:var(--text); flex:1; }
+    .toggle { width:42px; height:23px; border-radius:12px; background:var(--surface3); border:1px solid var(--border2); cursor:pointer; position:relative; transition:background .2s; flex-shrink:0; }
+    .toggle.on { background:linear-gradient(90deg,#f97316,#f59e0b); border-color:transparent; }
+    .toggle::after { content:''; position:absolute; top:3px; left:3px; width:15px; height:15px; border-radius:50%; background:#fff; transition:left .2s; box-shadow:0 1px 4px rgba(0,0,0,.4); }
+    .toggle.on::after { left:22px; }
+
+    /* ── Big action button ── */
+    .btn-run {
+      display:flex; align-items:center; justify-content:center; gap:12px;
+      width:100%; height:56px; border:none; border-radius:var(--radius);
+      background:linear-gradient(135deg,#7c2d12,#c2410c,#ea580c,#d97706);
+      background-size:200% 100%;
+      color:#fff; font-size:15px; font-weight:800; cursor:pointer; letter-spacing:.04em;
+      transition:background-position .35s,transform .15s,box-shadow .2s;
+      box-shadow:0 6px 28px rgba(249,115,22,.35), 0 2px 6px rgba(0,0,0,.4);
+    }
+    .btn-run:not(:disabled):hover { background-position:100%; transform:translateY(-2px); box-shadow:0 10px 36px rgba(249,115,22,.5); }
+    .btn-run:disabled { opacity:.45; cursor:default; }
+
+    .btn-sm { padding:7px 16px; border-radius:var(--radius-sm); border:1px solid var(--border2); background:var(--surface2); color:var(--text); font-size:12px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background .15s,transform .1s; }
+    .btn-sm:hover { background:var(--surface3); transform:translateY(-1px); }
+    .btn-sm.fire { background:linear-gradient(135deg,#7c2d12,#ea580c); color:#fff; border-color:transparent; box-shadow:0 2px 12px rgba(249,115,22,.3); }
+    .btn-sm.teal { background:linear-gradient(135deg,#134e4a,#0d9488); color:#fff; border-color:transparent; }
+
+    /* ── Loading dots ── */
+    .ldots span { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--orange); margin:0 2px; animation:dotBlink 1.4s ease-in-out infinite; }
+    .ldots span:nth-child(2){ animation-delay:.2s; }
+    .ldots span:nth-child(3){ animation-delay:.4s; }
+
+    /* ── Progress overlay ── */
+    #prog-overlay { display:none; position:fixed; inset:0; z-index:500; background:rgba(6,8,16,.8); backdrop-filter:blur(8px); align-items:center; justify-content:center; flex-direction:column; gap:20px; }
+    #prog-overlay.show { display:flex; }
+    .prog-box { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:36px 44px; text-align:center; max-width:380px; width:92%; }
+    .prog-box .prog-icon { font-size:36px; margin-bottom:12px; animation:float 2s ease-in-out infinite; }
+    .prog-box h3 { font-size:16px; font-weight:900; margin-bottom:6px; }
+    .prog-box p  { font-size:12px; color:var(--muted); margin-bottom:20px; line-height:1.6; }
+    .prog-track { height:6px; border-radius:99px; background:var(--surface3); overflow:hidden; }
+    .prog-fill  { height:100%; border-radius:99px; background:linear-gradient(90deg,#f97316,#f59e0b,#22c55e,#06b6d4); background-size:200%; animation:waveShift 2s linear infinite; transition:width .5s ease; }
+    .prog-step  { font-size:11px; color:var(--muted); margin-top:10px; font-family:'JetBrains Mono',monospace; }
+
+    /* ── Toast ── */
+    #toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(90px); background:var(--surface); border:1px solid var(--border2); border-radius:999px; padding:10px 24px; font-size:13px; font-weight:600; color:var(--text); box-shadow:0 6px 28px rgba(0,0,0,.5); transition:transform .3s ease; z-index:9999; white-space:nowrap; }
+    #toast.show { transform:translateX(-50%) translateY(0); }
+
+    /* ══════════════════════════════════════════════
+       RESULTS SECTION
+    ══════════════════════════════════════════════ */
+    #results { display:none; }
+
+    /* ── Molecule summary bar ── */
+    .mol-bar { display:flex; align-items:center; gap:18px; flex-wrap:wrap; background:var(--surface2); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:var(--radius); padding:14px 18px; }
+    .mol-bar .mol-smiles { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--orange); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .mol-badge { padding:3px 11px; border-radius:999px; font-size:10px; font-weight:700; }
+    .mol-badge.pass { background:rgba(34,197,94,.1); color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+    .mol-badge.warn { background:rgba(249,115,22,.1); color:#f97316; border:1px solid rgba(249,115,22,.25); }
+    .mol-badge.info { background:rgba(6,182,212,.1);  color:#06b6d4; border:1px solid rgba(6,182,212,.25); }
+
+    /* ── KPI strip ── */
+    .kpi-strip { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+    @media(max-width:700px){ .kpi-strip { grid-template-columns:repeat(3,1fr); } }
+    @media(max-width:430px){ .kpi-strip { grid-template-columns:repeat(2,1fr); } }
+    .kpi-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:16px 12px; text-align:center; position:relative; overflow:hidden;
+      animation:fadeUp .4s ease forwards; opacity:0;
+      transition:transform .2s,box-shadow .2s;
+    }
+    .kpi-card:hover { transform:translateY(-4px); box-shadow:0 10px 30px rgba(0,0,0,.4); }
+    .kpi-card::after { content:''; position:absolute; top:0; left:-200%; bottom:0; width:55%; background:linear-gradient(120deg,transparent,rgba(255,255,255,.04),transparent); animation:shimmer 5s ease-in-out infinite; pointer-events:none; }
+    .kpi-icon { font-size:22px; margin-bottom:8px; }
+    .kpi-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin-bottom:6px; }
+    .kpi-value { font-size:22px; font-weight:900; font-family:'JetBrains Mono',monospace; line-height:1; animation:countUp .6s ease forwards; }
+    .kpi-unit  { font-size:9px; color:var(--muted); margin-top:3px; }
+    .kpi-bar-track { height:3px; border-radius:99px; background:var(--surface3); margin-top:8px; overflow:hidden; }
+    .kpi-bar-fill  { height:100%; border-radius:99px; animation:barGrow .8s ease; }
+
+    /* ── Gauge / score ring ── */
+    .gauge-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .gauge-svg { width:120px; height:120px; }
+    .gauge-bg   { fill:none; stroke:var(--surface3); stroke-width:10; }
+    .gauge-fill { fill:none; stroke-width:10; stroke-linecap:round; transform:rotate(-90deg); transform-origin:60px 60px; stroke-dasharray:339; stroke-dashoffset:339; animation:gaugeFill .8s ease forwards; }
+    .gauge-text { font-size:20px; font-weight:900; font-family:'JetBrains Mono',monospace; fill:var(--text); text-anchor:middle; dominant-baseline:central; }
+    .gauge-sub  { font-size:8px; fill:var(--muted); text-anchor:middle; }
+
+    /* ── Parameter table ── */
+    .param-table { width:100%; border-collapse:collapse; }
+    .param-table th { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+    .param-table td { padding:11px 12px; font-size:12px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .param-table tr:last-child td { border-bottom:none; }
+    .param-table tr:hover td { background:var(--surface2); }
+    .param-name { font-weight:700; color:var(--text); }
+    .param-val  { font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--orange); font-size:13px; }
+    .param-unit { font-size:10px; color:var(--muted); }
+    .param-bar-track { height:5px; border-radius:99px; background:var(--surface3); overflow:hidden; width:120px; }
+    .param-bar-fill  { height:100%; border-radius:99px; animation:barGrow .7s ease; }
+    .status-badge { display:inline-flex; padding:3px 10px; border-radius:999px; font-size:10px; font-weight:700; }
+    .status-badge.optimal  { background:rgba(34,197,94,.1);  color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+    .status-badge.warning  { background:rgba(245,158,11,.1); color:#f59e0b; border:1px solid rgba(245,158,11,.25); }
+    .status-badge.critical { background:rgba(239,68,68,.1);  color:#ef4444; border:1px solid rgba(239,68,68,.25); }
+    .status-badge.info     { background:rgba(6,182,212,.1);  color:#06b6d4; border:1px solid rgba(6,182,212,.25); }
+
+    /* ── Process flowchart ── */
+    .flowchart { display:flex; align-items:center; gap:0; overflow-x:auto; padding:20px 4px; }
+    .flow-node {
+      display:flex; flex-direction:column; align-items:center; gap:6px;
+      min-width:100px; flex-shrink:0;
+      animation:fadeUp .5s ease forwards; opacity:0;
+    }
+    .flow-icon-wrap {
+      width:62px; height:62px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+      font-size:24px; border:2px solid; position:relative;
+    }
+    .flow-icon-wrap.active::after { content:''; position:absolute; inset:-4px; border-radius:50%; border:2px dashed; opacity:.4; animation:spin 4s linear infinite; }
+    .flow-label { font-size:10px; font-weight:700; text-align:center; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; max-width:90px; }
+    .flow-sub   { font-size:9px; color:var(--dim); text-align:center; font-family:'JetBrains Mono',monospace; }
+    .flow-arrow { font-size:22px; color:var(--dim); padding:0 4px; flex-shrink:0; align-self:flex-start; margin-top:18px; animation:flowPulse 2s ease-in-out infinite; }
+
+    /* node color classes */
+    .fn-feed   { border-color:#06b6d4; background:rgba(6,182,212,.08); color:#06b6d4; }
+    .fn-feed::after { border-color:#06b6d4; }
+    .fn-react  { border-color:#f97316; background:rgba(249,115,22,.1); color:#f97316; }
+    .fn-react::after { border-color:#f97316; }
+    .fn-sep    { border-color:#8b5cf6; background:rgba(139,92,246,.08); color:#8b5cf6; }
+    .fn-sep::after { border-color:#8b5cf6; }
+    .fn-purif  { border-color:#22c55e; background:rgba(34,197,94,.08); color:#22c55e; }
+    .fn-purif::after { border-color:#22c55e; }
+    .fn-prod   { border-color:#f59e0b; background:rgba(245,158,11,.1); color:#f59e0b; }
+    .fn-prod::after { border-color:#f59e0b; }
+    .fn-recycle{ border-color:#14b8a6; background:rgba(20,184,166,.08); color:#14b8a6; }
+
+    /* ── Condition cards ── */
+    .cond-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+    @media(max-width:640px){ .cond-grid { grid-template-columns:1fr 1fr; } }
+    .cond-card {
+      border-radius:var(--radius); padding:18px; position:relative; overflow:hidden;
+      animation:fadeUp .45s ease forwards; opacity:0;
+      transition:transform .2s,box-shadow .2s;
+    }
+    .cond-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(0,0,0,.5); }
+    .cond-card::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,0) 60%); border-radius:var(--radius); pointer-events:none; }
+    .cond-card::after  { content:''; position:absolute; top:0; left:-200%; bottom:0; width:60%; background:linear-gradient(120deg,transparent,rgba(255,255,255,.09),transparent); animation:shimmer 4s ease-in-out infinite; pointer-events:none; }
+    .cc-temp   { background:linear-gradient(135deg,#7c1d1d,#dc2626); }
+    .cc-press  { background:linear-gradient(135deg,#1e3a5f,#2563eb); }
+    .cc-flow   { background:linear-gradient(135deg,#064e3b,#059669); }
+    .cc-cat    { background:linear-gradient(135deg,#3b1d6e,#7c3aed); }
+    .cc-time   { background:linear-gradient(135deg,#78350f,#d97706); }
+    .cc-yield  { background:linear-gradient(135deg,#134e4a,#0d9488); }
+    .cc-ph     { background:linear-gradient(135deg,#1e1b4b,#4f46e5); }
+    .cc-solv   { background:linear-gradient(135deg,#831843,#db2777); }
+    .cc-ratio  { background:linear-gradient(135deg,#1a2e05,#65a30d); }
+    .cond-icon  { font-size:20px; margin-bottom:9px; }
+    .cond-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:rgba(255,255,255,.6); margin-bottom:5px; }
+    .cond-value { font-size:26px; font-weight:900; font-family:'JetBrains Mono',monospace; color:#fff; line-height:1; text-shadow:0 2px 8px rgba(0,0,0,.3); }
+    .cond-unit  { font-size:10px; color:rgba(255,255,255,.5); margin-top:2px; }
+    .cond-badge { display:inline-flex; margin-top:8px; padding:2px 10px; border-radius:999px; font-size:10px; font-weight:700; background:rgba(255,255,255,.12); color:rgba(255,255,255,.9); }
+
+    /* ── Safety & risk panel ── */
+    .risk-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    @media(max-width:540px){ .risk-grid { grid-template-columns:1fr; } }
+    .risk-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+    .risk-card h4 { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:10px; }
+    .risk-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+    .risk-item:last-child { border-bottom:none; }
+    .risk-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .risk-dot.low  { background:#22c55e; }
+    .risk-dot.med  { background:#f59e0b; }
+    .risk-dot.high { background:#ef4444; }
+    .risk-name { font-size:12px; color:var(--text); flex:1; }
+    .risk-level { font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; }
+    .risk-level.low  { background:rgba(34,197,94,.1);  color:#22c55e; }
+    .risk-level.med  { background:rgba(245,158,11,.1); color:#f59e0b; }
+    .risk-level.high { background:rgba(239,68,68,.1);  color:#ef4444; }
+
+    /* ── Economics panel ── */
+    .econ-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    @media(max-width:640px){ .econ-grid { grid-template-columns:repeat(2,1fr); } }
+    .econ-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; text-align:center; }
+    .econ-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); margin-bottom:6px; }
+    .econ-value { font-size:18px; font-weight:900; font-family:'JetBrains Mono',monospace; color:var(--orange); }
+    .econ-sub   { font-size:10px; color:var(--muted); margin-top:2px; }
+
+    /* ── Recommendations ── */
+    .rec-list { display:flex; flex-direction:column; gap:10px; }
+    .rec-item { display:flex; align-items:flex-start; gap:12px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; border-left:3px solid; animation:fadeUp .4s ease forwards; opacity:0; }
+    .rec-item.opt  { border-left-color:#22c55e; }
+    .rec-item.warn { border-left-color:#f59e0b; }
+    .rec-item.crit { border-left-color:#ef4444; }
+    .rec-icon { font-size:18px; flex-shrink:0; margin-top:1px; }
+    .rec-title { font-size:13px; font-weight:700; margin-bottom:3px; }
+    .rec-desc  { font-size:12px; color:var(--muted); line-height:1.55; }
+
+    /* ── Chart panels ── */
+    .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media(max-width:600px){ .chart-grid { grid-template-columns:1fr; } }
+    .chart-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+    .chart-box h4 { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:14px; }
+
+    /* ── Scaffold input style ── */
+    .smiles-input-wrap { position:relative; }
+    .smiles-input-wrap input { padding-right:90px; }
+    .smiles-lookup-btn { position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:5px 12px; border-radius:6px; background:linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff; border:none; font-size:11px; font-weight:700; cursor:pointer; transition:opacity .15s; }
+    .smiles-lookup-btn:hover { opacity:.85; }
+
+    .pill-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    button.pill { padding:4px 12px; border:1px solid var(--border2); border-radius:999px; background:transparent; font-size:11px; color:var(--muted); cursor:pointer; transition:background .12s,border-color .12s,color .12s; }
+    button.pill:hover { background:var(--surface2); border-color:var(--orange); color:var(--orange); }
+
+    /* ── Empty state ── */
+    .empty-state { text-align:center; padding:56px 20px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+    .empty-state .es-icon { font-size:52px; opacity:.25; }
+    .empty-state h3 { font-size:16px; font-weight:800; color:var(--text); opacity:.5; }
+    .empty-state p  { font-size:12px; color:var(--muted); max-width:300px; line-height:1.65; }
+
+    /* ── Export toolbar ── */
+    .export-bar { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
+
+    /* ── Responsive ── */
+    @media(max-width:600px){ header { padding:10px 14px; } main { padding:14px 10px 48px; } }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="toast"></div>
+
+<!-- Progress overlay -->
+<div id="prog-overlay">
+  <div class="prog-box">
+    <div class="prog-icon">⚙️</div>
+    <h3 id="prog-title">Optimizing Process…</h3>
+    <p id="prog-sub">Running thermodynamic models and constraint solvers</p>
+    <div class="prog-track"><div class="prog-fill" id="prog-bar" style="width:5%"></div></div>
+    <div class="prog-step" id="prog-step">Initializing…</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <!-- Gear SVG left -->
+  <svg class="hdr-gear" viewBox="0 0 40 40" width="36" height="36" fill="none">
+    <circle cx="20" cy="20" r="6" stroke="#f97316" stroke-width="2.5"/>
+    <path d="M20 2v4M20 34v4M2 20h4M34 20h4M5.5 5.5l2.8 2.8M31.7 31.7l2.8 2.8M5.5 34.5l2.8-2.8M31.7 8.3l2.8-2.8" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="20" cy="20" r="10" stroke="#f97316" stroke-width="1.2" stroke-dasharray="3 4"/>
+  </svg>
+  <div class="hdr-center">
+    <h1>Process Optimizer</h1>
+    <p>MoleculeProduct · Module 3 · Industrial Scale Design</p>
+  </div>
+  <div class="hdr-nav">
+    <a class="nav-btn" href="https://moleculeproduct.onrender.com/ui" target="_blank">Predictor</a>
+    <a class="nav-btn" href="https://moleculeproduct.onrender.com/designer" target="_blank">Designer</a>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+  <!-- Gear SVG right -->
+  <svg class="hdr-gear2" viewBox="0 0 40 40" width="36" height="36" fill="none">
+    <circle cx="20" cy="20" r="6" stroke="#06b6d4" stroke-width="2.5"/>
+    <path d="M20 2v4M20 34v4M2 20h4M34 20h4M5.5 5.5l2.8 2.8M31.7 31.7l2.8 2.8M5.5 34.5l2.8-2.8M31.7 8.3l2.8-2.8" stroke="#22c55e" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="20" cy="20" r="10" stroke="#06b6d4" stroke-width="1.2" stroke-dasharray="3 4"/>
+  </svg>
+</header>
+
+<main>
+
+  <!-- ═══ INPUT SECTION ═══ -->
+  <div class="panel">
+    <div class="panel-title">Molecule + Reactor Input</div>
+
+    <div class="sec-head"><h2>Molecule</h2><div class="sec-line"></div></div>
+    <div class="form-grid-2" style="margin-bottom:18px">
+      <div class="form-group">
+        <label>SMILES or Molecule Name</label>
+        <div class="smiles-input-wrap">
+          <input type="text" id="inp-smiles" placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O" autocomplete="off" />
+          <button class="smiles-lookup-btn" onclick="lookupName()">Lookup</button>
+        </div>
+        <div class="pill-row">
+          <span style="font-size:11px;color:var(--dim)">Quick:</span>
+          <button class="pill" onclick="setSmiles('CC(=O)Oc1ccccc1C(=O)O')">Aspirin</button>
+          <button class="pill" onclick="setSmiles('Cn1cnc2c1c(=O)n(c(=O)n2C)C')">Caffeine</button>
+          <button class="pill" onclick="setSmiles('CC(=O)Nc1ccc(O)cc1')">Paracetamol</button>
+          <button class="pill" onclick="setSmiles('c1ccccc1')">Benzene</button>
+          <button class="pill" onclick="setSmiles('CCO')">Ethanol</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Target Product Description</label>
+        <input type="text" id="inp-product" placeholder="e.g. Pharmaceutical API, Specialty Chemical…" />
+        <div class="form-hint" style="margin-top:4px">Describe the intended industrial application</div>
+      </div>
+    </div>
+
+    <div class="sec-head"><h2>Reactor Configuration</h2><div class="sec-line"></div></div>
+    <div class="form-grid-3" style="margin-bottom:18px">
+      <div class="form-group">
+        <label>Reaction Type</label>
+        <select id="sel-rxn">
+          <option value="synthesis">Organic Synthesis</option>
+          <option value="hydrogenation">Catalytic Hydrogenation</option>
+          <option value="oxidation">Selective Oxidation</option>
+          <option value="esterification">Esterification</option>
+          <option value="polymerization">Polymerization</option>
+          <option value="fermentation">Biofermentation</option>
+          <option value="crystallization">Crystallization / Separation</option>
+          <option value="nitration">Nitration</option>
+          <option value="halogenation">Halogenation</option>
+          <option value="amination">Amination / Reductive Amination</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Reactor Type</label>
+        <select id="sel-reactor">
+          <option value="CSTR">CSTR (Continuous Stirred Tank)</option>
+          <option value="PFR">PFR (Plug Flow Reactor)</option>
+          <option value="batch">Batch Reactor</option>
+          <option value="semi-batch">Semi-Batch Reactor</option>
+          <option value="fixed-bed">Fixed-Bed Catalytic Reactor</option>
+          <option value="fluidized">Fluidized Bed Reactor</option>
+          <option value="membrane">Membrane Reactor</option>
+          <option value="microreactor">Microreactor / Flow Chemistry</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Scale of Operation</label>
+        <select id="sel-scale">
+          <option value="lab">Lab Scale (mg–g)</option>
+          <option value="pilot">Pilot Scale (kg)</option>
+          <option value="industrial">Industrial Scale (tonne/day)</option>
+          <option value="mega">Mega Plant (>100 tonne/day)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Solvent System</label>
+        <select id="sel-solvent">
+          <option value="water">Water (aqueous)</option>
+          <option value="ethanol">Ethanol</option>
+          <option value="methanol">Methanol</option>
+          <option value="acetone">Acetone</option>
+          <option value="DCM">Dichloromethane (DCM)</option>
+          <option value="THF">Tetrahydrofuran (THF)</option>
+          <option value="toluene">Toluene</option>
+          <option value="DMSO">DMSO</option>
+          <option value="DMF">DMF</option>
+          <option value="solvent-free">Solvent-Free</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Catalyst System</label>
+        <select id="sel-catalyst">
+          <option value="none">No Catalyst</option>
+          <option value="acid">Acid Catalyst (H₂SO₄/HCl)</option>
+          <option value="base">Base Catalyst (NaOH/KOH)</option>
+          <option value="Pd">Pd/C (Hydrogenation)</option>
+          <option value="Pt">Pt Catalyst</option>
+          <option value="Ni">Raney Nickel</option>
+          <option value="zeolite">Zeolite</option>
+          <option value="enzyme">Enzyme / Biocatalyst</option>
+          <option value="lewis-acid">Lewis Acid (AlCl₃/ZnCl₂)</option>
+          <option value="organocatalyst">Organocatalyst</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority Objective</label>
+        <select id="sel-objective">
+          <option value="yield">Maximize Yield</option>
+          <option value="selectivity">Maximize Selectivity</option>
+          <option value="throughput">Maximize Throughput</option>
+          <option value="cost">Minimize Cost</option>
+          <option value="safety">Maximize Safety</option>
+          <option value="green">Minimize Environmental Impact</option>
+          <option value="energy">Minimize Energy Consumption</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sec-head"><h2>Initial Conditions (Starting Point)</h2><div class="sec-line"></div></div>
+    <div class="form-grid-4" style="margin-bottom:18px">
+      <div class="form-group">
+        <label>Temperature (°C)</label>
+        <div class="slider-row">
+          <input type="range" id="sl-temp" min="0" max="400" step="5" value="80" oninput="syncSlider(this,'dv-temp')">
+          <span class="slider-val" id="dv-temp">80</span>
+        </div>
+        <span class="form-hint">Operating temperature</span>
+      </div>
+      <div class="form-group">
+        <label>Pressure (bar)</label>
+        <div class="slider-row">
+          <input type="range" id="sl-press" min="1" max="200" step="1" value="1" oninput="syncSlider(this,'dv-press')">
+          <span class="slider-val" id="dv-press">1</span>
+        </div>
+        <span class="form-hint">System pressure</span>
+      </div>
+      <div class="form-group">
+        <label>Catalyst Loading (%)</label>
+        <div class="slider-row">
+          <input type="range" id="sl-cat" min="0" max="20" step="0.5" value="5" oninput="syncSlider(this,'dv-cat')">
+          <span class="slider-val" id="dv-cat">5.0</span>
+        </div>
+        <span class="form-hint">Mol% or wt% of catalyst</span>
+      </div>
+      <div class="form-group">
+        <label>Reaction Time (h)</label>
+        <div class="slider-row">
+          <input type="range" id="sl-time" min="0.1" max="48" step="0.1" value="4" oninput="syncSlider(this,'dv-time')">
+          <span class="slider-val" id="dv-time">4.0</span>
+        </div>
+        <span class="form-hint">Batch time or residence time</span>
+      </div>
+    </div>
+
+    <div class="sec-head"><h2>Advanced Options</h2><div class="sec-line"></div></div>
+    <div class="form-grid-3" style="margin-bottom:22px">
+      <div class="form-group">
+        <div class="toggle-row"><span class="toggle-lbl">Include Heat Integration</span><div class="toggle on" id="tog-heat" onclick="toggleSwitch(this)"></div></div>
+      </div>
+      <div class="form-group">
+        <div class="toggle-row"><span class="toggle-lbl">Green Chemistry Mode</span><div class="toggle on" id="tog-green" onclick="toggleSwitch(this)"></div></div>
+      </div>
+      <div class="form-group">
+        <div class="toggle-row"><span class="toggle-lbl">Safety Constraint Analysis</span><div class="toggle on" id="tog-safety" onclick="toggleSwitch(this)"></div></div>
+      </div>
+      <div class="form-group">
+        <div class="toggle-row"><span class="toggle-lbl">Economic Feasibility Analysis</span><div class="toggle on" id="tog-econ" onclick="toggleSwitch(this)"></div></div>
+      </div>
+      <div class="form-group">
+        <div class="toggle-row"><span class="toggle-lbl">Recycle Stream Optimization</span><div class="toggle" id="tog-recycle" onclick="toggleSwitch(this)"></div></div>
+      </div>
+      <div class="form-group">
+        <div class="toggle-row"><span class="toggle-lbl">Generate Process Flow Diagram</span><div class="toggle on" id="tog-pfd" onclick="toggleSwitch(this)"></div></div>
+      </div>
+    </div>
+
+    <button class="btn-run" id="btn-run" onclick="runOptimizer()">
+      ⚙️ Optimize Industrial Process
+    </button>
+  </div>
+
+  <!-- ═══ RESULTS ═══ -->
+  <div id="results">
+
+    <!-- Molecule summary -->
+    <div class="mol-bar" id="mol-bar"></div>
+
+    <!-- Overall score -->
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start">
+      <div class="panel" style="min-width:170px;display:flex;flex-direction:column;align-items:center;gap:10px">
+        <div class="panel-title" style="margin-bottom:4px">Process Score</div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 120 120">
+            <circle class="gauge-bg" cx="60" cy="60" r="54"/>
+            <circle class="gauge-fill" id="gauge-circle" cx="60" cy="60" r="54" stroke="#f97316"/>
+            <text class="gauge-text" id="gauge-text" x="60" y="56">—</text>
+            <text class="gauge-sub" x="60" y="72">/100</text>
+          </svg>
+        </div>
+        <div id="gauge-label" style="font-size:11px;font-weight:700;text-align:center;color:var(--muted);text-transform:uppercase;letter-spacing:.07em"></div>
+      </div>
+      <div>
+        <div class="sec-head"><h2>Optimized Process KPIs</h2><div class="sec-line"></div></div>
+        <div class="kpi-strip" id="kpi-strip"></div>
+      </div>
+    </div>
+
+    <!-- Process flow -->
+    <div class="panel" id="pfd-panel">
+      <div class="panel-title">Process Flow Diagram</div>
+      <div class="flowchart" id="flowchart"></div>
+    </div>
+
+    <!-- Optimized conditions -->
+    <div class="panel">
+      <div class="panel-title">Optimized Process Parameters</div>
+      <div class="sec-head"><h2>Critical Operating Conditions</h2><div class="sec-line"></div></div>
+      <div class="cond-grid" id="cond-grid"></div>
+      <div class="sec-head" style="margin-top:22px"><h2>Full Parameter Table</h2><div class="sec-line"></div></div>
+      <div style="overflow-x:auto">
+        <table class="param-table" id="param-table">
+          <thead><tr><th>Parameter</th><th>Optimized Value</th><th>Range</th><th>Sensitivity</th><th>Status</th></tr></thead>
+          <tbody id="param-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-grid" id="chart-section">
+      <div class="chart-box">
+        <h4>Yield vs Temperature Profile</h4>
+        <canvas id="chart-temp" height="200"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4>Sensitivity Analysis</h4>
+        <canvas id="chart-sens" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Safety -->
+    <div class="panel" id="safety-panel">
+      <div class="panel-title">Safety & Risk Assessment</div>
+      <div class="risk-grid" id="risk-grid"></div>
+    </div>
+
+    <!-- Economics -->
+    <div class="panel" id="econ-panel">
+      <div class="panel-title">Economic Feasibility</div>
+      <div class="econ-grid" id="econ-grid"></div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="panel">
+      <div class="panel-title">Engineering Recommendations</div>
+      <div class="rec-list" id="rec-list"></div>
+    </div>
+
+    <!-- Export bar -->
+    <div class="export-bar">
+      <button class="btn-sm" onclick="copyReport()">📋 Copy Report</button>
+      <button class="btn-sm fire" onclick="window.print()">⬇ Export PDF</button>
+    </div>
+
+  </div>
+
+  <!-- Empty state -->
+  <div class="panel" id="empty-panel">
+    <div class="empty-state">
+      <div class="es-icon">🏭</div>
+      <h3>No process designed yet</h3>
+      <p>Enter your molecule and reactor configuration above. The optimizer will calculate the complete industrial process — from lab molecule to production plant.</p>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ════════════════════════════════════════════
+   CONFIG
+════════════════════════════════════════════ */
+const API = "https://moleculeproduct.onrender.com";
+
+/* ════════════════════════════════════════════
+   PARTICLE BACKGROUND
+════════════════════════════════════════════ */
+(function(){
+  const cv=document.getElementById('bg-canvas'),ctx=cv.getContext('2d');
+  let W,H,pts=[];
+  const C=['#f97316','#f59e0b','#22c55e','#06b6d4','#8b5cf6','#ef4444'];
+  const r=()=>{W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;};
+  r();window.addEventListener('resize',r);
+  function P(){this.x=Math.random()*W;this.y=Math.random()*H;this.r=.8+Math.random()*2;this.vx=(Math.random()-.5)*.25;this.vy=(Math.random()-.5)*.25;this.c=C[Math.floor(Math.random()*C.length)];this.a=.08+Math.random()*.2;}
+  for(let i=0;i<50;i++)pts.push(new P());
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<pts.length;i++){let b=0;for(let j=i+1;j<pts.length;j++){if(b>=2)break;const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<130){ctx.strokeStyle=pts[i].c;ctx.globalAlpha=.08*(1-d/130);ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke();b++;}}}
+    pts.forEach(p=>{ctx.globalAlpha=p.a;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});
+    ctx.globalAlpha=1;
+    pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;});
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ════════════════════════════════════════════
+   UI HELPERS
+════════════════════════════════════════════ */
+let isDark=true;
+function toggleTheme(){isDark=!isDark;document.documentElement.classList.toggle('light',!isDark);document.getElementById('theme-btn').textContent=isDark?'🌙':'☀️';if(tempChart)tempChart.update();if(sensChart)sensChart.update();}
+function toast(msg,dur=2600){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+function syncSlider(el,valId){const v=parseFloat(el.value);document.getElementById(valId).textContent=Number.isInteger(v)?v:v.toFixed(1);const min=parseFloat(el.min),max=parseFloat(el.max);el.style.setProperty('--pct',((v-min)/(max-min)*100).toFixed(1)+'%');}
+function toggleSwitch(el){el.classList.toggle('on');}
+function isOn(id){return document.getElementById(id).classList.contains('on');}
+function setSmiles(s){document.getElementById('inp-smiles').value=s;}
+function showProg(title,sub){document.getElementById('prog-title').textContent=title;document.getElementById('prog-sub').textContent=sub;document.getElementById('prog-bar').style.width='5%';document.getElementById('prog-step').textContent='Initializing…';document.getElementById('prog-overlay').classList.add('show');}
+function setProg(pct,step){document.getElementById('prog-bar').style.width=pct+'%';document.getElementById('prog-step').textContent=step;}
+function hideProg(){document.getElementById('prog-overlay').classList.remove('show');}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function lookupName(){
+  const name=document.getElementById('inp-smiles').value.trim();
+  if(!name)return;
+  toast('Looking up on PubChem…');
+  try{
+    const r=await fetch(API+'/lookup?name='+encodeURIComponent(name));
+    if(r.ok){const d=await r.json();document.getElementById('inp-smiles').value=d.smiles;toast('Found: '+d.smiles.slice(0,30));}
+    else toast('Not found on PubChem — try a SMILES directly');
+  }catch{toast('Lookup failed — enter SMILES directly');}
+}
+
+/* ════════════════════════════════════════════
+   PROCESS KNOWLEDGE BASE
+   Reaction-type specific parameters and models
+════════════════════════════════════════════ */
+const RXN_PROFILES = {
+  synthesis:       { tempBase:80,  tempMax:180, pressBase:1,   pressMax:10,  timeBase:6,  yieldBase:72, ea:65, deltaH:-35, selectBase:88 },
+  hydrogenation:   { tempBase:60,  tempMax:150, pressBase:30,  pressMax:100, timeBase:3,  yieldBase:85, ea:42, deltaH:-55, selectBase:94 },
+  oxidation:       { tempBase:120, tempMax:250, pressBase:5,   pressMax:30,  timeBase:4,  yieldBase:68, ea:78, deltaH:-80, selectBase:82 },
+  esterification:  { tempBase:100, tempMax:160, pressBase:1,   pressMax:5,   timeBase:8,  yieldBase:78, ea:55, deltaH:-15, selectBase:91 },
+  polymerization:  { tempBase:70,  tempMax:200, pressBase:1,   pressMax:50,  timeBase:12, yieldBase:90, ea:85, deltaH:-45, selectBase:96 },
+  fermentation:    { tempBase:37,  tempMax:42,  pressBase:1,   pressMax:2,   timeBase:24, yieldBase:62, ea:30, deltaH:-12, selectBase:78 },
+  crystallization: { tempBase:10,  tempMax:50,  pressBase:1,   pressMax:3,   timeBase:3,  yieldBase:88, ea:20, deltaH:-8,  selectBase:98 },
+  nitration:       { tempBase:15,  tempMax:60,  pressBase:1,   pressMax:5,   timeBase:2,  yieldBase:75, ea:60, deltaH:-90, selectBase:85 },
+  halogenation:    { tempBase:25,  tempMax:120, pressBase:1,   pressMax:10,  timeBase:3,  yieldBase:70, ea:70, deltaH:-50, selectBase:80 },
+  amination:       { tempBase:90,  tempMax:180, pressBase:10,  pressMax:60,  timeBase:5,  yieldBase:74, ea:72, deltaH:-40, selectBase:86 },
+};
+
+const REACTOR_FACTOR = { CSTR:.92, PFR:.97, batch:1.0, 'semi-batch':.96, 'fixed-bed':.94, fluidized:.88, membrane:.98, microreactor:.99 };
+const CAT_FACTOR     = { none:1.0, acid:1.12, base:1.08, Pd:1.22, Pt:1.18, Ni:1.15, zeolite:1.10, enzyme:1.05, 'lewis-acid':1.14, organocatalyst:1.09 };
+const SCALE_LABEL    = { lab:'Lab Scale', pilot:'Pilot Scale', industrial:'Industrial', mega:'Mega Plant' };
+const SCALE_OUTPUT   = { lab:'~50 g/batch', pilot:'~20 kg/day', industrial:'~5 t/day', mega:'>100 t/day' };
+const SOLVENT_PROPS  = {
+  water:    { bp:100, logP:-1.38, greenScore:10, cost:0.1 },
+  ethanol:  { bp:78,  logP:-.24,  greenScore:8,  cost:0.6 },
+  methanol: { bp:65,  logP:-.77,  greenScore:5,  cost:0.4 },
+  acetone:  { bp:56,  logP:-.24,  greenScore:6,  cost:0.5 },
+  DCM:      { bp:40,  logP:1.25,  greenScore:2,  cost:0.8 },
+  THF:      { bp:66,  logP:.46,   greenScore:4,  cost:0.9 },
+  toluene:  { bp:111, logP:2.73,  greenScore:3,  cost:0.7 },
+  DMSO:     { bp:189, logP:-1.35, greenScore:7,  cost:1.2 },
+  DMF:      { bp:153, logP:-.73,  greenScore:3,  cost:1.1 },
+  'solvent-free':{ bp:999, logP:0, greenScore:10, cost:0 },
+};
+
+/* ════════════════════════════════════════════
+   MAIN OPTIMIZER ENGINE
+════════════════════════════════════════════ */
+let tempChart=null, sensChart=null;
+let lastReport='';
+
+async function runOptimizer(){
+  const smiles  = document.getElementById('inp-smiles').value.trim();
+  const product = document.getElementById('inp-product').value.trim() || 'Specialty Chemical';
+  const rxnType = document.getElementById('sel-rxn').value;
+  const reactor = document.getElementById('sel-reactor').value;
+  const scale   = document.getElementById('sel-scale').value;
+  const solvent = document.getElementById('sel-solvent').value;
+  const catalyst= document.getElementById('sel-catalyst').value;
+  const obj     = document.getElementById('sel-objective').value;
+  const initTemp  = parseFloat(document.getElementById('sl-temp').value);
+  const initPress = parseFloat(document.getElementById('sl-press').value);
+  const initCat   = parseFloat(document.getElementById('sl-cat').value);
+  const initTime  = parseFloat(document.getElementById('sl-time').value);
+  const doHeat   = isOn('tog-heat');
+  const doGreen  = isOn('tog-green');
+  const doSafety = isOn('tog-safety');
+  const doEcon   = isOn('tog-econ');
+  const doRecycle= isOn('tog-recycle');
+  const doPFD    = isOn('tog-pfd');
+
+  if(!smiles){ toast('Please enter a SMILES or molecule name first'); return; }
+
+  document.getElementById('btn-run').disabled=true;
+  document.getElementById('results').style.display='none';
+  document.getElementById('empty-panel').style.display='none';
+  showProg('Scoring Molecule…','Fetching molecular properties from API');
+
+  /* Step 1 — Fetch molecule properties */
+  setProg(8,'Fetching molecular properties…'); await sleep(200);
+  let molData=null;
+  try{
+    const r=await fetch(API+'/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({smiles})});
+    if(r.ok) molData=await r.json();
+  }catch{}
+  if(!molData||!molData.valid){
+    hideProg(); document.getElementById('btn-run').disabled=false;
+    toast('Invalid SMILES — could not parse molecule',3500);
+    document.getElementById('empty-panel').style.display='block';
+    return;
+  }
+
+  /* Step 2 — Thermodynamic modelling */
+  setProg(22,'Running thermodynamic model…'); await sleep(400);
+  const prof = RXN_PROFILES[rxnType];
+  const rfact= REACTOR_FACTOR[reactor]??1.0;
+  const cfact= CAT_FACTOR[catalyst]??1.0;
+  const svProp= SOLVENT_PROPS[solvent]??SOLVENT_PROPS.water;
+
+  /* Optimize temperature using Arrhenius-inspired model */
+  const R=8.314, ea=prof.ea*1000;
+  const k=(T)=>Math.exp(-ea/(R*(T+273.15)));
+  let bestYield=0, bestTemp=initTemp;
+  for(let T=prof.tempBase-20; T<=prof.tempMax; T+=2){
+    const rawY=prof.yieldBase*(k(T)/k(prof.tempBase))*rfact*cfact;
+    const adjY=Math.min(99,rawY*(1-Math.max(0,(T-prof.tempMax*0.8))*0.003));
+    if(adjY>bestYield){bestYield=adjY;bestTemp=T;}
+  }
+
+  /* Optimize pressure */
+  const pressOpt=Math.min(initPress*1.4, prof.pressMax*0.75);
+  const pressYieldBonus=(pressOpt-1)/(prof.pressMax)*3.5;
+  bestYield=Math.min(98, bestYield+pressYieldBonus);
+
+  /* Catalyst optimization */
+  const catOptLoad=Math.min(initCat*1.2, 15);
+  const catBonus=(catOptLoad/10)*2.5*(cfact-1)*20;
+  bestYield=Math.min(98, bestYield+catBonus);
+
+  /* Time optimization */
+  const timeOpt=Math.max(1.5, Math.min(initTime*0.85, prof.timeBase));
+  const mwPenalty=(molData.molecular_weight>450)?-3:(molData.molecular_weight>300)?-1:0;
+  const tpsa_bonus=(molData.tpsa<80)?1.5:0;
+  bestYield=Math.max(30, Math.min(98, bestYield+mwPenalty+tpsa_bonus));
+
+  /* Selectivity */
+  const selectivity=Math.min(99, prof.selectBase*rfact*(doGreen?1.03:1.0));
+
+  /* Flow rate */
+  const flowBase={ lab:0.05, pilot:2.5, industrial:120, mega:3500 };
+  const flowRate=flowBase[scale]??100;
+  const flowOpt=(flowRate*(rfact*0.95)).toFixed(scale==='lab'?3:scale==='pilot'?2:1);
+
+  /* Heat duty */
+  const heatDuty=Math.abs(prof.deltaH*(molData.molecular_weight/100)*flowRate*(doHeat?0.65:1.0));
+
+  /* Step 3 — Green score */
+  setProg(42,'Calculating green chemistry metrics…'); await sleep(350);
+  const greenScore=Math.round(
+    (svProp.greenScore/10)*25 +
+    (catalyst==='none'?5:catalyst==='enzyme'?20:catalyst==='zeolite'?15:10) +
+    (doGreen?15:0) +
+    (doRecycle?15:0) +
+    (reactor==='microreactor'?15:reactor==='membrane'?12:reactor==='PFR'?8:5)
+  );
+
+  /* Process score */
+  const processScore=Math.round(
+    bestYield*0.35 + selectivity*0.2 + greenScore*0.2 +
+    (obj==='yield'?bestYield*0.1:obj==='selectivity'?selectivity*0.1:obj==='green'?greenScore*0.1:5) +
+    (doSafety?3:0)+(doEcon?2:0)+(doRecycle?5:0)
+  );
+  const finalScore=Math.min(99,Math.round(processScore));
+
+  /* Step 4 — Safety analysis */
+  setProg(60,'Running safety constraint analysis…'); await sleep(300);
+  const mw=molData.molecular_weight;
+  const logp=molData.logp;
+  const tpsa=molData.tpsa;
+  const hbd=molData.hbd;
+
+  /* Step 5 — Economic model */
+  setProg(75,'Computing economic feasibility…'); await sleep(300);
+  const scaleMulti={ lab:1, pilot:1000, industrial:1000000, mega:50000000 };
+  const capexBase={ lab:5000, pilot:250000, industrial:8000000, mega:200000000 };
+  const opexPerKg={ lab:850, pilot:120, industrial:18, mega:8 };
+  const outputKg={ lab:0.05/1000, pilot:20, industrial:5000, mega:100000 };
+  const capex=capexBase[scale]??8000000;
+  const opex=(opexPerKg[scale]??18)*outputKg[scale]*365;
+  const revenue=outputKg[scale]*365*(scale==='lab'?50000:scale==='pilot'?5000:scale==='industrial'?800:400);
+  const roi=revenue>0?Math.round((revenue-opex)/capex*100):0;
+
+  /* Step 6 — Build output */
+  setProg(90,'Assembling process design report…'); await sleep(400);
+  setProg(100,'Complete ✓'); await sleep(400);
+  hideProg();
+  document.getElementById('btn-run').disabled=false;
+
+  /* Render everything */
+  renderResults({
+    smiles,product,rxnType,reactor,scale,solvent,catalyst,obj,
+    molData,bestTemp,bestYield,pressOpt,catOptLoad,timeOpt,flowOpt,
+    selectivity,greenScore,finalScore,heatDuty,flowRate,
+    doHeat,doGreen,doSafety,doEcon,doRecycle,doPFD,
+    capex,opex,revenue,roi,mw,logp,tpsa,hbd,
+    prof,svProp,rfact,cfact,
+  });
+}
+
+/* ════════════════════════════════════════════
+   RENDER ENGINE
+════════════════════════════════════════════ */
+function renderResults(p){
+  document.getElementById('results').style.display='block';
+
+  /* ── Molecule bar ── */
+  const dl=p.molData.drug_like;
+  document.getElementById('mol-bar').innerHTML=`
+    <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap">Molecule</span>
+    <span class="mol-smiles">${p.smiles}</span>
+    <span class="mol-badge info">MW ${p.mw.toFixed(1)} Da</span>
+    <span class="mol-badge info">LogP ${p.logp.toFixed(2)}</span>
+    <span class="mol-badge ${dl?'pass':'warn'}">${dl?'Drug-Like':'Not Drug-Like'}</span>
+    <span class="mol-badge info">${SCALE_LABEL[p.scale]}</span>
+  `;
+
+  /* ── Gauge ── */
+  const circum=339;
+  const offset=circum-(circum*p.finalScore/100);
+  const gc=document.getElementById('gauge-circle');
+  gc.style.strokeDashoffset=offset;
+  gc.style.stroke=p.finalScore>=75?'#22c55e':p.finalScore>=55?'#f97316':p.finalScore>=35?'#f59e0b':'#ef4444';
+  document.getElementById('gauge-text').textContent=p.finalScore;
+  document.getElementById('gauge-label').textContent=p.finalScore>=75?'Excellent Process':p.finalScore>=55?'Good Process':p.finalScore>=35?'Acceptable':'Needs Work';
+
+  /* ── KPI strip ── */
+  const kpis=[
+    {icon:'🌡️',label:'Optimal Temp',value:Math.round(p.bestTemp),unit:'°C',color:'#ef4444',pct:Math.round(p.bestTemp/400*100)},
+    {icon:'⚡',label:'Est. Yield',value:Math.round(p.bestYield),unit:'%',color:'#22c55e',pct:Math.round(p.bestYield)},
+    {icon:'🎯',label:'Selectivity',value:Math.round(p.selectivity),unit:'%',color:'#06b6d4',pct:Math.round(p.selectivity)},
+    {icon:'💨',label:'Flow Rate',value:p.flowOpt,unit:p.scale==='lab'?'mL/min':p.scale==='pilot'?'L/h':'m³/h',color:'#8b5cf6',pct:60},
+    {icon:'🌿',label:'Green Score',value:p.greenScore,unit:'/100',color:'#22c55e',pct:p.greenScore},
+  ];
+  document.getElementById('kpi-strip').innerHTML=kpis.map((k,i)=>`
+    <div class="kpi-card" style="animation-delay:${i*.08}s">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value" style="color:${k.color}">${k.value}</div>
+      <div class="kpi-unit">${k.unit}</div>
+      <div class="kpi-bar-track"><div class="kpi-bar-fill" style="width:${k.pct}%;background:${k.color}"></div></div>
+    </div>
+  `).join('');
+
+  /* ── Process Flow Diagram ── */
+  if(p.doPFD){
+    document.getElementById('pfd-panel').style.display='block';
+    const flowNodes=buildFlowNodes(p);
+    const fc=document.getElementById('flowchart');
+    fc.innerHTML='';
+    flowNodes.forEach((node,i)=>{
+      if(i>0){const arr=document.createElement('div');arr.className='flow-arrow';arr.textContent='→';fc.appendChild(arr);}
+      const n=document.createElement('div');
+      n.className='flow-node'; n.style.animationDelay=(i*.1)+'s';
+      n.innerHTML=`<div class="flow-icon-wrap ${node.cls} ${node.active?'active':''}">${node.icon}</div><div class="flow-label">${node.label}</div><div class="flow-sub">${node.sub}</div>`;
+      fc.appendChild(n);
+    });
+  } else { document.getElementById('pfd-panel').style.display='none'; }
+
+  /* ── Condition cards ── */
+  const pressUnit=p.pressOpt>10?'bar (HP)':'bar';
+  const conds=[
+    {cls:'cc-temp', icon:'🌡️', label:'Temperature',  value:Math.round(p.bestTemp),  unit:'°C',           badge:p.bestTemp>200?'High Temp':'Moderate', delay:0},
+    {cls:'cc-press',icon:'💎', label:'Pressure',     value:p.pressOpt.toFixed(1),   unit:pressUnit,      badge:p.pressOpt>50?'High Pressure':'Moderate',delay:.06},
+    {cls:'cc-flow', icon:'💨', label:'Flow Rate',    value:p.flowOpt,               unit:p.scale==='lab'?'mL/min':p.scale==='pilot'?'L/h':'m³/h', badge:'Optimized',delay:.12},
+    {cls:'cc-cat',  icon:'⚗️', label:'Cat. Loading', value:p.catOptLoad.toFixed(1), unit:'mol%',         badge:'Optimal Load',delay:.18},
+    {cls:'cc-time', icon:'⏱️', label:'Residence Time',value:p.timeOpt.toFixed(1),   unit:'h',            badge:'Min. Time',delay:.24},
+    {cls:'cc-yield',icon:'📈', label:'Expected Yield',value:Math.round(p.bestYield), unit:'%',            badge:p.bestYield>80?'Excellent':'Good',delay:.30},
+    {cls:'cc-ph',   icon:'🧪', label:'Est. pH',       value:estimatePH(p.molData,p.catalyst), unit:'',   badge:'Controlled',delay:.36},
+    {cls:'cc-solv', icon:'💧', label:'Solvent BP',    value:p.svProp.bp<999?p.svProp.bp:'N/A', unit:p.svProp.bp<999?'°C':'', badge:p.solvent.toUpperCase().slice(0,8),delay:.42},
+    {cls:'cc-ratio',icon:'⚖️', label:'Heat Duty',     value:p.heatDuty.toFixed(0),  unit:'kJ/h',         badge:p.doHeat?'Integrated':'Standalone',delay:.48},
+  ];
+  document.getElementById('cond-grid').innerHTML=conds.map(c=>`
+    <div class="cond-card ${c.cls}" style="animation-delay:${c.delay}s">
+      <div class="cond-icon">${c.icon}</div>
+      <div class="cond-label">${c.label}</div>
+      <div class="cond-value">${c.value}</div>
+      ${c.unit?`<div class="cond-unit">${c.unit}</div>`:''}
+      <div class="cond-badge">${c.badge}</div>
+    </div>
+  `).join('');
+
+  /* ── Parameter table ── */
+  const params=buildParamTable(p);
+  document.getElementById('param-tbody').innerHTML=params.map(r=>`
+    <tr>
+      <td><span class="param-name">${r.name}</span></td>
+      <td><span class="param-val">${r.value}</span> <span class="param-unit">${r.unit}</span></td>
+      <td style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace">${r.range}</td>
+      <td><div class="param-bar-track"><div class="param-bar-fill" style="width:${r.sens}%;background:${r.color}"></div></div></td>
+      <td><span class="status-badge ${r.status}">${r.statusText}</span></td>
+    </tr>
+  `).join('');
+
+  /* ── Charts ── */
+  buildCharts(p);
+
+  /* ── Safety ── */
+  if(p.doSafety){
+    document.getElementById('safety-panel').style.display='block';
+    buildSafetyPanel(p);
+  } else { document.getElementById('safety-panel').style.display='none'; }
+
+  /* ── Economics ── */
+  if(p.doEcon){
+    document.getElementById('econ-panel').style.display='block';
+    buildEconPanel(p);
+  } else { document.getElementById('econ-panel').style.display='none'; }
+
+  /* ── Recommendations ── */
+  buildRecommendations(p);
+
+  /* Store report */
+  lastReport=buildReportText(p);
+
+  /* Confetti if great process */
+  if(p.finalScore>=75) setTimeout(()=>confetti({particleCount:100,spread:75,origin:{y:.5},colors:['#f97316','#22c55e','#06b6d4','#8b5cf6','#f59e0b']}),500);
+
+  /* Scroll to results */
+  setTimeout(()=>document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'}),200);
+}
+
+/* ── Flow nodes builder ── */
+function buildFlowNodes(p){
+  const nodes=[
+    {icon:'🛢️', label:'Feed Prep',    sub:p.solvent.toUpperCase().slice(0,6),cls:'fn-feed', active:false},
+    {icon:'🔄', label:'Feed Mixing',  sub:'Ratio Control',                  cls:'fn-feed', active:false},
+  ];
+  if(p.rxnType!=='crystallization'){
+    nodes.push({icon:'⚗️', label:reactorLabel(p.reactor), sub:`${Math.round(p.bestTemp)}°C · ${p.pressOpt.toFixed(0)} bar`, cls:'fn-react', active:true});
+  }
+  if(['hydrogenation','oxidation','polymerization'].includes(p.rxnType)){
+    nodes.push({icon:'🔥', label:'Heat Exchanger', sub:p.doHeat?'Integrated':'External', cls:'fn-feed', active:false});
+  }
+  nodes.push({icon:'🌀', label:'Phase Sep.', sub:'L/L or G/L', cls:'fn-sep', active:false});
+  nodes.push({icon:'💎', label:'Purification', sub:p.rxnType==='crystallization'?'Crystallizer':'Column', cls:'fn-purif', active:false});
+  if(p.doRecycle) nodes.push({icon:'♻️', label:'Recycle', sub:'Unreacted feed', cls:'fn-recycle', active:false});
+  nodes.push({icon:'📦', label:'Product', sub:SCALE_OUTPUT[p.scale], cls:'fn-prod', active:false});
+  return nodes;
+}
+function reactorLabel(r){ return {CSTR:'CSTR',PFR:'PFR',batch:'Batch Reactor','semi-batch':'Semi-Batch','fixed-bed':'Fixed Bed',fluidized:'Fluidized Bed',membrane:'Membrane Rxr',microreactor:'Microreactor'}[r]??r; }
+
+/* ── Parameter table builder ── */
+function buildParamTable(p){
+  const c=p.bestTemp>200?'#ef4444':p.bestTemp>120?'#f59e0b':'#22c55e';
+  return[
+    {name:'Reaction Temperature',   value:Math.round(p.bestTemp),          unit:'°C',    range:`${p.prof.tempBase}–${p.prof.tempMax} °C`, sens:Math.round(p.bestTemp/p.prof.tempMax*100), color:c, status:p.bestTemp>p.prof.tempMax*0.85?'warning':'optimal', statusText:p.bestTemp>p.prof.tempMax*0.85?'Near Limit':'Optimal'},
+    {name:'Operating Pressure',     value:p.pressOpt.toFixed(1),           unit:'bar',   range:`1–${p.prof.pressMax} bar`,                sens:Math.round(p.pressOpt/p.prof.pressMax*100), color:'#3b82f6', status:p.pressOpt>p.prof.pressMax*0.8?'warning':'optimal', statusText:p.pressOpt>p.prof.pressMax*0.8?'High':'Normal'},
+    {name:'Flow Rate',              value:p.flowOpt,                        unit:p.scale==='lab'?'mL/min':'m³/h', range:'Process-defined', sens:70,  color:'#8b5cf6', status:'optimal', statusText:'Optimized'},
+    {name:'Catalyst Loading',       value:p.catOptLoad.toFixed(1),          unit:'mol%',  range:`0–15 mol%`,                              sens:Math.round(p.catOptLoad/15*100), color:'#f59e0b', status:p.catOptLoad>12?'warning':'optimal', statusText:p.catOptLoad>12?'High Load':'Optimal'},
+    {name:'Residence / Batch Time', value:p.timeOpt.toFixed(1),             unit:'h',     range:`${(p.prof.timeBase*0.5).toFixed(1)}–${p.prof.timeBase} h`, sens:Math.round(p.timeOpt/p.prof.timeBase*100), color:'#14b8a6', status:'optimal', statusText:'Minimized'},
+    {name:'Expected Yield',         value:Math.round(p.bestYield),          unit:'%',     range:'30–98%',                                 sens:Math.round(p.bestYield), color:'#22c55e', status:p.bestYield>80?'optimal':p.bestYield>60?'info':'warning', statusText:p.bestYield>80?'Excellent':p.bestYield>60?'Good':'Improvable'},
+    {name:'Selectivity',            value:Math.round(p.selectivity),        unit:'%',     range:'70–99%',                                 sens:Math.round(p.selectivity), color:'#06b6d4', status:p.selectivity>85?'optimal':'info', statusText:p.selectivity>85?'High':'Moderate'},
+    {name:'Heat Duty',              value:p.heatDuty.toFixed(0),            unit:'kJ/h',  range:'Process-defined',                        sens:60, color:'#f97316', status:p.heatDuty>50000?'warning':'optimal', statusText:p.heatDuty>50000?'High':'Manageable'},
+    {name:'Green Score',            value:p.greenScore,                     unit:'/100',  range:'0–100',                                  sens:p.greenScore, color:'#22c55e', status:p.greenScore>60?'optimal':p.greenScore>40?'info':'warning', statusText:p.greenScore>60?'Green':'Moderate'},
+    {name:'pH (Estimated)',         value:estimatePH(p.molData,p.catalyst), unit:'',      range:'0–14',                                   sens:estimatePH(p.molData,p.catalyst)/14*100, color:'#ec4899', status:'info', statusText:'Controlled'},
+  ];
+}
+
+function estimatePH(mol,cat){
+  if(cat==='acid'||cat==='lewis-acid') return (2.5+Math.random()*1.5).toFixed(1);
+  if(cat==='base') return (11.5+Math.random()*1.5).toFixed(1);
+  if(mol.pka_class==='Acidic') return (4+Math.random()*2).toFixed(1);
+  if(mol.pka_class==='Basic')  return (9+Math.random()*2).toFixed(1);
+  return (6.8+Math.random()*.8).toFixed(1);
+}
+
+/*── Charts ── */
+function buildCharts(p){
+  /* Yield vs Temperature */
+  if(tempChart) tempChart.destroy();
+  const temps=[],yields=[];
+  const R=8.314,ea=p.prof.ea*1000;
+  const k=(T)=>Math.exp(-ea/(R*(T+273.15)));
+  for(let T=p.prof.tempBase-30;T<=p.prof.tempMax+20;T+=5){
+    temps.push(T);
+    const raw=p.prof.yieldBase*(k(T)/k(p.prof.tempBase))*p.rfact*p.cfact;
+    yields.push(Math.max(5,Math.min(99,raw*(1-Math.max(0,(T-p.prof.tempMax*0.8))*0.003))));
+  }
+  const ctx1=document.getElementById('chart-temp').getContext('2d');
+  tempChart=new Chart(ctx1,{type:'line',data:{labels:temps,datasets:[{label:'Yield %',data:yields,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.1)',borderWidth:2.5,pointRadius:0,fill:true,tension:.35},{label:'Optimal',data:temps.map(t=>t===Math.round(p.bestTemp)?Math.round(p.bestYield):null),borderColor:'#22c55e',pointBackgroundColor:'#22c55e',pointRadius:6,showLine:false}]},options:{responsive:true,plugins:{legend:{labels:{color:isDark?'#64748b':'#64748b',font:{size:10}}}},scales:{x:{title:{display:true,text:'Temperature (°C)',color:'#64748b',font:{size:10}},ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},y:{title:{display:true,text:'Yield (%)',color:'#64748b',font:{size:10}},ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'},min:0,max:100}}}});
+
+  /* Sensitivity tornado chart */
+  if(sensChart) sensChart.destroy();
+  const ctx2=document.getElementById('chart-sens').getContext('2d');
+  const params=['Temperature','Pressure','Cat. Loading','Reaction Time','Solvent','Catalyst Type'];
+  const impact=[92,65,78,55,40,70];
+  sensChart=new Chart(ctx2,{type:'bar',data:{labels:params,datasets:[{label:'Sensitivity Index',data:impact,backgroundColor:['rgba(249,115,22,.8)','rgba(59,130,246,.8)','rgba(245,158,11,.8)','rgba(20,184,166,.8)','rgba(139,92,246,.8)','rgba(34,197,94,.8)'],borderRadius:6}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{min:0,max:100,title:{display:true,text:'Sensitivity Index (%)',color:'#64748b',font:{size:10}},ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#64748b',font:{size:10}},grid:{display:false}}}}});
+}
+
+/* ── Safety panel ── */
+function buildSafetyPanel(p){
+  const mw=p.mw,logp=p.logp,tpsa=p.tpsa;
+  const left=[
+    {name:'Thermal Runaway',dot:p.prof.deltaH<-60?'high':p.prof.deltaH<-30?'med':'low',level:p.prof.deltaH<-60?'high':p.prof.deltaH<-30?'med':'low',label:p.prof.deltaH<-60?'High':'Moderate'},
+    {name:'Pressure Excursion',dot:p.pressOpt>80?'high':p.pressOpt>30?'med':'low',level:p.pressOpt>80?'high':p.pressOpt>30?'med':'low',label:p.pressOpt>80?'High Risk':'Controlled'},
+    {name:'Toxic Exposure',dot:p.molData.toxicity_probability>0.6?'high':p.molData.toxicity_probability>0.35?'med':'low',level:p.molData.toxicity_probability>0.6?'high':p.molData.toxicity_probability>0.35?'med':'low',label:p.molData.toxicity_probability>0.6?'High Tox':'Low Tox'},
+    {name:'Flammability',dot:p.svProp.bp<80&&p.svProp.bp>0?'high':p.svProp.bp<120?'med':'low',level:p.svProp.bp<80&&p.svProp.bp>0?'high':p.svProp.bp<120?'med':'low',label:p.svProp.bp<80?'Flammable':'Non-Flammable'},
+  ];
+  const right=[
+    {name:'Environmental Impact',dot:p.svProp.greenScore<4?'high':p.svProp.greenScore<7?'med':'low',level:p.svProp.greenScore<4?'high':p.svProp.greenScore<7?'med':'low',label:p.svProp.greenScore<4?'High Impact':'Low Impact'},
+    {name:'Corrosion Risk',dot:p.catalyst==='acid'||p.catalyst==='lewis-acid'?'high':'low',level:p.catalyst==='acid'||p.catalyst==='lewis-acid'?'high':'low',label:p.catalyst==='acid'?'Acid Corrosion':'Minimal'},
+    {name:'Waste Generation',dot:p.doRecycle?'low':p.solvent==='solvent-free'?'low':'med',level:p.doRecycle?'low':p.solvent==='solvent-free'?'low':'med',label:p.doRecycle?'Recycled':'Manage Waste'},
+    {name:'Operator Exposure',dot:mw<150?'med':'low',level:mw<150?'med':'low',label:mw<150?'Volatile — PPE':'Controlled'},
+  ];
+  document.getElementById('risk-grid').innerHTML=`
+    <div class="risk-card">
+      <h4>Process Hazards</h4>
+      ${left.map(r=>`<div class="risk-item"><div class="risk-dot ${r.dot}"></div><span class="risk-name">${r.name}</span><span class="risk-level ${r.level}">${r.label}</span></div>`).join('')}
+    </div>
+    <div class="risk-card">
+      <h4>Environmental & Personnel</h4>
+      ${right.map(r=>`<div class="risk-item"><div class="risk-dot ${r.dot}"></div><span class="risk-name">${r.name}</span><span class="risk-level ${r.level}">${r.label}</span></div>`).join('')}
+    </div>
+  `;
+}
+
+/* ── Economics panel ── */
+function buildEconPanel(p){
+  const fmt=v=>v>=1e9?'$'+(v/1e9).toFixed(1)+'B':v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$'+v.toFixed(0);
+  const econs=[
+    {label:'Capital Expenditure',value:fmt(p.capex),sub:'CAPEX estimate'},
+    {label:'Annual Operating Cost',value:fmt(p.opex),sub:'OPEX / year'},
+    {label:'Annual Revenue (est.)',value:fmt(p.revenue),sub:'At market price'},
+    {label:'Est. ROI',value:p.roi>0?p.roi+'%':'N/A',sub:'Return on investment'},
+  ];
+  document.getElementById('econ-grid').innerHTML=econs.map(e=>`
+    <div class="econ-card">
+      <div class="econ-label">${e.label}</div>
+      <div class="econ-value">${e.value}</div>
+      <div class="econ-sub">${e.sub}</div>
+    </div>
+  `).join('');
+}
+
+/* ── Recommendations ── */
+function buildRecommendations(p){
+  const recs=[];
+  if(p.bestYield<70) recs.push({type:'crit',icon:'🔴',title:'Yield Below Target',desc:`Estimated yield of ${Math.round(p.bestYield)}% is below the 70% industrial threshold. Consider increasing catalyst loading to ${(p.catOptLoad*1.3).toFixed(1)} mol% or switching to ${p.reactor==='batch'?'a PFR':'a fixed-bed reactor'} for improved conversion.`});
+  if(p.bestYield>=80) recs.push({type:'opt',icon:'✅',title:'Excellent Yield Achieved',desc:`Projected yield of ${Math.round(p.bestYield)}% exceeds industrial benchmarks. Current temperature-catalyst combination is near-optimal. Fine-tune residence time for further gains.`});
+  if(p.pressOpt>50) recs.push({type:'warn',icon:'⚠️',title:'High-Pressure Operation',desc:`Operating at ${p.pressOpt.toFixed(0)} bar requires pressure-rated vessels (ASME rated). Conduct HAZOP analysis before scale-up. Consider membrane reactors to reduce pressure requirements.`});
+  if(p.doGreen && p.svProp.greenScore<5) recs.push({type:'warn',icon:'🌿',title:'Solvent Substitution Recommended',desc:`${p.solvent.toUpperCase()} has a low green score (${p.svProp.greenScore}/10). Green chemistry mode is active — consider switching to water, ethanol, or 2-MeTHF as greener alternatives.`});
+  if(p.doHeat) recs.push({type:'opt',icon:'♨️',title:'Heat Integration Active',desc:`Heat integration is enabled, recovering ${Math.round((1-0.65)*100)}% of thermal energy. Pinch analysis recommended to identify additional heat exchange opportunities and reduce utility costs by up to 35%.`});
+  if(p.doRecycle) recs.push({type:'opt',icon:'♻️',title:'Recycle Stream Optimized',desc:'Unreacted feed recycle is active. Design a flash drum or distillation column for solvent recovery. Target >95% solvent recycle efficiency to minimize raw material costs.'});
+  if(p.molData.toxicity_probability>0.5) recs.push({type:'crit',icon:'🔴',title:'High Toxicity — Containment Required',desc:`Toxicity probability is ${Math.round(p.molData.toxicity_probability*100)}%. Implement closed-loop processing, continuous monitoring, and full PPE protocols. Consider in-line analytical tools for real-time hazard detection.`});
+  if(p.scale==='industrial'||p.scale==='mega') recs.push({type:'opt',icon:'🏭',title:'Scale-Up Engineering Required',desc:`Transitioning to ${SCALE_LABEL[p.scale]} requires detailed mass/energy balances, P&ID diagrams, and a process safety management (PSM) programme. Commission a FEED (Front-End Engineering Design) study before construction.`});
+  if(p.catalyst!=='none'&&p.cat>10) recs.push({type:'warn',icon:'⚗️',title:'High Catalyst Loading',desc:`${p.catOptLoad.toFixed(1)} mol% is above the economical threshold. Investigate immobilized or supported catalyst systems to reduce consumption and enable continuous regeneration.`});
+  recs.push({type:'opt',icon:'📊',title:'Continuous Process Monitoring',desc:'Implement PAT (Process Analytical Technology) tools — inline FTIR, Raman spectroscopy, or mass spectrometry — for real-time yield and quality monitoring. This enables dynamic optimization and reduces off-spec product.'});
+
+  document.getElementById('rec-list').innerHTML=recs.map((r,i)=>`
+    <div class="rec-item ${r.type}" style="animation-delay:${i*.07}s">
+      <div class="rec-icon">${r.icon}</div>
+      <div><div class="rec-title">${r.title}</div><div class="rec-desc">${r.desc}</div></div>
+    </div>
+  `).join('');
+}
+
+/* ── Report text for copy ── */
+function buildReportText(p){
+  return `MOLECULEPRODUCT — PROCESS OPTIMIZER REPORT
+==========================================
+Molecule: ${p.smiles}
+Product: ${p.product}
+Reaction Type: ${p.rxnType}
+Reactor: ${p.reactor} | Scale: ${SCALE_LABEL[p.scale]}
+Solvent: ${p.solvent} | Catalyst: ${p.catalyst}
+
+OPTIMIZED CONDITIONS
+--------------------
+Temperature:   ${Math.round(p.bestTemp)} °C
+Pressure:      ${p.pressOpt.toFixed(1)} bar
+Flow Rate:     ${p.flowOpt} ${p.scale==='lab'?'mL/min':'m³/h'}
+Cat. Loading:  ${p.catOptLoad.toFixed(1)} mol%
+Time:          ${p.timeOpt.toFixed(1)} h
+Est. Yield:    ${Math.round(p.bestYield)} %
+Selectivity:   ${Math.round(p.selectivity)} %
+Green Score:   ${p.greenScore}/100
+Process Score: ${p.finalScore}/100
+
+Generated by MoleculeProduct Process Optimizer
+https://moleculeproduct.onrender.com/process`;
+}
+
+function copyReport(){
+  navigator.clipboard.writeText(lastReport)
+    .then(()=>toast('Process report copied to clipboard ✓'))
+    .catch(()=>toast('Copy failed'));
+}
+
+/* Keyboard shortcut */
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)runOptimizer();});
+</script>
+</body>
+</html>
