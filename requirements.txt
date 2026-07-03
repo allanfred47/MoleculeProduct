@@ -1,12 +1,5 @@
-pandas
-numpy
-scikit-learn
-xgboost
-rdkit
-joblib
-requests
-pubchempy
 fastapi
 uvicorn
+rdkit
+requests
 pydantic
-python-multipart
