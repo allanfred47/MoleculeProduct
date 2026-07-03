@@ -300,7 +300,7 @@
       <button class="predict" id="predict-btn" onclick="runPredict()">Predict</button>
     </div>
     <div class="examples">
-      <span>Try:</span>
+      <span>Examples:</span>
       <button class="pill" onclick="fillAndPredict('CCO')">Ethanol</button>
       <button class="pill" onclick="fillAndPredict('CC(=O)Oc1ccccc1C(=O)O')">Aspirin</button>
       <button class="pill" onclick="fillAndPredict('Cn1cnc2c1c(=O)n(c(=O)n2C)C')">Caffeine</button>
@@ -476,8 +476,21 @@
     } finally { setBtn("lookup-btn", false, "Lookup"); }
   }
   async function runPredict() {
-    const smiles = document.getElementById("smiles-input").value.trim();
+    let smiles = document.getElementById("smiles-input").value.trim();
     if (!smiles) return;
+    // If input has no special SMILES characters, treat as a name and look up first
+    const looksLikeName = smiles.indexOf('(') === -1 && smiles.indexOf('=') === -1 && smiles.indexOf('[') === -1 && smiles.length > 1;
+    if (looksLikeName) {
+      setBtn("predict-btn", true, "Looking up…");
+      try {
+        const lr = await fetch(API + "/lookup?name=" + encodeURIComponent(smiles));
+        if (lr.ok) {
+          const ld = await lr.json();
+          smiles = ld.smiles;
+          document.getElementById("smiles-input").value = smiles;
+        }
+      } catch {}
+    }
     document.getElementById("error-banner").style.display = "none";
     document.getElementById("results").style.display = "none";
     document.getElementById("skeleton").style.display = "flex";
