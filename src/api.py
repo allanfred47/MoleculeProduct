@@ -22,6 +22,11 @@ A molecular property prediction API powered by RDKit and PubChem.
 - **HBD** — number of hydrogen bond donors
 - **HBA** — number of hydrogen bond acceptors
 - **Rotatable Bonds** — measure of molecular flexibility
+- **Ring Count** — total number of rings in the molecule
+- **Aromatic Rings** — number of aromatic rings
+- **Heavy Atom Count** — number of non-hydrogen atoms
+- **Fraction CSP3** — fraction of sp3 carbons (molecular complexity)
+- **Drug-likeness Score** — estimated score based on Lipinski Rule of 5
 
 ## Lipinski Rule of 5
 A molecule is considered drug-like if:
@@ -30,7 +35,7 @@ A molecule is considered drug-like if:
 - HBD ≤ 5
 - HBA ≤ 10
     """,
-    version="1.0.0",
+    version="2.0.0",
     contact={
         "name": "MoleculeProduct",
         "url": "https://moleculeproduct.onrender.com",
@@ -52,17 +57,40 @@ class SmilesInput(BaseModel):
 class MoleculeResponse(BaseModel):
     smiles: str
     valid: bool
+    # Basic properties
     molecular_weight: float | None = None
     logp: float | None = None
     tpsa: float | None = None
     hbd: int | None = None
     hba: int | None = None
     rotatable_bonds: int | None = None
+    # New descriptors
+    ring_count: int | None = None
+    aromatic_rings: int | None = None
+    heavy_atom_count: int | None = None
+    fraction_csp3: float | None = None
+    molar_refractivity: float | None = None
+    # Drug-likeness
+    lipinski_violations: int | None = None
+    drug_likeness_score: float | None = None
+    drug_like: bool | None = None
+
+
+def calculate_drug_likeness(mw, logp, hbd, hba):
+    """Calculate a simple drug-likeness score from 0 to 1."""
+    violations = 0
+    if mw > 500:  violations += 1
+    if logp > 5:  violations += 1
+    if hbd > 5:   violations += 1
+    if hba > 10:  violations += 1
+
+    score = round(1 - (violations / 4), 2)
+    return violations, score
 
 
 @app.get("/")
 def root():
-    return {"message": "API is running"}
+    return {"message": "MoleculeProduct API v2.0 is running"}
 
 
 @app.get("/lookup")
@@ -89,13 +117,36 @@ def predict(data: SmilesInput):
     if mol is None:
         return MoleculeResponse(smiles=data.smiles, valid=False)
 
+    mw   = round(Descriptors.MolWt(mol), 3)
+    logp = round(Crippen.MolLogP(mol), 4)
+    tpsa = round(rdMolDescriptors.CalcTPSA(mol), 2)
+    hbd  = Lipinski.NumHDonors(mol)
+    hba  = Lipinski.NumHAcceptors(mol)
+    rb   = Lipinski.NumRotatableBonds(mol)
+
+    ring_count     = rdMolDescriptors.CalcNumRings(mol)
+    aromatic_rings = rdMolDescriptors.CalcNumAromaticRings(mol)
+    heavy_atoms    = mol.GetNumHeavyAtoms()
+    frac_csp3      = round(rdMolDescriptors.CalcFractionCSP3(mol), 4)
+    mr             = round(Crippen.MolMR(mol), 3)
+
+    violations, score = calculate_drug_likeness(mw, logp, hbd, hba)
+
     return MoleculeResponse(
         smiles=data.smiles,
         valid=True,
-        molecular_weight=round(Descriptors.MolWt(mol), 3),
-        logp=round(Crippen.MolLogP(mol), 4),
-        tpsa=round(rdMolDescriptors.CalcTPSA(mol), 2),
-        hbd=Lipinski.NumHDonors(mol),
-        hba=Lipinski.NumHAcceptors(mol),
-        rotatable_bonds=Lipinski.NumRotatableBonds(mol),
+        molecular_weight=mw,
+        logp=logp,
+        tpsa=tpsa,
+        hbd=hbd,
+        hba=hba,
+        rotatable_bonds=rb,
+        ring_count=ring_count,
+        aromatic_rings=aromatic_rings,
+        heavy_atom_count=heavy_atoms,
+        fraction_csp3=frac_csp3,
+        molar_refractivity=mr,
+        lipinski_violations=violations,
+        drug_likeness_score=score,
+        drug_like=violations == 0,
     )
