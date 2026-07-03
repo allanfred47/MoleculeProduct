@@ -43,12 +43,10 @@
     .skeleton { border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); padding: 24px; display: flex; flex-direction: column; gap: 14px; }
     .skel-line { height: 14px; border-radius: 6px; background: #e2e8f0; animation: pulse 1.4s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-    /* Drug-likeness score */
     .score-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; display: flex; align-items: center; gap: 24px; }
     .score-circle { width: 80px; height: 80px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; border: 4px solid; flex-shrink: 0; }
     .score-circle.good { border-color: var(--emerald); color: #059669; background: #f0fdf4; }
-    .score-circle.bad  { border-color: var(--red);     color: var(--red); background: #fef2f2; }
+    .score-circle.bad  { border-color: var(--red); color: var(--red); background: #fef2f2; }
     .score-circle .score-num { font-size: 22px; line-height: 1; }
     .score-circle .score-label { font-size: 9px; color: var(--muted); margin-top: 2px; }
     .score-info h3 { font-size: 14px; font-weight: 700; }
@@ -56,20 +54,24 @@
     .violations { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .violation-tag { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
     .pass-tag { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
-
-    /* Section titles */
     .section-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
-
-    /* Props grids */
-    .props-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .props-grid   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .props-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
     @media(max-width:550px){ .props-grid, .props-grid-4 { grid-template-columns: repeat(2,1fr); } }
     .prop-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
     .prop-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
     .prop-value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
     .prop-unit  { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-    /* Lipinski bars */
+    /* Solubility card */
+    .sol-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; display: flex; align-items: center; gap: 20px; }
+    .sol-badge { padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .sol-high   { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+    .sol-good   { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+    .sol-mod    { background: #fefce8; border: 1px solid #fde68a; color: #92400e; }
+    .sol-poor   { background: #fff7ed; border: 1px solid #fed7aa; color: #c2410c; }
+    .sol-insol  { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+    .sol-info h3 { font-size: 13px; font-weight: 700; }
+    .sol-info p  { font-size: 12px; color: var(--muted); margin-top: 3px; }
     .lipinski-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; }
     .bar-row { margin-bottom: 14px; }
     .bar-row:last-child { margin-bottom: 0; }
@@ -80,7 +82,6 @@
     .bar-fill  { height: 100%; border-radius: 99px; transition: width .7s ease; }
     .bar-fill.good { background: var(--emerald); }
     .bar-fill.bad  { background: var(--red); }
-
     .smiles-echo { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; display: flex; align-items: center; gap: 12px; font-size: 13px; }
     .echo-label { color: var(--muted); font-size: 12px; white-space: nowrap; }
     .echo-val   { font-family: 'JetBrains Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -138,10 +139,13 @@
     <div id="invalid-banner" class="banner error" style="display:none">
       <strong>Not found.</strong> This name was not recognised. Try a different name or paste a SMILES string.
     </div>
-    <div id="valid-results" style="display:none; display:flex; flex-direction:column; gap:16px;">
+    <div id="valid-results" style="display:none; flex-direction:column; gap:16px;">
 
       <!-- Drug-likeness score -->
       <div class="score-card" id="score-card"></div>
+
+      <!-- ML Solubility -->
+      <div class="sol-card" id="sol-card"></div>
 
       <!-- Basic properties -->
       <div>
@@ -223,6 +227,22 @@
     }
   }
 
+  function solClass(label) {
+    if (label === "Highly Soluble")      return "sol-high";
+    if (label === "Soluble")             return "sol-good";
+    if (label === "Moderately Soluble")  return "sol-mod";
+    if (label === "Poorly Soluble")      return "sol-poor";
+    return "sol-insol";
+  }
+
+  function solDescription(label) {
+    if (label === "Highly Soluble")     return "Dissolves easily in water. Excellent for oral drugs.";
+    if (label === "Soluble")            return "Good water solubility. Suitable for oral administration.";
+    if (label === "Moderately Soluble") return "Partial water solubility. May need formulation help.";
+    if (label === "Poorly Soluble")     return "Low water solubility. Absorption challenges likely.";
+    return "Very low water solubility. Difficult to administer orally.";
+  }
+
   function showResults(data) {
     document.getElementById("skeleton").style.display = "none";
     document.getElementById("results").style.display = "block";
@@ -236,7 +256,7 @@
     document.getElementById("invalid-banner").style.display = "none";
     document.getElementById("valid-results").style.display = "flex";
 
-    // Drug-likeness score card
+    // Drug-likeness
     const good = data.drug_like;
     const violations = [];
     if (data.molecular_weight > 500) violations.push("MW > 500");
@@ -259,6 +279,15 @@
         </div>
       </div>`;
 
+    // Solubility
+    const sc = solClass(data.solubility_class);
+    document.getElementById("sol-card").innerHTML = `
+      <div class="sol-info">
+        <h3>Predicted Aqueous Solubility</h3>
+        <p>logS = ${data.predicted_logs} &nbsp;|&nbsp; ${solDescription(data.solubility_class)}</p>
+      </div>
+      <span class="sol-badge ${sc}">${data.solubility_class}</span>`;
+
     // Basic properties
     const basic = [
       { label: "Molecular Weight", value: data.molecular_weight, unit: "Da", dp: 3 },
@@ -277,11 +306,11 @@
 
     // Extended descriptors
     const extended = [
-      { label: "Ring Count",         value: data.ring_count,          unit: "", dp: 0 },
-      { label: "Aromatic Rings",     value: data.aromatic_rings,      unit: "", dp: 0 },
-      { label: "Heavy Atoms",        value: data.heavy_atom_count,    unit: "", dp: 0 },
-      { label: "Fraction CSP3",      value: data.fraction_csp3,       unit: "", dp: 4 },
-      { label: "Molar Refractivity", value: data.molar_refractivity,  unit: "", dp: 3 },
+      { label: "Ring Count",         value: data.ring_count,         unit: "", dp: 0 },
+      { label: "Aromatic Rings",     value: data.aromatic_rings,     unit: "", dp: 0 },
+      { label: "Heavy Atoms",        value: data.heavy_atom_count,   unit: "", dp: 0 },
+      { label: "Fraction CSP3",      value: data.fraction_csp3,      unit: "", dp: 4 },
+      { label: "Molar Refractivity", value: data.molar_refractivity, unit: "", dp: 3 },
     ];
     document.getElementById("extended-props").innerHTML = extended.map(p => `
       <div class="prop-card">
