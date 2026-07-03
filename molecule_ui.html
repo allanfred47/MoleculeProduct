@@ -8,23 +8,16 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e0e0e0; min-height: 100vh; padding: 24px 16px; }
     .container { max-width: 900px; margin: 0 auto; }
-
-    /* Header */
     .header { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 8px; }
     h1 { font-size: 2rem; font-weight: 700; color: #7dd3fc; }
     .subtitle { text-align: center; color: #94a3b8; margin-bottom: 28px; font-size: 0.95rem; }
-
-    /* Molecule SVG animation */
-    .mol-anim { flex-shrink: 0; }
     .mol-anim svg { animation: spin 12s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .atom { fill: none; stroke: #7dd3fc; stroke-width: 1.5; }
     .atom-dot { fill: #7dd3fc; }
     .atom-dot.green { fill: #22c55e; }
     .atom-dot.orange { fill: #f97316; }
     .atom-dot.purple { fill: #a78bfa; }
     .bond { stroke: #334155; stroke-width: 1.2; }
-
     .input-row { display: flex; gap: 10px; margin-bottom: 14px; }
     input[type="text"] { flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e0e0e0; font-size: 1rem; outline: none; }
     input[type="text"]:focus { border-color: #7dd3fc; }
@@ -37,7 +30,6 @@
     .example-btn:hover { background: #334155; }
     .error-box { background: #450a0a; border: 1px solid #dc2626; color: #fca5a5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: none; }
     .results { display: none; }
-
     .drug-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 24px; margin-bottom: 16px; }
     .score-circle { width: 90px; height: 90px; border-radius: 50%; border: 6px solid #22c55e; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
     .score-circle.bad { border-color: #ef4444; }
@@ -49,7 +41,6 @@
     .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
     .badge.pass { background: #14532d; color: #86efac; }
     .badge.fail { background: #450a0a; color: #fca5a5; }
-
     .sol-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
     .sol-card h3 { font-size: 1rem; font-weight: 600; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
     .sol-main { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -62,8 +53,6 @@
     .sol-class.unknown { color: #94a3b8; }
     .sol-logs { color: #94a3b8; font-size: 0.9rem; }
     .sol-desc { color: #64748b; font-size: 0.85rem; margin-top: 6px; }
-
-    /* Toxicity card */
     .tox-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 24px; }
     .tox-circle { width: 90px; height: 90px; border-radius: 50%; border: 6px solid #22c55e; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
     .tox-circle.low { border-color: #f59e0b; }
@@ -76,7 +65,13 @@
     .tox-badge.safe { background: #14532d; color: #86efac; }
     .tox-badge.warn { background: #431407; color: #fdba74; }
     .tox-badge.danger { background: #450a0a; color: #fca5a5; }
-
+    .visc-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .visc-card h3 { font-size: 1rem; font-weight: 600; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .visc-main { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .visc-value { font-size: 1.6rem; font-weight: 700; color: #7dd3fc; }
+    .visc-unit { font-size: 0.85rem; color: #64748b; margin-top: 2px; }
+    .visc-class { font-size: 1rem; font-weight: 600; padding: 4px 14px; border-radius: 20px; background: #0f2744; color: #7dd3fc; border: 1px solid #1e3a5f; }
+    .visc-desc { color: #64748b; font-size: 0.85rem; margin-top: 8px; }
     .section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin: 20px 0 10px; font-weight: 600; }
     .props-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; margin-bottom: 8px; }
     .prop-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px; }
@@ -86,7 +81,6 @@
     .prop-card.acidic .prop-value { color: #f87171; }
     .prop-card.basic .prop-value { color: #60a5fa; }
     .prop-card.neutral .prop-value { color: #94a3b8; }
-
     .lipinski-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 8px; }
     .lip-item { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px; }
     .lip-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
@@ -104,11 +98,9 @@
 <body>
 <div class="container">
 
-  <!-- Header with animated molecule -->
   <div class="header">
     <div class="mol-anim">
       <svg width="54" height="54" viewBox="0 0 54 54">
-        <!-- bonds -->
         <line class="bond" x1="27" y1="5" x2="47" y2="16"/>
         <line class="bond" x1="47" y1="16" x2="47" y2="38"/>
         <line class="bond" x1="47" y1="38" x2="27" y2="49"/>
@@ -118,7 +110,6 @@
         <line class="bond" x1="27" y1="5" x2="27" y2="27"/>
         <line class="bond" x1="47" y1="38" x2="27" y2="27"/>
         <line class="bond" x1="7" y1="38" x2="27" y2="27"/>
-        <!-- atoms -->
         <circle class="atom-dot" cx="27" cy="5" r="3.5"/>
         <circle class="atom-dot green" cx="47" cy="16" r="3.5"/>
         <circle class="atom-dot orange" cx="47" cy="38" r="3.5"/>
@@ -151,7 +142,7 @@
     </div>
   </div>
 
-  <p class="subtitle">Predict molecular properties, drug-likeness, toxicity, and aqueous solubility</p>
+  <p class="subtitle">Predict molecular properties, drug-likeness, toxicity, viscosity, and aqueous solubility</p>
 
   <div class="input-row">
     <input type="text" id="molInput" placeholder="Type molecule name (e.g. aspirin) or paste a SMILES string" />
@@ -173,7 +164,6 @@
 
   <div class="results" id="results">
 
-    <!-- Drug likeness -->
     <div class="drug-card">
       <div class="score-circle" id="scoreCircle">
         <span class="score-pct" id="scorePct">--</span>
@@ -186,7 +176,6 @@
       </div>
     </div>
 
-    <!-- Solubility -->
     <div class="sol-card">
       <h3>Predicted Aqueous Solubility</h3>
       <div class="sol-main">
@@ -196,7 +185,6 @@
       <div class="sol-desc" id="solDesc">--</div>
     </div>
 
-    <!-- Toxicity -->
     <div class="tox-card">
       <div class="tox-circle" id="toxCircle">
         <span class="tox-pct" id="toxPct">--</span>
@@ -209,7 +197,18 @@
       </div>
     </div>
 
-    <!-- Basic properties -->
+    <div class="visc-card">
+      <h3>Predicted Viscosity</h3>
+      <div class="visc-main">
+        <div>
+          <div class="visc-value" id="viscValue">--</div>
+          <div class="visc-unit">cP at 25 degrees C (est.)</div>
+        </div>
+        <span class="visc-class" id="viscClass">--</span>
+      </div>
+      <div class="visc-desc" id="viscDesc">--</div>
+    </div>
+
     <div class="section-title">Basic Properties</div>
     <div class="props-grid">
       <div class="prop-card"><div class="prop-label">Molecular Weight</div><div class="prop-value" id="mw">--</div><div class="prop-unit">Da</div></div>
@@ -220,7 +219,6 @@
       <div class="prop-card"><div class="prop-label">Rotatable Bonds</div><div class="prop-value" id="rot">--</div><div class="prop-unit">count</div></div>
     </div>
 
-    <!-- Physical properties -->
     <div class="section-title">Physical Properties</div>
     <div class="props-grid">
       <div class="prop-card"><div class="prop-label">Boiling Point</div><div class="prop-value" id="bp">--</div><div class="prop-unit">degrees C (est.)</div></div>
@@ -231,7 +229,6 @@
       <div class="prop-card"><div class="prop-label">Formal Charge</div><div class="prop-value" id="charge">--</div><div class="prop-unit">total charge</div></div>
     </div>
 
-    <!-- Extended descriptors -->
     <div class="section-title">Extended Descriptors</div>
     <div class="props-grid">
       <div class="prop-card"><div class="prop-label">Ring Count</div><div class="prop-value" id="rings">--</div><div class="prop-unit">total rings</div></div>
@@ -241,7 +238,6 @@
       <div class="prop-card"><div class="prop-label">Molar Refractivity</div><div class="prop-value" id="mr">--</div><div class="prop-unit">MR</div></div>
     </div>
 
-    <!-- Lipinski -->
     <div class="section-title">Lipinski Rule of 5</div>
     <div class="lipinski-grid">
       <div class="lip-item">
@@ -291,9 +287,7 @@
       var looksLikeName = /^[a-zA-Z][a-zA-Zs-]{2,}$/.test(raw);
       if (looksLikeName) {
         var lookupResp = await fetch(API + '/lookup?name=' + encodeURIComponent(raw));
-        if (!lookupResp.ok) {
-          throw new Error('"' + raw + '" was not recognized. Try a different name or paste a SMILES string.');
-        }
+        if (!lookupResp.ok) throw new Error('"' + raw + '" was not recognized. Try a different name or paste a SMILES string.');
         var lookupData = await lookupResp.json();
         smiles = lookupData.smiles;
         if (!smiles) throw new Error('No SMILES found for "' + raw + '".');
@@ -318,7 +312,6 @@
   }
 
   function renderResults(d) {
-    // Drug likeness
     var pct = Math.round((d.drug_likeness_score || 0) * 100);
     var circle = document.getElementById('scoreCircle');
     circle.className = 'score-circle ' + (pct >= 75 ? '' : pct >= 50 ? 'medium' : 'bad');
@@ -329,7 +322,6 @@
     badge.textContent = d.drug_like ? 'Passes all Rule of 5 criteria' : d.lipinski_violations + ' Rule of 5 violation' + (d.lipinski_violations !== 1 ? 's' : '');
     badge.className = 'badge ' + (d.drug_like ? 'pass' : 'fail');
 
-    // Solubility
     var sc = d.solubility_class || 'Unknown';
     var solEl = document.getElementById('solClass');
     solEl.textContent = sc;
@@ -340,61 +332,60 @@
     var descMap = { 'Highly Soluble': 'Excellent water solubility. Easy to formulate.', 'Soluble': 'Good water solubility. Generally bioavailable.', 'Moderately Soluble': 'Moderate solubility. May need formulation aid.', 'Poorly Soluble': 'Low water solubility. Difficult to administer orally.', 'Insoluble': 'Very low water solubility. Significant formulation challenge.' };
     document.getElementById('solDesc').textContent = descMap[sc] || '';
 
-    // Toxicity
     var toxProb = d.toxicity_probability;
     var toxClass = d.toxicity_class || 'Unknown';
     var toxCircle = document.getElementById('toxCircle');
-    var toxPctEl = document.getElementById('toxPct');
     var toxBadge = document.getElementById('toxBadge');
     if (toxProb !== null && toxProb !== undefined) {
-      toxPctEl.textContent = toxProb + '%';
+      document.getElementById('toxPct').textContent = toxProb + '%';
       document.getElementById('toxTitle').textContent = toxClass;
-      if (toxClass === 'Non-toxic') {
-        toxCircle.className = 'tox-circle';
-        toxBadge.textContent = 'Low risk — safe profile';
-        toxBadge.className = 'tox-badge safe';
-      } else if (toxClass === 'Low Toxicity Risk') {
-        toxCircle.className = 'tox-circle low';
-        toxBadge.textContent = 'Moderate risk — use with caution';
-        toxBadge.className = 'tox-badge warn';
-      } else {
-        toxCircle.className = 'tox-circle high';
-        toxBadge.textContent = 'High risk — potentially harmful';
-        toxBadge.className = 'tox-badge danger';
-      }
+      if (toxClass === 'Non-toxic') { toxCircle.className = 'tox-circle'; toxBadge.textContent = 'Low risk — safe profile'; toxBadge.className = 'tox-badge safe'; }
+      else if (toxClass === 'Low Toxicity Risk') { toxCircle.className = 'tox-circle low'; toxBadge.textContent = 'Moderate risk — use with caution'; toxBadge.className = 'tox-badge warn'; }
+      else { toxCircle.className = 'tox-circle high'; toxBadge.textContent = 'High risk — potentially harmful'; toxBadge.className = 'tox-badge danger'; }
     } else {
-      toxPctEl.textContent = '--';
+      document.getElementById('toxPct').textContent = '--';
       document.getElementById('toxTitle').textContent = 'Model not available';
-      toxBadge.textContent = 'Check server';
-      toxBadge.className = 'tox-badge warn';
+      toxBadge.textContent = 'Check server'; toxBadge.className = 'tox-badge warn';
     }
 
-    // Basic
+    var visc = d.viscosity;
+    var viscClass = d.viscosity_class || 'Unknown';
+    if (visc !== null && visc !== undefined) {
+      document.getElementById('viscValue').textContent = visc;
+      document.getElementById('viscClass').textContent = viscClass;
+      var viscDescMap = {
+        'Very Low': 'Flows like water or lighter. Very easy to pour and mix.',
+        'Low': 'Flows easily. Similar to light oils or alcohols.',
+        'Moderate': 'Moderate flow resistance. Similar to vegetable oil.',
+        'High': 'Thick and slow-flowing. Similar to honey or syrup.',
+        'Very High': 'Extremely thick. Difficult to pour without heating.'
+      };
+      document.getElementById('viscDesc').textContent = viscDescMap[viscClass] || '';
+    } else {
+      document.getElementById('viscValue').textContent = '--';
+      document.getElementById('viscClass').textContent = 'Not available';
+      document.getElementById('viscDesc').textContent = '';
+    }
+
     document.getElementById('mw').textContent = d.molecular_weight;
     document.getElementById('logp').textContent = d.logp;
     document.getElementById('tpsa').textContent = d.tpsa;
     document.getElementById('hbd').textContent = d.hbd;
     document.getElementById('hba').textContent = d.hba;
     document.getElementById('rot').textContent = d.rotatable_bonds;
-
-    // Physical
     document.getElementById('bp').textContent = d.boiling_point;
     document.getElementById('mp').textContent = d.melting_point;
     document.getElementById('density').textContent = d.density;
-    var pkaEl = document.getElementById('pka');
-    pkaEl.textContent = d.pka_class;
+    document.getElementById('pka').textContent = d.pka_class;
     document.getElementById('pkaCard').className = 'prop-card ' + (d.pka_class || '').toLowerCase();
     document.getElementById('stereo').textContent = d.stereocenters;
     document.getElementById('charge').textContent = d.formal_charge >= 0 ? '+' + d.formal_charge : d.formal_charge;
-
-    // Extended
     document.getElementById('rings').textContent = d.ring_count;
     document.getElementById('aromatic').textContent = d.aromatic_rings;
     document.getElementById('heavy').textContent = d.heavy_atom_count;
     document.getElementById('csp3').textContent = d.fraction_csp3;
     document.getElementById('mr').textContent = d.molar_refractivity;
 
-    // Lipinski bars
     setBar('l-mw', 'b-mw', d.molecular_weight, 500);
     setBar('l-logp', 'b-logp', d.logp, 5);
     setBar('l-hbd', 'b-hbd', d.hbd, 5);
@@ -412,11 +403,7 @@
     bar.className = 'lip-bar ' + (value > limit ? 'warn' : 'ok');
   }
 
-  function showError(show, msg) {
-    var box = document.getElementById('errorBox');
-    box.style.display = show ? 'block' : 'none';
-    if (msg) box.textContent = msg;
-  }
+  function showError(show, msg) { var box = document.getElementById('errorBox'); box.style.display = show ? 'block' : 'none'; if (msg) box.textContent = msg; }
   function showLoading(show) { document.getElementById('loadingBox').style.display = show ? 'block' : 'none'; }
   function showResults(show) { document.getElementById('results').style.display = show ? 'block' : 'none'; }
 
