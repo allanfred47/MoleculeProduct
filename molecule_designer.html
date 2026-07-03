@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoleculeProduct — Generative Designer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #07090f;
+      --surface:  #0e1117;
+      --surface2: #141820;
+      --surface3: #1a2030;
+      --border:   #1e2535;
+      --border2:  #2a3348;
+      --text:     #e8edf5;
+      --muted:    #6b7694;
+      --dim:      #3a4460;
+      --cyan:     #00d4e8;
+      --blue:     #4d9fff;
+      --violet:   #a78bfa;
+      --green:    #34d399;
+      --amber:    #fbbf24;
+      --red:      #f87171;
+      --pink:     #f472b6;
+      --radius:   14px;
+      --radius-sm: 8px;
+    }
+    html.light {
+      --bg:       #f0f4fa;
+      --surface:  #ffffff;
+      --surface2: #f5f7fc;
+      --surface3: #eaeff8;
+      --border:   #dde3ef;
+      --border2:  #c8d0e2;
+      --text:     #111827;
+      --muted:    #6b7280;
+      --dim:      #9ca3af;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background .3s, color .3s;
+    }
+
+    #bg-canvas {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0; opacity: .5;
+    }
+
+    @keyframes headerPulse { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    @keyframes waveShift   { 0%{background-position:0% 0%} 100%{background-position:300% 0%} }
+    @keyframes spin        { to{transform:rotate(360deg)} }
+    @keyframes titleCycle  { 0%,100%{color:#00d4e8} 25%{color:#4d9fff} 50%{color:#a78bfa} 75%{color:#34d399} }
+    @keyframes fadeUp      { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes shimmer     { 0%{left:-200%} 60%,100%{left:200%} }
+    @keyframes scanTop     { 0%{left:-100%} 100%{left:200%} }
+    @keyframes barGrow     { from{width:0} }
+    @keyframes popIn       { 0%{transform:scale(.4);opacity:0} 70%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+    @keyframes pulse       { 0%,100%{opacity:1} 50%{opacity:.3} }
+    @keyframes dotBlink    { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+    @keyframes spinRing    { to{transform:rotate(360deg)} }
+
+    header {
+      background: linear-gradient(270deg,#07090f,#091a30,#0d1a0a,#130d2a,#07090f,#091a30);
+      background-size: 400% 400%;
+      animation: headerPulse 14s ease infinite;
+      padding: 14px 28px;
+      display: flex; align-items: center; gap: 14px;
+      position: sticky; top: 0; z-index: 100;
+      border-bottom: 1px solid var(--border);
+    }
+    html.light header {
+      background: linear-gradient(270deg,#e8f4fd,#f0f4ff,#f0fdf4,#f9f4ff,#e8f4fd);
+      background-size: 400% 400%;
+    }
+    header::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg,#00d4e8,#4d9fff,#a78bfa,#34d399,#fbbf24,#f472b6,#00d4e8);
+      background-size: 300% 100%; animation: waveShift 5s linear infinite;
+    }
+    .hdr-logo { animation: spin 18s linear infinite; flex-shrink: 0; }
+    .hdr-logo2 { animation: spin 18s linear infinite reverse; flex-shrink: 0; }
+    .hdr-center { flex: 1; text-align: center; }
+    .hdr-center h1 { font-size: 15px; font-weight: 800; animation: titleCycle 9s ease-in-out infinite; letter-spacing: .02em; }
+    .hdr-center p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .hdr-actions { display: flex; align-items: center; gap: 10px; }
+    .theme-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid var(--border2); background: var(--surface2);
+      cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
+      transition: transform .2s, background .2s; flex-shrink: 0;
+    }
+    .theme-btn:hover { transform: rotate(22deg); background: var(--surface3); }
+    .nav-link {
+      padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border2);
+      background: var(--surface2); color: var(--muted); font-size: 12px; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--cyan); background: var(--surface3); }
+
+    main { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 28px 18px 48px; display: flex; flex-direction: column; gap: 20px; }
+
+    .mode-tabs { display: flex; gap: 0; border: 1px solid var(--border2); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+    .mode-tab {
+      flex: 1; padding: 14px 10px; text-align: center; cursor: pointer;
+      font-size: 13px; font-weight: 700; color: var(--muted);
+      transition: background .2s, color .2s;
+      border-right: 1px solid var(--border2);
+      position: relative;
+    }
+    .mode-tab:last-child { border-right: none; }
+    .mode-tab .tab-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    .mode-tab .tab-sub { font-size: 10px; font-weight: 400; color: var(--dim); margin-top: 2px; display: block; }
+    .mode-tab.active {
+      background: linear-gradient(135deg, rgba(0,212,232,.08), rgba(77,159,255,.08));
+      color: var(--cyan);
+    }
+    .mode-tab.active::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #00d4e8, #4d9fff);
+    }
+    .mode-tab:hover:not(.active) { background: var(--surface2); color: var(--text); }
+
+    .panel {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 24px; position: relative; overflow: hidden;
+    }
+    .panel::before {
+      content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 1px;
+      background: linear-gradient(90deg, transparent, #00d4e8, #a78bfa, transparent);
+      animation: scanTop 5s linear infinite;
+    }
+    .panel-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+    .panel-title::before { content: ''; width: 3px; height: 14px; border-radius: 2px; background: linear-gradient(to bottom, #00d4e8, #4d9fff); flex-shrink: 0; }
+
+    .sec-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; margin-top: 4px; }
+    .sec-head h3 { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; }
+    .sec-line { flex: 1; height: 1px; background: linear-gradient(90deg,#00d4e8,#4d9fff,#a78bfa,#34d399,#00d4e8); background-size: 200% 100%; animation: waveShift 7s linear infinite; }
+
+    .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media(max-width:640px){ .form-grid { grid-template-columns: 1fr 1fr; } }
+    @media(max-width:420px){ .form-grid { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+    .form-group .form-hint { font-size: 10px; color: var(--dim); margin-top: -2px; }
+    .slider-row { display: flex; align-items: center; gap: 8px; }
+    input[type=range] {
+      flex: 1; height: 4px; border-radius: 99px; cursor: pointer;
+      -webkit-appearance: none; appearance: none;
+      background: linear-gradient(90deg, #00d4e8 var(--pct,50%), var(--surface3) var(--pct,50%));
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+      background: #00d4e8; border: 2px solid var(--bg); cursor: pointer;
+      box-shadow: 0 0 6px rgba(0,212,232,.6);
+    }
+    .slider-val {
+      font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+      color: var(--cyan); min-width: 46px; text-align: right;
+    }
+    .toggle-row { display: flex; align-items: center; gap: 10px; }
+    .toggle-label { font-size: 12px; color: var(--text); flex: 1; }
+    .toggle {
+      width: 40px; height: 22px; border-radius: 11px; background: var(--surface3);
+      border: 1px solid var(--border2); cursor: pointer; position: relative;
+      transition: background .2s;
+    }
+    .toggle.on { background: linear-gradient(90deg,#00d4e8,#4d9fff); border-color: transparent; }
+    .toggle::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 14px; height: 14px; border-radius: 50%; background: #fff;
+      transition: left .2s; box-shadow: 0 1px 4px rgba(0,0,0,.4);
+    }
+    .toggle.on::after { left: 21px; }
+
+    input[type=text], textarea, select {
+      width: 100%; height: 42px; background: var(--bg); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); padding: 0 12px; font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; color: var(--text); outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    textarea { height: auto; padding: 10px 12px; resize: vertical; font-size: 12px; }
+    input[type=text]:focus, textarea:focus, select:focus {
+      border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,212,232,.12);
+    }
+    select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7694' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 30px; }
+
+    .btn-generate {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; height: 52px; border: none; border-radius: var(--radius);
+      background: linear-gradient(135deg, #006370, #0d7490, #1d4ed8);
+      background-size: 200% 100%;
+      color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: background-position .3s, transform .15s, opacity .15s;
+      box-shadow: 0 4px 24px rgba(0,212,232,.25), 0 1px 4px rgba(0,0,0,.4);
+      letter-spacing: .02em;
+    }
+    .btn-generate:not(:disabled):hover { background-position: 100% 0; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,212,232,.35); }
+    .btn-generate:disabled { opacity: .5; cursor: default; transform: none; }
+    .btn-sm {
+      padding: 7px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border2);
+      background: var(--surface2); color: var(--text); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background .15s, transform .1s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-sm:hover { background: var(--surface3); transform: translateY(-1px); }
+    .btn-sm.accent { background: linear-gradient(135deg,#064e3b,#059669); color:#fff; border-color:transparent; box-shadow:0 2px 10px rgba(5,150,105,.3); }
+
+    .loading-dots span {
+      display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--cyan); margin: 0 2px;
+      animation: dotBlink 1.4s ease-in-out infinite;
+    }
+    .loading-dots span:nth-child(2){ animation-delay:.2s; }
+    .loading-dots span:nth-child(3){ animation-delay:.4s; }
+
+    #gen-results, #mod-results { display: none; }
+
+    .stats-bar {
+      display: flex; gap: 12px; flex-wrap: wrap; padding: 14px 18px;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+    }
+    .stat-chip { display: flex; flex-direction: column; gap: 2px; }
+    .stat-chip .s-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+    .stat-chip .s-val   { font-size: 15px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--cyan); }
+    .stat-divider { width: 1px; background: var(--border); align-self: stretch; }
+
+    .cand-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    @media(max-width:540px){ .cand-grid { grid-template-columns: 1fr; } }
+
+    .cand-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; position: relative; overflow: hidden;
+      opacity: 0; transform: translateY(20px);
+      animation: fadeUp .45s ease forwards;
+      transition: box-shadow .25s, transform .25s, border-color .2s;
+    }
+    .cand-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,.5); border-color: var(--border2); }
+    .cand-card::after { content:''; position:absolute; top:0; left:-200%; bottom:0; width:55%; background:linear-gradient(120deg,transparent,rgba(255,255,255,.04),transparent); animation: shimmer 5s ease-in-out infinite; pointer-events:none; }
+
+    .rank-badge {
+      position: absolute; top: 12px; right: 12px;
+      width: 28px; height: 28px; border-radius: 50%;
+      font-size: 11px; font-weight: 800; font-family: 'JetBrains Mono', monospace;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rank-badge.gold   { background: rgba(251,191,36,.18); color: #fbbf24; border: 1px solid rgba(251,191,36,.4); }
+    .rank-badge.silver { background: rgba(148,163,184,.15); color: #94a3b8; border: 1px solid rgba(148,163,184,.3); }
+    .rank-badge.bronze { background: rgba(180,120,60,.15);  color: #c8844a; border: 1px solid rgba(180,120,60,.3); }
+    .rank-badge.plain  { background: rgba(107,118,148,.1);  color: var(--muted); border: 1px solid var(--border); }
+
+    .cand-header { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+    .score-ring {
+      width: 58px; height: 58px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 900; font-family: 'JetBrains Mono', monospace;
+      border: 2.5px solid; flex-shrink: 0;
+      animation: popIn .5s ease forwards;
+    }
+    .score-ring.great  { border-color: #34d399; color: #34d399; background: rgba(52,211,153,.08); }
+    .score-ring.good   { border-color: #4d9fff; color: #4d9fff; background: rgba(77,159,255,.08); }
+    .score-ring.fair   { border-color: #fbbf24; color: #fbbf24; background: rgba(251,191,36,.08); }
+    .score-ring.poor   { border-color: #f87171; color: #f87171; background: rgba(248,113,113,.08); }
+    .cand-meta { flex: 1; min-width: 0; }
+    .cand-smiles { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--cyan); word-break: break-all; line-height: 1.4; margin-bottom: 4px; }
+    .cand-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .tag { padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+    .tag.pass  { background: rgba(52,211,153,.1); color: #34d399; border: 1px solid rgba(52,211,153,.25); }
+    .tag.fail  { background: rgba(248,113,113,.1); color: #f87171; border: 1px solid rgba(248,113,113,.25); }
+    .tag.info  { background: rgba(77,159,255,.1);  color: #4d9fff; border: 1px solid rgba(77,159,255,.25); }
+    .tag.warn  { background: rgba(251,191,36,.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
+
+    .cand-struct { width: 100%; aspect-ratio: 1; border-radius: 10px; background: #fff; border: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+    .cand-struct img { width: 100%; height: 100%; object-fit: contain; }
+    .cand-struct .no-struct { font-size: 10px; color: #aaa; text-align: center; padding: 8px; }
+
+    .mini-props { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
+    .mini-prop { background: var(--surface2); border-radius: 7px; padding: 7px 10px; display: flex; justify-content: space-between; align-items: center; }
+    .mini-prop .mp-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--dim); }
+    .mini-prop .mp-val   { font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+    .mini-prop .mp-val.g { color: var(--green); }
+    .mini-prop .mp-val.r { color: var(--red); }
+    .mini-prop .mp-val.b { color: var(--blue); }
+
+    .score-bar-track { height: 4px; border-radius: 99px; background: var(--surface3); overflow: hidden; margin-top: 8px; }
+    .score-bar-fill  { height: 100%; border-radius: 99px; animation: barGrow .7s ease; }
+
+    .cand-footer { display: flex; gap: 6px; margin-top: 12px; }
+
+    .mod-table { width: 100%; border-collapse: collapse; }
+    .mod-table th { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--dim); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+    .mod-table td { padding: 10px; font-size: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .mod-table tr:last-child td { border-bottom: none; }
+    .mod-table tr:hover td { background: var(--surface2); }
+    .mod-row-smiles { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--cyan); word-break: break-all; }
+    .delta { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
+    .delta.up   { color: var(--green); }
+    .delta.down { color: var(--red); }
+    .delta.same { color: var(--muted); }
+    .mod-label { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+
+    #toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(90px);
+      background: var(--surface); border: 1px solid var(--border2); border-radius: 999px;
+      padding: 10px 24px; font-size: 13px; font-weight: 600; color: var(--text);
+      box-shadow: 0 6px 28px rgba(0,0,0,.5); transition: transform .3s ease;
+      z-index: 9999; white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    .empty-state {
+      text-align: center; padding: 48px 20px; color: var(--muted);
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .empty-state .es-icon { font-size: 44px; opacity: .35; }
+    .empty-state h3 { font-size: 15px; font-weight: 700; color: var(--text); opacity: .6; }
+    .empty-state p  { font-size: 12px; max-width: 280px; line-height: 1.6; }
+
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    button.pill {
+      padding: 4px 12px; border: 1px solid var(--border2); border-radius: 999px;
+      background: transparent; font-size: 11px; color: var(--muted); cursor: pointer;
+      transition: background .12s, border-color .12s, color .12s;
+    }
+    button.pill:hover { background: var(--surface2); border-color: var(--cyan); color: var(--cyan); }
+
+    #progress-overlay {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(7,9,15,.75); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center; flex-direction: column; gap: 18px;
+    }
+    #progress-overlay.show { display: flex; }
+    .progress-box { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 32px 40px; text-align: center; max-width: 340px; width: 90%; }
+    .progress-box h3 { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+    .progress-box p  { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+    .progress-track { height: 6px; border-radius: 99px; background: var(--surface3); overflow: hidden; }
+    .progress-fill  { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#00d4e8,#4d9fff,#a78bfa); background-size: 200%; animation: waveShift 1.5s linear infinite; transition: width .4s ease; }
+    .progress-steps { font-size: 11px; color: var(--muted); margin-top: 10px; font-family: 'JetBrains Mono', monospace; }
+
+    @media(max-width:600px){
+      header { padding: 10px 14px; }
+      main { padding: 16px 12px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="toast"></div>
+
+<div id="progress-overlay">
+  <div class="progress-box">
+    <h3 id="prog-title">Generating Molecules…</h3>
+    <p id="prog-sub">Applying chemical filters and scoring candidates</p>
+    <div class="progress-track"><div class="progress-fill" id="prog-bar" style="width:5%"></div></div>
+    <div class="progress-steps" id="prog-step">Initializing…</div>
+  </div>
+</div>
+
+<header>
+  <svg class="hdr-logo" viewBox="0 0 32 32" width="32" height="32" fill="none">
+    <circle cx="16" cy="16" r="5" stroke="#00d4e8" stroke-width="2.5"/>
+    <circle cx="4"  cy="8"  r="3" stroke="#4d9fff" stroke-width="2"/>
+    <circle cx="28" cy="8"  r="3" stroke="#4d9fff" stroke-width="2"/>
+    <circle cx="4"  cy="24" r="3" stroke="#34d399" stroke-width="2"/>
+    <circle cx="28" cy="24" r="3" stroke="#34d399" stroke-width="2"/>
+    <line x1="7"  y1="9.5"  x2="12" y2="13"  stroke="#4d9fff" stroke-width="1.5"/>
+    <line x1="25" y1="9.5"  x2="20" y2="13"  stroke="#4d9fff" stroke-width="1.5"/>
+    <line x1="7"  y1="22.5" x2="12" y2="19"  stroke="#34d399" stroke-width="1.5"/>
+    <line x1="25" y1="22.5" x2="20" y2="19"  stroke="#34d399" stroke-width="1.5"/>
+  </svg>
+  <div class="hdr-center">
+    <h1>Generative Molecular Designer</h1>
+    <p>MoleculeProduct · Module 2 · v1.0</p>
+  </div>
+  <div class="hdr-actions">
+    <a class="nav-link" href="https://moleculeproduct.onrender.com/ui" target="_blank">← Predictor</a>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+  <svg class="hdr-logo2" viewBox="0 0 32 32" width="32" height="32" fill="none">
+    <circle cx="16" cy="16" r="5" stroke="#a78bfa" stroke-width="2.5"/>
+    <circle cx="4"  cy="8"  r="3" stroke="#f472b6" stroke-width="2"/>
+    <circle cx="28" cy="8"  r="3" stroke="#f472b6" stroke-width="2"/>
+    <circle cx="4"  cy="24" r="3" stroke="#fbbf24" stroke-width="2"/>
+    <circle cx="28" cy="24" r="3" stroke="#fbbf24" stroke-width="2"/>
+    <line x1="7"  y1="9.5"  x2="12" y2="13"  stroke="#f472b6" stroke-width="1.5"/>
+    <line x1="25" y1="9.5"  x2="20" y2="13"  stroke="#f472b6" stroke-width="1.5"/>
+    <line x1="7"  y1="22.5" x2="12" y2="19"  stroke="#fbbf24" stroke-width="1.5"/>
+    <line x1="25" y1="22.5" x2="20" y2="19"  stroke="#fbbf24" stroke-width="1.5"/>
+  </svg>
+</header>
+
+<main>
+  <div class="mode-tabs">
+    <div class="mode-tab active" id="tab-gen" onclick="switchMode('gen')">
+      <span class="tab-icon">⚗️</span>
+      Generate from Targets
+      <span class="tab-sub">Create new molecules matching your criteria</span>
+    </div>
+    <div class="mode-tab" id="tab-mod" onclick="switchMode('mod')">
+      <span class="tab-icon">🔬</span>
+      Modify Existing
+      <span class="tab-sub">Optimize a molecule you already have</span>
+    </div>
+  </div>
+
+  <!-- GENERATE PANEL -->
+  <div id="panel-gen">
+    <div class="panel">
+      <div class="panel-title">Target Property Constraints</div>
+      <div class="sec-head"><h3>Drug-Likeness</h3><div class="sec-line"></div></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Min Drug-Like Score</label>
+          <div class="slider-row">
+            <input type="range" id="sl-dl" min="0" max="1" step="0.05" value="0.75" oninput="syncSlider(this,'dv-dl','')">
+            <span class="slider-val" id="dv-dl">0.75</span>
+          </div>
+          <span class="form-hint">0 = any · 1 = strict Lipinski</span>
+        </div>
+        <div class="form-group">
+          <label>Max Lipinski Violations</label>
+          <div class="slider-row">
+            <input type="range" id="sl-viol" min="0" max="4" step="1" value="0" oninput="syncSlider(this,'dv-viol','')">
+            <span class="slider-val" id="dv-viol">0</span>
+          </div>
+          <span class="form-hint">0 = must pass Ro5 fully</span>
+        </div>
+        <div class="form-group">
+          <label>Max Toxicity Probability</label>
+          <div class="slider-row">
+            <input type="range" id="sl-tox" min="0" max="1" step="0.05" value="0.35" oninput="syncSlider(this,'dv-tox','')">
+            <span class="slider-val" id="dv-tox">0.35</span>
+          </div>
+          <span class="form-hint">Lower = safer molecules only</span>
+        </div>
+      </div>
+      <div class="sec-head" style="margin-top:18px"><h3>Physicochemical Range</h3><div class="sec-line"></div></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>MW Range (Da)</label>
+          <div class="slider-row">
+            <input type="range" id="sl-mw-min" min="50" max="300" step="10" value="150" oninput="syncSlider(this,'dv-mw-min','')">
+            <span class="slider-val" id="dv-mw-min">150</span>
+          </div>
+          <div class="slider-row" style="margin-top:4px">
+            <input type="range" id="sl-mw-max" min="200" max="700" step="10" value="500" oninput="syncSlider(this,'dv-mw-max','')">
+            <span class="slider-val" id="dv-mw-max">500</span>
+          </div>
+          <span class="form-hint">Min → Max molecular weight</span>
+        </div>
+        <div class="form-group">
+          <label>LogP Range</label>
+          <div class="slider-row">
+            <input type="range" id="sl-logp-min" min="-3" max="2" step="0.5" value="-1" oninput="syncSlider(this,'dv-logp-min','')">
+            <span class="slider-val" id="dv-logp-min">-1.0</span>
+          </div>
+          <div class="slider-row" style="margin-top:4px">
+            <input type="range" id="sl-logp-max" min="1" max="7" step="0.5" value="5" oninput="syncSlider(this,'dv-logp-max','')">
+            <span class="slider-val" id="dv-logp-max">5.0</span>
+          </div>
+          <span class="form-hint">Lipophilicity window</span>
+        </div>
+        <div class="form-group">
+          <label>Min LogS (Solubility)</label>
+          <div class="slider-row">
+            <input type="range" id="sl-logs" min="-6" max="0" step="0.5" value="-4" oninput="syncSlider(this,'dv-logs','')">
+            <span class="slider-val" id="dv-logs">-4.0</span>
+          </div>
+          <span class="form-hint">Higher = more soluble required</span>
+        </div>
+      </div>
+      <div class="sec-head" style="margin-top:18px"><h3>Generation Settings</h3><div class="sec-line"></div></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Scaffold Basis</label>
+          <select id="sel-scaffold">
+            <option value="drug_fragments">Drug-like Fragments (default)</option>
+            <option value="aromatic">Aromatic / Ring-rich</option>
+            <option value="aliphatic">Aliphatic / Flexible</option>
+            <option value="heterocyclic">Heterocyclic (N,O,S rings)</option>
+            <option value="natural">Natural Product-like</option>
+            <option value="custom">Custom seed (enter below)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Candidates to Generate</label>
+          <div class="slider-row">
+            <input type="range" id="sl-count" min="4" max="20" step="2" value="8" oninput="syncSlider(this,'dv-count','')">
+            <span class="slider-val" id="dv-count">8</span>
+          </div>
+          <span class="form-hint">More = more diverse but slower</span>
+        </div>
+        <div class="form-group">
+          <label>Diversity Mode</label>
+          <select id="sel-diversity">
+            <option value="balanced">Balanced</option>
+            <option value="explorative">Explorative (novel scaffolds)</option>
+            <option value="focused">Focused (tight cluster)</option>
+          </select>
+        </div>
+      </div>
+      <div id="custom-seed-row" style="display:none;margin-top:14px">
+        <div class="form-group">
+          <label>Custom Seed SMILES</label>
+          <input type="text" id="custom-seed-input" placeholder="e.g. c1ccccc1 — scaffold to build upon" />
+          <div class="pill-row">
+            <span style="font-size:11px;color:var(--dim)">Try:</span>
+            <button class="pill" onclick="document.getElementById('custom-seed-input').value='c1ccccc1'">Benzene</button>
+            <button class="pill" onclick="document.getElementById('custom-seed-input').value='c1ccncc1'">Pyridine</button>
+            <button class="pill" onclick="document.getElementById('custom-seed-input').value='C1CCNCC1'">Piperidine</button>
+            <button class="pill" onclick="document.getElementById('custom-seed-input').value='c1ccc2[nH]cccc2c1'">Indole</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <button class="btn-generate" id="btn-gen" onclick="runGenerate()">
+          <span>⚗️</span> Generate Molecules
+        </button>
+      </div>
+    </div>
+    <div id="gen-results">
+      <div class="stats-bar" id="gen-stats"></div>
+      <div class="cand-grid" id="gen-grid"></div>
+    </div>
+    <div class="panel">
+      <div class="empty-state" id="gen-empty">
+        <div class="es-icon">⚗️</div>
+        <h3>No molecules yet</h3>
+        <p>Set your target constraints above and click Generate. The engine will create and score candidates in real time.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODIFY PANEL -->
+  <div id="panel-mod" style="display:none">
+    <div class="panel">
+      <div class="panel-title">Input Molecule</div>
+      <div class="form-group">
+        <label>SMILES String</label>
+        <input type="text" id="mod-smiles" placeholder="Paste your SMILES here…" autocomplete="off" />
+        <div class="pill-row">
+          <span style="font-size:11px;color:var(--dim)">Quick load:</span>
+          <button class="pill" onclick="loadModSmiles('CC(=O)Oc1ccccc1C(=O)O')">Aspirin</button>
+          <button class="pill" onclick="loadModSmiles('Cn1cnc2c1c(=O)n(c(=O)n2C)C')">Caffeine</button>
+          <button class="pill" onclick="loadModSmiles('CC(=O)Nc1ccc(O)cc1')">Paracetamol</button>
+          <button class="pill" onclick="loadModSmiles('c1ccc2[nH]cccc2c1')">Indole</button>
+          <button class="pill" onclick="loadModSmiles('C1CN2CCC1CC2')">DABCO</button>
+        </div>
+      </div>
+      <div class="sec-head" style="margin-top:18px"><h3>Optimisation Goals</h3><div class="sec-line"></div></div>
+      <div class="form-grid">
+        <div class="form-group"><div class="toggle-row"><span class="toggle-label">Improve Drug-Likeness</span><div class="toggle on" id="tog-dl" onclick="toggleSwitch(this)"></div></div></div>
+        <div class="form-group"><div class="toggle-row"><span class="toggle-label">Improve Solubility</span><div class="toggle on" id="tog-sol" onclick="toggleSwitch(this)"></div></div></div>
+        <div class="form-group"><div class="toggle-row"><span class="toggle-label">Reduce Toxicity</span><div class="toggle on" id="tog-tox" onclick="toggleSwitch(this)"></div></div></div>
+        <div class="form-group"><div class="toggle-row"><span class="toggle-label">Keep MW &lt; 500 Da</span><div class="toggle on" id="tog-mw" onclick="toggleSwitch(this)"></div></div></div>
+        <div class="form-group"><div class="toggle-row"><span class="toggle-label">Keep Core Scaffold</span><div class="toggle" id="tog-core" onclick="toggleSwitch(this)"></div></div></div>
+        <div class="form-group"><div class="toggle-row"><span class="toggle-label">Allow Ring Changes</span><div class="toggle on" id="tog-ring" onclick="toggleSwitch(this)"></div></div></div>
+      </div>
+      <div style="margin-top:20px">
+        <button class="btn-generate" id="btn-mod" onclick="runModify()" style="background:linear-gradient(135deg,#3b0764,#7c3aed,#4f46e5)">
+          <span>🔬</span> Suggest Modifications
+        </button>
+      </div>
+    </div>
+    <div id="mod-results">
+      <div class="panel">
+        <div class="panel-title">Baseline vs. Modifications</div>
+        <div id="baseline-row" style="margin-bottom:16px"></div>
+        <div class="sec-head"><h3>Ranked Modifications</h3><div class="sec-line"></div></div>
+        <div style="overflow-x:auto">
+          <table class="mod-table" id="mod-table">
+            <thead><tr><th>#</th><th>Modification</th><th>SMILES</th><th>Score</th><th>ΔDrug-Like</th><th>ΔLogS</th><th>ΔTox</th><th>MW</th><th></th></tr></thead>
+            <tbody id="mod-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="cand-grid" id="mod-cand-grid" style="margin-top:14px"></div>
+    </div>
+    <div class="panel">
+      <div class="empty-state" id="mod-empty">
+        <div class="es-icon">🔬</div>
+        <h3>Awaiting input</h3>
+        <p>Paste a SMILES string, set your optimisation goals, and click Suggest Modifications.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const API = "https://moleculeproduct.onrender.com";
+
+(function(){
+  const cv=document.getElementById('bg-canvas'),ctx=cv.getContext('2d');
+  let W,H,pts=[];
+  const C=['#00d4e8','#4d9fff','#a78bfa','#34d399','#f472b6','#fbbf24'];
+  const resize=()=>{W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;};
+  resize();window.addEventListener('resize',resize);
+  function Pt(){this.x=Math.random()*W;this.y=Math.random()*H;this.r=1+Math.random()*2.2;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;this.c=C[Math.floor(Math.random()*C.length)];this.a=.1+Math.random()*.25;}
+  for(let i=0;i<60;i++)pts.push(new Pt());
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<pts.length;i++){let b=0;for(let j=i+1;j<pts.length;j++){if(b>=2)break;const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<120){ctx.strokeStyle=pts[i].c;ctx.globalAlpha=.1*(1-d/120);ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke();b++;}}}
+    pts.forEach(p=>{ctx.globalAlpha=p.a;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});
+    ctx.globalAlpha=1;
+    pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;});
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+let isDark=true;
+function toggleTheme(){isDark=!isDark;document.documentElement.classList.toggle('light',!isDark);document.getElementById('theme-btn').textContent=isDark?'🌙':'☀️';}
+function toast(msg,dur=2400){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+function syncSlider(el,valId,suffix){const v=parseFloat(el.value);document.getElementById(valId).textContent=Number.isInteger(v)?v:v.toFixed(1);const min=parseFloat(el.min),max=parseFloat(el.max);const pct=((v-min)/(max-min)*100).toFixed(1)+'%';el.style.setProperty('--pct',pct);}
+function toggleSwitch(el){el.classList.toggle('on');}
+function isOn(id){return document.getElementById(id).classList.contains('on');}
+document.getElementById('sel-scaffold').addEventListener('change',function(){document.getElementById('custom-seed-row').style.display=this.value==='custom'?'block':'none';});
+function switchMode(m){document.getElementById('tab-gen').classList.toggle('active',m==='gen');document.getElementById('tab-mod').classList.toggle('active',m==='mod');document.getElementById('panel-gen').style.display=m==='gen'?'block':'none';document.getElementById('panel-mod').style.display=m==='mod'?'block':'none';}
+function loadModSmiles(s){document.getElementById('mod-smiles').value=s;}
+function rankBadge(i){if(i===0)return'<div class="rank-badge gold">1</div>';if(i===1)return'<div class="rank-badge silver">2</div>';if(i===2)return'<div class="rank-badge bronze">3</div>';return`<div class="rank-badge plain">${i+1}</div>`;}
+function ringClass(s){return s>=75?'great':s>=55?'good':s>=35?'fair':'poor';}
+function showProgress(title,sub){document.getElementById('prog-title').textContent=title;document.getElementById('prog-sub').textContent=sub;document.getElementById('prog-bar').style.width='5%';document.getElementById('prog-step').textContent='Initializing…';document.getElementById('progress-overlay').classList.add('show');}
+function setProgress(pct,step){document.getElementById('prog-bar').style.width=pct+'%';document.getElementById('prog-step').textContent=step;}
+function hideProgress(){document.getElementById('progress-overlay').classList.remove('show');}
+
+const FRAGMENTS={
+  drug_fragments:['c1ccccc1','c1ccncc1','c1cnc2ccccc2n1','c1ccc2ncccc2c1','c1ccc2[nH]cccc2c1','c1cnc2cccnc2n1','c1ccc2c(c1)CCCO2','c1ccc2c(c1)OCO2','c1ccsc1','c1ccoc1','c1cc2ccccc2s1','C1CCNCC1','C1CCCCC1','C1CCCC1','C1CCOC1','C1CCNC1','C1CN2CCC1CC2','CC(=O)N','CC(=O)O','CCN','CCNC(=O)','c1ccc(nc1)','c1ccnc(n1)','c1cncnc1','c1nccn1','CC','CCC','CCO','CCF','CCCl','CCS','C(F)(F)F','CC(C)','C(C)(C)C'],
+  aromatic:['c1ccccc1','c1ccncc1','c1cnc2ccccc2n1','c1ccc2ncccc2c1','c1ccc2[nH]cccc2c1','c1cnc2cccnc2n1','c1ccsc1','c1ccoc1','c1cc2ccccc2s1','c1ccc2c(c1)CCCO2','c1ccc2c(c1)OCO2','c1ccc(nc1)','c1ccnc(n1)','c1ccc(-c2ccccc2)cc1','c1ccc(F)cc1','c1ccc(Cl)cc1','c1ccc(OC)cc1','c1ccc(N)cc1','c1ccc(O)cc1'],
+  aliphatic:['CC','CCC','CCCC','CCC(C)','CC(C)(C)C','CCO','CCCO','CCN','CCCN','CCCC(=O)','C1CCNCC1','C1CCCCC1','C1CCCC1','C1CCOCC1','C(F)(F)F','CCF','CCS','CCSC','OCC','NCC','CC(N)','CC(O)','CC(=O)','CC(C)N'],
+  heterocyclic:['c1ccncc1','c1cnc2ccccc2n1','c1cnc2cccnc2n1','C1CCNCC1','C1CCNC1','c1ccsc1','c1ccoc1','c1ccc2[nH]cccc2c1','c1ccc2[nH]ncc2c1','C1CN2CCC1CC2','c1cnccn1','c1nccc2ccccc12','c1ccc2c(c1)nc[nH]2','c1ccc2[nH]cnc2c1','C1COCCN1','C1COCCO1','C1CSCCS1'],
+  natural:['OC1CCCCC1','OC1CCCC1','OC(C)c1ccccc1','CC1CCCCC1O','OC1CC2CCCC2C1','CC(O)c1ccccc1','CC1=CC=CC=C1O','OCC1=CC=CC=C1','NC(=O)c1ccccc1','OC1=CC=CC=C1','Oc1ccccc1','OC1CC(O)CC(O)C1','CC(C)c1ccccc1','CCc1ccccc1','Cc1ccccc1N','NC(Cc1ccccc1)C(=O)O','CC(N)C(=O)O'],
+};
+
+const MODIFICATIONS=[
+  {label:'Add –OH',fn:s=>addGroup(s,'O')},
+  {label:'Add –NH₂',fn:s=>addGroup(s,'N')},
+  {label:'Add –F',fn:s=>addGroup(s,'F')},
+  {label:'Add –Cl',fn:s=>addGroup(s,'Cl')},
+  {label:'Add –CH₃',fn:s=>addGroup(s,'C')},
+  {label:'Add –OCH₃',fn:s=>addGroup(s,'OC')},
+  {label:'Add –CN',fn:s=>addGroup(s,'C#N')},
+  {label:'Add –CF₃',fn:s=>addGroup(s,'C(F)(F)F')},
+  {label:'Add –COOH',fn:s=>addGroup(s,'C(=O)O')},
+  {label:'Add –CONH₂',fn:s=>addGroup(s,'C(=O)N')},
+  {label:'Add –SO₂NH₂',fn:s=>addGroup(s,'S(=O)(=O)N')},
+  {label:'Methylate N',fn:s=>methylateN(s)},
+  {label:'Cyclise chain',fn:s=>cyclise(s)},
+  {label:'Remove –OH',fn:s=>removeGroup(s,'O')},
+  {label:'Remove –CH₃',fn:s=>removeGroup(s,'C')},
+  {label:'Halogenate ring',fn:s=>halogenate(s)},
+];
+
+function addGroup(smiles,group){const c=[];c.push(smiles+group);const lr=smiles.lastIndexOf(')');if(lr>0)c.push(smiles.slice(0,lr)+group+smiles.slice(lr));const fa=smiles.search(/[a-z]/);if(fa>=0)c.push(smiles.slice(0,fa+1)+'('+group+')'+smiles.slice(fa+1));return c;}
+function methylateN(s){return[s.replace(/[NH]/,'[N](C)').replace(/\bN\b/,'NC').replace('[nH]','n(C)')];}
+function cyclise(s){if(s.includes('1'))return[s.replace(/C(?!.*C)/,'C2')+'2'];return[s+'1CC1'];}
+function removeGroup(s,g){const r=new RegExp('\\('+escR(g)+'\\)|'+escR(g),'g');const m=s.replace(r,'');return m!==s?[m]:[];}
+function halogenate(s){const c=[];const i=s.search(/c/);if(i>=0){c.push(s.slice(0,i+1)+'(F)'+s.slice(i+1));c.push(s.slice(0,i+1)+'(Cl)'+s.slice(i+1));}return c;}
+function escR(s){return s.replace(/[.*+?^${}()|[]\\]/g,'\\$&');}
+
+function compositeScore(d){
+  const dl=(d.drug_likeness_score??0)*35;
+  const logS=d.predicted_logs??-6;
+  const sol=Math.max(0,Math.min(20,(logS+6)/6*20));
+  const tox=(1-(d.toxicity_probability??0.5))*25;
+  const ro5=(1-(d.lipinski_violations??4)/4)*20;
+  return Math.round(dl+sol+tox+ro5);
+}
+
+async function predictSMILES(smiles){
+  const r=await fetch(API+'/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({smiles})});
+  if(!r.ok)return null;
+  return await r.json();
+}
+
+function renderCandCard(d,smiles,rank,delay=0){
+  const score=compositeScore(d),rc=ringClass(score);
+  const pass=(d.lipinski_violations??99)===0;
+  const logS=d.predicted_logs??-99,tox=d.toxicity_probability,mw=d.molecular_weight;
+  const barColor=rc==='great'?'linear-gradient(90deg,#059669,#34d399)':rc==='good'?'linear-gradient(90deg,#1d4ed8,#4d9fff)':rc==='fair'?'linear-gradient(90deg,#b45309,#fbbf24)':'linear-gradient(90deg,#b91c1c,#f87171)';
+  const card=document.createElement('div');
+  card.className='cand-card';
+  card.style.animationDelay=delay+'s';
+  const uid='s'+rank+'_'+Date.now();
+  card.innerHTML=`${rankBadge(rank)}<div class="cand-header"><div class="score-ring ${rc}">${score}</div><div class="cand-meta"><div class="cand-smiles">${smiles.length>50?smiles.slice(0,47)+'…':smiles}</div><div class="cand-tags" style="margin-top:5px">${pass?'<span class="tag pass">✓ Ro5</span>':'<span class="tag fail">✗ Ro5</span>'}${(tox!=null&&tox<0.3)?'<span class="tag pass">Low Tox</span>':tox!=null&&tox>0.6?'<span class="tag fail">High Tox</span>':'<span class="tag warn">Tox?</span>'}${logS>-2?'<span class="tag pass">Soluble</span>':logS>-4?'<span class="tag info">Mod.Sol</span>':'<span class="tag fail">Insol.</span>'}${d.drug_like?'<span class="tag pass">Drug-Like</span>':''}</div></div></div><div class="cand-struct" id="${uid}"><div class="no-struct"><div class="loading-dots"><span></span><span></span><span></span></div></div></div><div class="score-bar-track"><div class="score-bar-fill" style="width:${score}%;background:${barColor}"></div></div><div class="mini-props"><div class="mini-prop"><span class="mp-label">MW</span><span class="mp-val ${mw<=500?'g':'r'}">${mw!=null?mw.toFixed(1):'-'}</span></div><div class="mini-prop"><span class="mp-label">LogP</span><span class="mp-val ${(d.logp??99)<=5?'g':'r'}">${d.logp!=null?d.logp.toFixed(2):'-'}</span></div><div class="mini-prop"><span class="mp-label">LogS</span><span class="mp-val ${logS>-4?'g':'r'}">${logS!=null?logS.toFixed(2):'-'}</span></div><div class="mini-prop"><span class="mp-label">TPSA</span><span class="mp-val b">${d.tpsa!=null?d.tpsa.toFixed(0):'-'}</span></div></div><div class="cand-footer"><button class="btn-sm" onclick="copyToClip('${smiles.replace(/'/g,"\\'")}')">📋 Copy</button><button class="btn-sm accent" onclick="sendToPredictor('${smiles.replace(/'/g,"\\'")}')">→ Predictor</button></div>`;
+  const sd=card.querySelector('#'+uid);
+  const img=new Image();img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';
+  img.onload=()=>{sd.innerHTML='';sd.appendChild(img);};
+  img.onerror=()=>{sd.innerHTML='<div class="no-struct">Structure unavailable</div>';};
+  img.src=API+'/structure?smiles='+encodeURIComponent(smiles)+'&size=280';
+  return card;
+}
+
+function copyToClip(s){navigator.clipboard.writeText(s).then(()=>toast('SMILES copied ✓')).catch(()=>toast('Copy failed'));}
+function sendToPredictor(s){window.open(API+'/ui','_blank');toast('Opening in Predictor…');}
+
+function passesFilters(d,f){
+  if((d.drug_likeness_score??0)<f.dlMin)return false;
+  if((d.lipinski_violations??99)>f.violMax)return false;
+  if((d.toxicity_probability??1)>f.toxMax)return false;
+  if((d.molecular_weight??0)<f.mwMin||(d.molecular_weight??9999)>f.mwMax)return false;
+  if((d.logp??99)<f.logpMin||(d.logp??-99)>f.logpMax)return false;
+  if((d.predicted_logs??-99)<f.logsMin)return false;
+  return true;
+}
+
+function buildPool(fragments,n,diversity){
+  const pool=[],used=new Set();
+  const shuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+  const frags=shuffle(fragments);
+  while(pool.length<n){
+    const f1=frags[pool.length%frags.length];let smi;
+    if(diversity==='explorative'){const f2=frags[(pool.length+Math.floor(Math.random()*5)+1)%frags.length];const linkers=['','C','CC','CCC','O','N','c1cc(ccc1)','C(=O)'];const linker=linkers[Math.floor(Math.random()*linkers.length)];smi=f1+linker+f2;}
+    else if(diversity==='focused'){const adds=['','C','F','Cl','O','N','OC','CC'];smi=f1+adds[pool.length%adds.length];}
+    else{if(pool.length%3===0&&frags.length>1){const f2=frags[(pool.length+3)%frags.length];smi=f1+f2;}else{const tiny=['','C','O','N','F','CC','OC'];smi=f1+tiny[pool.length%tiny.length];}}
+    if(!used.has(smi)){used.add(smi);pool.push(smi);}
+  }
+  return pool;
+}
+
+function diversify(arr,n){
+  if(arr.length<=n)return arr;
+  const out=[arr[0]];
+  for(let i=1;i<arr.length&&out.length<n;i++){const last=compositeScore(out[out.length-1].data),curr=compositeScore(arr[i].data);if(Math.abs(last-curr)>2||out.length<Math.ceil(n/2))out.push(arr[i]);}
+  while(out.length<n&&out.length<arr.length)out.push(arr[out.length]);
+  return out.slice(0,n);
+}
+
+async function runGenerate(){
+  const scaffoldType=document.getElementById('sel-scaffold').value;
+  const count=parseInt(document.getElementById('sl-count').value);
+  const dlMin=parseFloat(document.getElementById('sl-dl').value);
+  const violMax=parseInt(document.getElementById('sl-viol').value);
+  const toxMax=parseFloat(document.getElementById('sl-tox').value);
+  const mwMin=parseFloat(document.getElementById('sl-mw-min').value);
+  const mwMax=parseFloat(document.getElementById('sl-mw-max').value);
+  const logpMin=parseFloat(document.getElementById('sl-logp-min').value);
+  const logpMax=parseFloat(document.getElementById('sl-logp-max').value);
+  const logsMin=parseFloat(document.getElementById('sl-logs').value);
+  const diversity=document.getElementById('sel-diversity').value;
+  let baseFragments=scaffoldType==='custom'?[document.getElementById('custom-seed-input').value.trim()||'c1ccccc1']:FRAGMENTS[scaffoldType]||FRAGMENTS.drug_fragments;
+  const pool=buildPool(baseFragments,count*8,diversity);
+  document.getElementById('btn-gen').disabled=true;
+  document.getElementById('gen-results').style.display='none';
+  document.getElementById('gen-empty').style.display='none';
+  showProgress('Generating Molecules…','Building and scoring candidate library');
+  const passed=[],filters={dlMin,violMax,toxMax,mwMin,mwMax,logpMin,logpMax,logsMin};
+  let tested=0;
+  setProgress(10,'Building candidate pool…');await sleep(200);
+  for(let i=0;i<pool.length&&passed.length<count;i++){
+    const smi=pool[i];
+    const pct=Math.round(10+(i/pool.length)*75);
+    if(i%3===0){setProgress(pct,`Scoring candidate ${i+1} / ${Math.min(pool.length,count*8)}…`);await sleep(10);}
+    try{const data=await predictSMILES(smi);if(!data||!data.valid)continue;tested++;if(passesFilters(data,filters))passed.push({smi,data});}catch{}
+  }
+  setProgress(90,'Ranking by composite score…');await sleep(300);
+  passed.sort((a,b)=>compositeScore(b.data)-compositeScore(a.data));
+  const final=diversify(passed,count);
+  setProgress(100,'Done ✓');await sleep(300);
+  hideProgress();
+  document.getElementById('btn-gen').disabled=false;
+  if(final.length===0){document.getElementById('gen-empty').style.display='block';toast('No candidates passed the filters — try relaxing constraints.',3500);return;}
+  const avgScore=Math.round(final.reduce((a,c)=>a+compositeScore(c.data),0)/final.length);
+  const bestScore=compositeScore(final[0].data);
+  const passRo5=final.filter(c=>(c.data.lipinski_violations??99)===0).length;
+  document.getElementById('gen-stats').innerHTML=`<div class="stat-chip"><div class="s-label">Candidates</div><div class="s-val">${final.length}</div></div><div class="stat-divider"></div><div class="stat-chip"><div class="s-label">Best Score</div><div class="s-val">${bestScore}</div></div><div class="stat-divider"></div><div class="stat-chip"><div class="s-label">Avg Score</div><div class="s-val">${avgScore}</div></div><div class="stat-divider"></div><div class="stat-chip"><div class="s-label">Pass Ro5</div><div class="s-val">${passRo5}/${final.length}</div></div><div class="stat-divider"></div><div class="stat-chip"><div class="s-label">Pool Tested</div><div class="s-val">${tested}</div></div>`;
+  const grid=document.getElementById('gen-grid');grid.innerHTML='';
+  final.forEach((c,i)=>{const card=renderCandCard(c.data,c.smi,i,i*0.07);grid.appendChild(card);});
+  document.getElementById('gen-results').style.display='block';
+  if(final.some(c=>c.data.drug_like&&(c.data.lipinski_violations??99)===0)){setTimeout(()=>confetti({particleCount:90,spread:70,origin:{y:.6},colors:['#00d4e8','#4d9fff','#a78bfa','#34d399','#fbbf24']}),400);}
+}
+
+async function runModify(){
+  const smiles=document.getElementById('mod-smiles').value.trim();
+  if(!smiles){toast('Please enter a SMILES string first');return;}
+  const goals={dl:isOn('tog-dl'),sol:isOn('tog-sol'),tox:isOn('tog-tox'),mw:isOn('tog-mw'),core:isOn('tog-core'),ring:isOn('tog-ring')};
+  document.getElementById('btn-mod').disabled=true;
+  document.getElementById('mod-results').style.display='none';
+  document.getElementById('mod-empty').style.display='none';
+  showProgress('Analysing Molecule…','Scoring baseline and generating modifications');
+  setProgress(8,'Scoring baseline molecule…');
+  const baseline=await predictSMILES(smiles);
+  if(!baseline||!baseline.valid){hideProgress();document.getElementById('btn-mod').disabled=false;toast('Invalid SMILES — could not parse the molecule');document.getElementById('mod-empty').style.display='block';return;}
+  const baseScore=compositeScore(baseline);
+  setProgress(20,'Generating structural modifications…');await sleep(150);
+  const candidates=[],used=new Set([smiles]);let modIdx=0;
+  for(const mod of MODIFICATIONS){
+    if(goals.core&&['Cyclise chain','Remove –OH','Remove –CH₃'].includes(mod.label))continue;
+    if(!goals.ring&&mod.label==='Cyclise chain')continue;
+    const variants=mod.fn(smiles);
+    for(const v of variants){if(!v||used.has(v)||v.length<3||v.length>120)continue;used.add(v);candidates.push({smi:v,modLabel:mod.label});modIdx++;if(modIdx>=30)break;}
+    if(modIdx>=30)break;
+  }
+  setProgress(35,'Scoring modifications via API…');await sleep(100);
+  const scored=[];
+  for(let i=0;i<candidates.length;i++){
+    const c=candidates[i];
+    setProgress(35+Math.round((i/candidates.length)*50),`Evaluating modification ${i+1}/${candidates.length}…`);
+    if(i%2===0)await sleep(10);
+    try{
+      const data=await predictSMILES(c.smi);
+      if(!data||!data.valid)continue;
+      const dlImp=data.drug_likeness_score>(baseline.drug_likeness_score??0);
+      const solImp=(data.predicted_logs??-99)>(baseline.predicted_logs??-99);
+      const toxImp=(data.toxicity_probability??1)<(baseline.toxicity_probability??1);
+      const mwOk=!goals.mw||(data.molecular_weight??999)<=500;
+      if((goals.dl&&dlImp)||(goals.sol&&solImp)||(goals.tox&&toxImp)||(!goals.dl&&!goals.sol&&!goals.tox)){if(mwOk)scored.push({...c,data,score:compositeScore(data)});}
+    }catch{}
+  }
+  setProgress(90,'Ranking by improvement…');await sleep(200);
+  scored.sort((a,b)=>b.score-a.score);
+  const top=scored.slice(0,8);
+  setProgress(100,'Done ✓');await sleep(300);
+  hideProgress();
+  document.getElementById('btn-mod').disabled=false;
+  if(top.length===0){document.getElementById('mod-empty').style.display='block';toast('No valid modifications found — try different goals or a simpler SMILES',4000);return;}
+  const bRc=ringClass(baseScore);
+  document.getElementById('baseline-row').innerHTML=`<div style="display:flex;align-items:center;gap:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px"><div class="score-ring ${bRc}" style="width:50px;height:50px;font-size:14px">${baseScore}</div><div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--dim)">Baseline Molecule</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--cyan);margin-top:3px">${smiles}</div><div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap"><span class="tag info">MW ${baseline.molecular_weight?.toFixed(1)}</span><span class="tag info">LogP ${baseline.logp?.toFixed(2)}</span><span class="tag info">LogS ${baseline.predicted_logs?.toFixed(2)}</span><span class="${(baseline.lipinski_violations??99)===0?'tag pass':'tag fail'}">Ro5: ${(baseline.lipinski_violations??99)===0?'Pass':'Fail'}</span></div></div></div>`;
+  const tbody=document.getElementById('mod-tbody');tbody.innerHTML='';
+  top.forEach((c,i)=>{
+    const dDl=((c.data.drug_likeness_score??0)-(baseline.drug_likeness_score??0));
+    const dSol=((c.data.predicted_logs??-6)-(baseline.predicted_logs??-6));
+    const dTox=((baseline.toxicity_probability??0)-(c.data.toxicity_probability??0));
+    const dc=(v,inv=false)=>v===0?'same':((v>0)!==inv)?'up':'down';
+    const ds=(v)=>v>0?'+':v<0?'':' ';
+    const rowRc=ringClass(c.score);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${rankBadge(i)}</td><td><span class="mod-label" style="background:rgba(77,159,255,.1);color:#4d9fff;border:1px solid rgba(77,159,255,.25)">${c.modLabel}</span></td><td class="mod-row-smiles">${c.smi.length>40?c.smi.slice(0,37)+'…':c.smi}</td><td><div class="score-ring ${rowRc}" style="width:36px;height:36px;font-size:11px">${c.score}</div></td><td><span class="delta ${dc(dDl)}">${ds(dDl)}${(dDl*100).toFixed(0)}%</span></td><td><span class="delta ${dc(dSol)}">${ds(dSol)}${Math.abs(dSol).toFixed(2)}</span></td><td><span class="delta ${dc(dTox)}">${ds(dTox)}${Math.abs(dTox*100).toFixed(0)}%</span></td><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${c.data.molecular_weight?.toFixed(1)??'-'}</td><td><button class="btn-sm" onclick="copyToClip('${c.smi.replace(/'/g,"\\'")}')">📋</button></td>`;
+    tbody.appendChild(tr);
+  });
+  const grid=document.getElementById('mod-cand-grid');grid.innerHTML='';
+  top.slice(0,4).forEach((c,i)=>{const card=renderCandCard(c.data,c.smi,i,i*0.08);grid.appendChild(card);});
+  document.getElementById('mod-results').style.display='block';
+  const best=top[0];
+  if(compositeScore(best.data)>baseScore+5){setTimeout(()=>confetti({particleCount:70,spread:60,origin:{y:.65},colors:['#a78bfa','#4d9fff','#34d399']}),400);toast(`Best modification improves score by ${compositeScore(best.data)-baseScore} points! 🎉`,3000);}
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey){const m=document.getElementById('tab-gen').classList.contains('active')?'gen':'mod';if(m==='gen')runGenerate();else runModify();}});
+</script>
+</body>
+</html>
