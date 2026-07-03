@@ -25,8 +25,10 @@
 
     body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition:background .3s,color .3s; }
 
+    /* ── Particles ── */
     #particle-canvas { position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.45; }
 
+    /* ── Wave animations ── */
     @keyframes headerWave { 0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%} }
     @keyframes waveShift  { 0%{background-position:0% 0%}100%{background-position:300% 0%} }
     @keyframes spin       { to{transform:rotate(360deg)} }
@@ -37,7 +39,9 @@
     @keyframes sectionIn  { to{opacity:1;transform:translateY(0)} }
     @keyframes spinRing   { to{transform:rotate(360deg)} }
     @keyframes pulse      { 0%,100%{opacity:1}50%{opacity:.35} }
+    @keyframes popIn      { 0%{transform:scale(.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1} }
 
+    /* ── Header ── */
     header {
       background:linear-gradient(270deg,#0d1117,#0c2340,#0e3a2f,#1a1240,#0d1117,#0c2340);
       background-size:400% 400%; animation:headerWave 12s ease infinite;
@@ -55,41 +59,71 @@
     .logo-text h1 { font-size:15px; font-weight:700; line-height:1; animation:titleWave 8s ease-in-out infinite; }
     .logo-text p  { font-size:11px; color:var(--muted); margin-top:2px; }
 
-    .theme-btn { width:36px; height:36px; border-radius:50%; border:1px solid var(--border); background:var(--surface2); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:background .2s,transform .2s; flex-shrink:0; }
+    /* ── Theme toggle ── */
+    .theme-btn {
+      width:36px; height:36px; border-radius:50%; border:1px solid var(--border);
+      background:var(--surface2); cursor:pointer; font-size:16px;
+      display:flex; align-items:center; justify-content:center;
+      transition:background .2s,transform .2s; flex-shrink:0;
+    }
     .theme-btn:hover { transform:rotate(20deg); background:var(--surface); }
 
+    /* ── Main ── */
     main { position:relative; z-index:1; max-width:820px; margin:0 auto; padding:24px 18px; display:flex; flex-direction:column; gap:14px; }
 
+    /* ── Cards ── */
     .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; position:relative; overflow:hidden; }
     .card::before { content:''; position:absolute; top:0; left:-100%; height:1px; right:0; background:linear-gradient(90deg,transparent,#39d0d8,#bc8cff,#3fb950,transparent); animation:scanLine 4s linear infinite; }
 
     label { font-size:13px; font-weight:600; display:block; margin-bottom:4px; color:var(--text); }
     .hint { font-size:12px; color:var(--muted); margin-bottom:10px; }
     .input-row { display:flex; gap:8px; }
-    input[type="text"] { flex:1; height:40px; border:1px solid var(--border); border-radius:8px; padding:0 12px; font-family:'JetBrains Mono',monospace; font-size:13px; background:var(--bg); color:var(--text); outline:none; transition:border-color .15s,box-shadow .15s; }
+    input[type="text"] {
+      flex:1; height:40px; border:1px solid var(--border); border-radius:8px;
+      padding:0 12px; font-family:'JetBrains Mono',monospace; font-size:13px;
+      background:var(--bg); color:var(--text); outline:none;
+      transition:border-color .15s,box-shadow .15s;
+    }
     input[type="text"]:focus { border-color:var(--cyan); box-shadow:0 0 0 3px rgba(57,208,216,.15); }
 
-    button.predict { height:40px; padding:0 16px; background:linear-gradient(135deg,#0e7490,#0891b2); color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity .15s,transform .1s; white-space:nowrap; box-shadow:0 2px 8px rgba(8,145,178,.4); }
+    button.predict {
+      height:40px; padding:0 16px; background:linear-gradient(135deg,#0e7490,#0891b2);
+      color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600;
+      cursor:pointer; transition:opacity .15s,transform .1s; white-space:nowrap;
+      box-shadow:0 2px 8px rgba(8,145,178,.4);
+    }
     button.predict.lookup { background:linear-gradient(135deg,#065f46,#059669); box-shadow:0 2px 8px rgba(5,150,105,.4); }
     button.predict:disabled { opacity:.4; cursor:default; }
     button.predict:not(:disabled):hover { opacity:.88; transform:translateY(-1px); }
 
     .examples { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; align-items:center; }
     .examples span { font-size:12px; color:var(--muted); }
-    button.pill { padding:3px 11px; border:1px solid var(--border); border-radius:999px; background:transparent; font-size:12px; color:var(--text); cursor:pointer; transition:background .12s,border-color .12s; }
+    button.pill {
+      padding:3px 11px; border:1px solid var(--border); border-radius:999px;
+      background:transparent; font-size:12px; color:var(--text); cursor:pointer;
+      transition:background .12s,border-color .12s;
+    }
     button.pill:hover { background:var(--surface2); border-color:var(--cyan); color:var(--cyan); }
 
+    /* ── History ── */
     #history-bar { display:none; flex-wrap:wrap; gap:6px; align-items:center; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px 14px; }
     #history-bar span { font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
     button.hist-pill { padding:3px 10px; border:1px solid rgba(57,208,216,.3); border-radius:999px; background:rgba(57,208,216,.06); font-size:11px; color:var(--cyan); cursor:pointer; font-family:'JetBrains Mono',monospace; transition:background .12s; }
     button.hist-pill:hover { background:rgba(57,208,216,.14); }
 
+    /* ── Toolbar (copy + compare + export) ── */
     .toolbar { display:none; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
-    .tool-btn { padding:6px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:12px; font-weight:600; cursor:pointer; transition:background .15s,transform .1s; display:inline-flex; align-items:center; gap:6px; }
+    .tool-btn {
+      padding:6px 14px; border-radius:8px; border:1px solid var(--border);
+      background:var(--surface); color:var(--text); font-size:12px; font-weight:600;
+      cursor:pointer; transition:background .15s,transform .1s;
+      display:inline-flex; align-items:center; gap:6px;
+    }
     .tool-btn:hover { background:var(--surface2); transform:translateY(-1px); }
     .tool-btn.primary { background:linear-gradient(135deg,#1e1b4b,#4f46e5); color:#fff; border-color:transparent; box-shadow:0 2px 8px rgba(79,70,229,.4); }
     .tool-btn.compare-active { background:linear-gradient(135deg,#064e3b,#059669); color:#fff; border-color:transparent; }
 
+    /* ── Compare panel ── */
     #compare-panel { display:none; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
     #compare-panel h3 { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
     .compare-row { display:flex; gap:8px; }
@@ -104,35 +138,43 @@
     .compare-row-item .val.better { color:var(--green); }
     .compare-row-item .val.worse  { color:var(--red); }
 
+    /* ── Banners ── */
     .banner { border-radius:var(--radius); padding:12px 16px; font-size:13px; }
     .banner.error   { background:rgba(248,81,73,.1);  border:1px solid rgba(248,81,73,.3);  color:#f85149; }
     .banner.invalid { background:rgba(248,81,73,.1);  border:1px solid rgba(248,81,73,.3);  color:#f85149; }
+    .banner.success { background:rgba(63,185,80,.1);  border:1px solid rgba(63,185,80,.3);  color:#3fb950; }
 
+    /* ── Skeleton ── */
     .skeleton { border-radius:var(--radius); border:1px solid var(--border); background:var(--surface); padding:24px; display:flex; flex-direction:column; gap:14px; }
     .skel-line { height:14px; border-radius:6px; background:var(--surface2); animation:pulse 1.4s ease-in-out infinite; }
 
+    /* ── Section head ── */
     .section-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
     .section-head h2 { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.09em; white-space:nowrap; }
     .section-head .line { flex:1; height:1px; background:linear-gradient(90deg,#39d0d8,#58a6ff,#bc8cff,#3fb950,#39d0d8); background-size:200% 100%; animation:waveShift 6s linear infinite; }
 
+    /* ── SMILES echo ── */
     .smiles-echo { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--cyan); border-radius:var(--radius); padding:10px 14px; display:flex; align-items:center; gap:10px; }
     .smiles-echo .echo-label { color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; }
     .smiles-echo .echo-val   { font-family:'JetBrains Mono',monospace; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--cyan); flex:1; }
     .copy-btn { background:transparent; border:1px solid var(--border); border-radius:6px; padding:3px 8px; font-size:11px; color:var(--muted); cursor:pointer; transition:background .12s,color .12s; white-space:nowrap; }
     .copy-btn:hover { background:var(--surface2); color:var(--cyan); border-color:var(--cyan); }
 
+    /* ── Structure card ── */
     .structure-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:190px; max-width:210px; }
     .structure-frame { width:100%; aspect-ratio:1; border-radius:10px; border:1px solid var(--border); background:#fff; overflow:hidden; display:flex; align-items:center; justify-content:center; }
     .structure-frame img { width:100%; height:100%; object-fit:contain; display:block; }
     .struct-placeholder { font-size:11px; color:#999; text-align:center; padding:12px; }
     .structure-label { font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; text-align:center; }
 
+    /* ── Ro5 badge ── */
     .ro5-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:600; border:1px solid; }
     .ro5-badge.pass { background:rgba(63,185,80,.12); border-color:rgba(63,185,80,.4); color:var(--green); }
     .ro5-badge.fail { background:rgba(248,81,73,.12); border-color:rgba(248,81,73,.4); color:var(--red); }
     .ro5-dot { width:7px; height:7px; border-radius:50%; }
     .ro5-dot.pass { background:var(--green); } .ro5-dot.fail { background:var(--red); }
 
+    /* ── Score circles ── */
     .summary-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
     @media(max-width:480px){ .summary-row { grid-template-columns:repeat(2,1fr); } }
     .score-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 10px; display:flex; flex-direction:column; align-items:center; gap:7px; }
@@ -143,10 +185,12 @@
     .score-circle.red   { border-color:var(--red);   color:var(--red);   background:rgba(248,81,73,.1); }
     .score-card .sc-class { font-size:10px; font-weight:600; color:var(--text); text-align:center; }
 
+    /* ── Radar chart ── */
     .radar-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; align-items:center; gap:8px; }
     .radar-wrap h3 { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
     #radar-chart { max-width:260px; max-height:260px; }
 
+    /* ── Property cards ── */
     .props-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
     @media(max-width:500px){ .props-grid { grid-template-columns:repeat(2,1fr); } }
     .prop-card { border-radius:12px; padding:14px 14px 12px; position:relative; overflow:hidden; transition:box-shadow .2s,transform .2s; border:none; opacity:0; transform:translateY(18px); animation:cardFadeIn .4s ease forwards; }
@@ -167,8 +211,10 @@
     .prop-card .prop-value { font-size:20px; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.3); }
     .prop-card .prop-unit  { font-size:10px; color:rgba(255,255,255,.55); margin-top:3px; }
 
+    /* ── Result sections ── */
     .result-section { opacity:0; transform:translateY(20px); animation:sectionIn .45s ease forwards; }
 
+    /* ── Tox card ── */
     .tox-card { background:var(--surface); border-radius:var(--radius); padding:20px; border:1px solid transparent; background-clip:padding-box; position:relative; }
     .tox-card::before { content:''; position:absolute; inset:-1px; border-radius:calc(var(--radius)+1px); background:linear-gradient(270deg,#bc8cff,#7c3aed,#4f46e5,#bc8cff); background-size:300% 100%; animation:waveShift 5s linear infinite; z-index:-1; }
     .tox-summary { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
@@ -182,9 +228,10 @@
     .tox-ep-bar-fill  { height:100%; border-radius:99px; transition:width .6s ease; }
     .tox-ep-label { display:flex; justify-content:space-between; font-size:10px; }
     .tox-ep-label .val { font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--text); }
-    .tox-ep-label .cls.t  { color:var(--red);  font-weight:700; }
-    .tox-ep-label .cls.nt { color:var(--green); font-weight:700; }
+    .tox-ep-label .cls.t  { color:var(--red);   font-weight:700; }
+    .tox-ep-label .cls.nt { color:var(--green);  font-weight:700; }
 
+    /* ── Special cards ── */
     .special-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     @media(max-width:520px){ .special-grid { grid-template-columns:1fr; } }
     .special-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; position:relative; overflow:hidden; }
@@ -207,9 +254,11 @@
     .special-card.visc .sc-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#7c3aed,#a78bfa); transition:width .7s ease; }
     .special-card.co2  .sc-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#0891b2,#22d3ee); transition:width .7s ease; }
 
+    /* ── Lipinski ── */
     .lipinski-card { background:var(--surface); border-radius:var(--radius); padding:18px 20px; position:relative; border:1px solid transparent; background-clip:padding-box; }
     .lipinski-card::before { content:''; position:absolute; inset:-1px; border-radius:calc(var(--radius)+1px); background:linear-gradient(270deg,#58a6ff,#39d0d8,#3fb950,#58a6ff); background-size:300% 100%; animation:waveShift 6s linear infinite; z-index:-1; }
-    .bar-row { margin-bottom:13px; } .bar-row:last-child { margin-bottom:0; }
+    .bar-row { margin-bottom:13px; }
+    .bar-row:last-child { margin-bottom:0; }
     .bar-meta { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:5px; }
     .bar-meta .bar-name { font-weight:500; color:var(--text); }
     .bar-meta .bar-val  { font-weight:700; font-family:'JetBrains Mono',monospace; }
@@ -219,9 +268,11 @@
     .bar-fill.good { background:linear-gradient(90deg,#238636,#3fb950); }
     .bar-fill.bad  { background:linear-gradient(90deg,#b91c1c,#f85149); }
 
+    /* ── Footer ── */
     footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); position:relative; z-index:1; }
     footer a { color:var(--cyan); text-decoration:none; }
 
+    /* ── Toast ── */
     #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:8px 20px; font-size:13px; font-weight:600; color:var(--text); box-shadow:0 4px 20px rgba(0,0,0,.4); transition:transform .3s ease; z-index:999; white-space:nowrap; }
     #toast.show { transform:translateX(-50%) translateY(0); }
 
@@ -233,6 +284,7 @@
 <canvas id="particle-canvas"></canvas>
 <div id="toast"></div>
 
+<!-- HEADER -->
 <header>
   <svg class="header-logo" viewBox="0 0 32 32" width="34" height="34" fill="none">
     <circle cx="16" cy="16" r="5" stroke="#39d0d8" stroke-width="2.5"/>
@@ -260,10 +312,12 @@
     <line x1="7"  y1="22.5" x2="12" y2="19"  stroke="#f85149" stroke-width="1.5"/>
     <line x1="25" y1="22.5" x2="20" y2="19"  stroke="#f85149" stroke-width="1.5"/>
   </svg>
-  <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
+  <button class="theme-btn" id="theme-btn" title="Toggle theme" onclick="toggleTheme()">🌙</button>
 </header>
 
 <main>
+
+  <!-- Input -->
   <div class="card">
     <label for="smiles-input">SMILES or Molecule Name</label>
     <p class="hint">Enter a SMILES string or molecule name, then click Predict.</p>
@@ -292,22 +346,27 @@
     <div class="skel-line" style="width:65%"></div>
   </div>
 
+  <!-- RESULTS -->
   <div id="results">
     <div id="invalid-banner" class="banner invalid" style="display:none"><strong>Invalid SMILES</strong> — could not be parsed.</div>
+
     <div id="valid-results" style="display:none">
 
+      <!-- Toolbar -->
       <div class="toolbar" id="toolbar">
         <button class="tool-btn" onclick="copySmiles()">📋 Copy SMILES</button>
         <button class="tool-btn" id="compare-toggle-btn" onclick="toggleCompare()">⚖️ Compare</button>
         <button class="tool-btn primary" onclick="exportPDF()">⬇ Export PDF</button>
       </div>
 
+      <!-- SMILES echo -->
       <div class="smiles-echo" style="margin-top:10px">
         <span class="echo-label">SMILES</span>
         <span class="echo-val" id="smiles-echo"></span>
         <button class="copy-btn" onclick="copySmiles()">Copy</button>
       </div>
 
+      <!-- Compare panel -->
       <div id="compare-panel">
         <h3>Compare with another molecule</h3>
         <div class="compare-row">
@@ -317,6 +376,7 @@
         <div id="compare-results"></div>
       </div>
 
+      <!-- Structure + Summary -->
       <div style="display:grid;grid-template-columns:auto 1fr;gap:14px;margin-top:14px;align-items:start">
         <div class="structure-card">
           <div class="section-head" style="margin-bottom:6px;width:100%"><h2>2D Structure</h2><div class="line"></div></div>
@@ -333,6 +393,7 @@
             <div class="score-card"><span class="sc-label">Solubility</span><div class="score-circle" id="sol-circle"></div><span class="sc-class" id="sol-class"></span></div>
             <div class="score-card"><span class="sc-label">Toxicity</span><div class="score-circle" id="tox-circle"></div><span class="sc-class" id="tox-class"></span></div>
           </div>
+          <!-- Radar chart -->
           <div class="radar-wrap">
             <h3>Profile Radar</h3>
             <canvas id="radar-chart"></canvas>
@@ -381,74 +442,317 @@
         <div class="section-head"><h2>Lipinski Rule of 5</h2><div class="line"></div></div>
         <div class="lipinski-card"><div id="lipinski-bars"></div></div>
       </div>
+
     </div>
   </div>
 </main>
 
-<footer>MoleculeProduct · Built with RDKit + FastAPI · <a href="https://moleculeproduct.onrender.com/docs" target="_blank">API Docs</a></footer>
+<footer>
+  MoleculeProduct · Built with RDKit + FastAPI ·
+  <a href="https://moleculeproduct.onrender.com/docs" target="_blank">API Docs</a>
+</footer>
 
 <script>
-const API="https://moleculeproduct.onrender.com";
-let radarChart=null,currentData=null,currentSmiles="";
+const API = "https://moleculeproduct.onrender.com";
+let radarChart = null;
+let currentData = null;
+let currentSmiles = "";
 
-(function(){const canvas=document.getElementById('particle-canvas'),ctx=canvas.getContext('2d');let W,H,pts=[];const COLS=['#39d0d8','#58a6ff','#bc8cff','#3fb950','#d29922'];function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}resize();window.addEventListener('resize',resize);function P(){this.x=Math.random()*W;this.y=Math.random()*H;this.r=1+Math.random()*2.5;this.vx=(Math.random()-.5)*.4;this.vy=(Math.random()-.5)*.4;this.color=COLS[Math.floor(Math.random()*COLS.length)];this.alpha=.15+Math.random()*.35;this.bonds=Math.floor(Math.random()*2)+1;}for(let i=0;i<55;i++)pts.push(new P());function draw(){ctx.clearRect(0,0,W,H);for(let i=0;i<pts.length;i++){let lk=0;for(let j=i+1;j<pts.length;j++){if(lk>=pts[i].bonds)break;const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<110){ctx.strokeStyle=pts[i].color;ctx.globalAlpha=.12*(1-d/110);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke();lk++;}}}pts.forEach(p=>{ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;}function upd(){pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;});}function loop(){draw();upd();requestAnimationFrame(loop);}loop();})();
+/* ═══ PARTICLES ═══ */
+(function(){
+  const canvas=document.getElementById('particle-canvas'),ctx=canvas.getContext('2d');
+  let W,H,pts=[];
+  const COLS=['#39d0d8','#58a6ff','#bc8cff','#3fb950','#d29922'];
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  function P(){this.x=Math.random()*W;this.y=Math.random()*H;this.r=1+Math.random()*2.5;this.vx=(Math.random()-.5)*.4;this.vy=(Math.random()-.5)*.4;this.color=COLS[Math.floor(Math.random()*COLS.length)];this.alpha=.15+Math.random()*.35;this.bonds=Math.floor(Math.random()*2)+1;}
+  for(let i=0;i<55;i++)pts.push(new P());
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<pts.length;i++){let lk=0;for(let j=i+1;j<pts.length;j++){if(lk>=pts[i].bonds)break;const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<110){ctx.strokeStyle=pts[i].color;ctx.globalAlpha=.12*(1-d/110);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke();lk++;}}}
+    pts.forEach(p=>{ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});
+    ctx.globalAlpha=1;
+  }
+  function upd(){pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;});}
+  function loop(){draw();upd();requestAnimationFrame(loop);}loop();
+})();
 
-(function(){const inp=document.getElementById('smiles-input');const ph=['e.g. CC(=O)Nc1ccc(O)cc1','Try: Caffeine','Try: Aspirin','e.g. c1ccccc1','Try: Glucose','e.g. CCO'];let pi=0,ci=0,del=false;function tick(){const p=ph[pi];if(!del){inp.placeholder=p.slice(0,ci+1);ci++;if(ci===p.length){del=true;setTimeout(tick,1600);return;}setTimeout(tick,55);}else{inp.placeholder=p.slice(0,ci-1);ci--;if(ci===0){del=false;pi=(pi+1)%ph.length;setTimeout(tick,400);return;}setTimeout(tick,28);}}tick();})();
+/* ═══ TYPEWRITER ═══ */
+(function(){
+  const inp=document.getElementById('smiles-input');
+  const ph=['e.g. CC(=O)Nc1ccc(O)cc1','Try: Caffeine','Try: Aspirin','e.g. c1ccccc1','Try: Glucose','e.g. CCO'];
+  let pi=0,ci=0,del=false;
+  function tick(){const p=ph[pi];if(!del){inp.placeholder=p.slice(0,ci+1);ci++;if(ci===p.length){del=true;setTimeout(tick,1600);return;}setTimeout(tick,55);}else{inp.placeholder=p.slice(0,ci-1);ci--;if(ci===0){del=false;pi=(pi+1)%ph.length;setTimeout(tick,400);return;}setTimeout(tick,28);}}
+  tick();
+})();
 
+/* ═══ THEME ═══ */
 let dark=true;
-function toggleTheme(){dark=!dark;document.documentElement.classList.toggle('light',!dark);document.getElementById('theme-btn').textContent=dark?'🌙':'☀️';if(radarChart)updateRadarColors();}
+function toggleTheme(){
+  dark=!dark;
+  document.documentElement.classList.toggle('light',!dark);
+  document.getElementById('theme-btn').textContent=dark?'🌙':'☀️';
+  if(radarChart) updateRadarColors();
+}
 
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+/* ═══ TOAST ═══ */
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
 
+/* ═══ HISTORY ═══ */
 let history=[];
 function addHistory(s){if(history.includes(s))return;history.unshift(s);if(history.length>5)history.pop();renderHistory();}
-function renderHistory(){const bar=document.getElementById('history-bar');if(!history.length){bar.style.display='none';return;}bar.style.display='flex';bar.innerHTML='<span>Recent:</span>'+history.map(s=>`<button class="hist-pill" onclick="fillAndPredict('${s.replace(/'/g,"\\'")}')">${s.length>22?s.slice(0,20)+'…':s}</button>`).join('');}
+function renderHistory(){
+  const bar=document.getElementById('history-bar');
+  if(!history.length){bar.style.display='none';return;}
+  bar.style.display='flex';
+  bar.innerHTML='<span>Recent:</span>'+history.map(s=>`<button class="hist-pill" onclick="fillAndPredict('${s.replace(/'/g,"\\'")}')">${s.length>22?s.slice(0,20)+'…':s}</button>`).join('');
+}
 
-function copySmiles(){if(!currentSmiles)return;navigator.clipboard.writeText(currentSmiles).then(()=>toast('SMILES copied ✓')).catch(()=>toast('Copy failed'));}
+/* ═══ COPY SMILES ═══ */
+function copySmiles(){
+  if(!currentSmiles)return;
+  navigator.clipboard.writeText(currentSmiles).then(()=>toast('SMILES copied to clipboard ✓')).catch(()=>toast('Copy failed'));
+}
+
+/* ═══ EXPORT PDF ═══ */
 function exportPDF(){window.print();}
 
+/* ═══ COMPARE ═══ */
 let compareOpen=false;
-function toggleCompare(){compareOpen=!compareOpen;const panel=document.getElementById('compare-panel');const btn=document.getElementById('compare-toggle-btn');panel.style.display=compareOpen?'block':'none';btn.classList.toggle('compare-active',compareOpen);if(!compareOpen)document.getElementById('compare-results').style.display='none';}
-async function runCompare(){let s=document.getElementById('compare-input').value.trim();if(!s||!currentData)return;if(/^[a-zA-Z0-9 '-]+$/.test(s)&&!/^d+$/.test(s)){try{const r=await fetch(API+'/lookup?name='+encodeURIComponent(s));if(r.ok){const d=await r.json();s=d.smiles;document.getElementById('compare-input').value=s;}}catch{}}try{const r=await fetch(API+'/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({smiles:s})});if(!r.ok)throw new Error();const b=await r.json();if(!b.valid){toast('Invalid SMILES for comparison');return;}renderCompare(currentData,b);}catch{toast('Could not fetch comparison molecule');}}
-function renderCompare(a,b){const fields=[{k:'molecular_weight',l:'Mol. Weight',dp:2,lower:true},{k:'logp',l:'LogP',dp:2,lower:true},{k:'tpsa',l:'TPSA',dp:1,lower:false},{k:'hbd',l:'HBD',dp:0,lower:true},{k:'hba',l:'HBA',dp:0,lower:true},{k:'drug_likeness_score',l:'Drug-Like',dp:2,lower:false},{k:'predicted_logs',l:'LogS',dp:2,lower:false},{k:'toxicity_probability',l:'Tox Prob',dp:2,lower:true}];const cr=document.getElementById('compare-results');cr.style.display='block';cr.innerHTML=`<div class="compare-grid"><div><h4>Molecule A</h4>${fields.map(f=>{const av=a[f.k],bv=b[f.k],better=f.lower?(av<=bv):(av>=bv);return `<div class="compare-row-item"><span class="lbl">${f.l}</span><span class="val ${better?'better':'worse'}">${f.dp===0?av:Number(av).toFixed(f.dp)}</span></div>`;}).join('')}</div><div><h4>Molecule B</h4>${fields.map(f=>{const av=a[f.k],bv=b[f.k],better=f.lower?(bv<=av):(bv>=av);return `<div class="compare-row-item"><span class="lbl">${f.l}</span><span class="val ${better?'better':'worse'}">${f.dp===0?bv:Number(bv).toFixed(f.dp)}</span></div>`;}).join('')}</div></div>`;}
+function toggleCompare(){
+  compareOpen=!compareOpen;
+  const panel=document.getElementById('compare-panel');
+  const btn=document.getElementById('compare-toggle-btn');
+  panel.style.display=compareOpen?'block':'none';
+  btn.classList.toggle('compare-active',compareOpen);
+  if(!compareOpen){document.getElementById('compare-results').style.display='none';}
+}
+async function runCompare(){
+  let s=document.getElementById('compare-input').value.trim();
+  if(!s||!currentData)return;
+  // lookup if name
+  if(/^[a-zA-Z0-9 '-]+$/.test(s)&&!/^d+$/.test(s)){
+    try{const r=await fetch(API+'/lookup?name='+encodeURIComponent(s));if(r.ok){const d=await r.json();s=d.smiles;document.getElementById('compare-input').value=s;}}catch{}
+  }
+  try{
+    const r=await fetch(API+'/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({smiles:s})});
+    if(!r.ok)throw new Error();
+    const b=await r.json();
+    if(!b.valid){toast('Invalid SMILES for comparison');return;}
+    renderCompare(currentData,b);
+  }catch{toast('Could not fetch comparison molecule');}
+}
+function renderCompare(a,b){
+  const fields=[
+    {k:'molecular_weight',l:'Mol. Weight',dp:2,unit:'Da',lower:true},
+    {k:'logp',l:'LogP',dp:2,unit:'',lower:true},
+    {k:'tpsa',l:'TPSA',dp:1,unit:'Å²',lower:false},
+    {k:'hbd',l:'HBD',dp:0,unit:'',lower:true},
+    {k:'hba',l:'HBA',dp:0,unit:'',lower:true},
+    {k:'drug_likeness_score',l:'Drug-Like',dp:2,unit:'',lower:false},
+    {k:'predicted_logs',l:'LogS',dp:2,unit:'',lower:false},
+    {k:'toxicity_probability',l:'Tox Prob',dp:2,unit:'',lower:true},
+  ];
+  const cr=document.getElementById('compare-results');
+  cr.style.display='block';
+  cr.innerHTML=`<div class="compare-grid">
+    <div><h4>Molecule A (current)</h4>${fields.map(f=>{
+      const av=a[f.k],bv=b[f.k];
+      const better=f.lower?(av<=bv):(av>=bv);
+      return `<div class="compare-row-item"><span class="lbl">${f.l}</span><span class="val ${better?'better':'worse'}">${f.dp===0?av:Number(av).toFixed(f.dp)}${f.unit?' '+f.unit:''}</span></div>`;
+    }).join('')}</div>
+    <div><h4>Molecule B (compare)</h4>${fields.map(f=>{
+      const av=a[f.k],bv=b[f.k];
+      const better=f.lower?(bv<=av):(bv>=av);
+      return `<div class="compare-row-item"><span class="lbl">${f.l}</span><span class="val ${better?'better':'worse'}">${f.dp===0?bv:Number(bv).toFixed(f.dp)}${f.unit?' '+f.unit:''}</span></div>`;
+    }).join('')}</div>
+  </div>`;
+}
 
-function buildRadar(data){const dl=Math.round((data.drug_likeness_score??0)*100);const logS=data.predicted_logs??-6;const sol=Math.round(Math.max(0,Math.min(100,(logS+6)/6*100)));const toxSafe=Math.round((1-(data.toxicity_probability??0.5))*100);const ro5=Math.round((1-(data.lipinski_violations??0)/4)*100);const fsp3=Math.round((data.fraction_csp3??0)*100);const mw=data.molecular_weight??500;const mwScore=Math.round(Math.max(0,Math.min(100,(1-mw/900)*100)));const labels=['Drug-Like','Solubility','Safety','Ro5 Pass','Sp3 Frac','Low MW'];const values=[dl,sol,toxSafe,ro5,fsp3,mwScore];const isDark=!document.documentElement.classList.contains('light');const gc=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.08)';const tc=isDark?'#7d8590':'#656d76';if(radarChart)radarChart.destroy();const ctx=document.getElementById('radar-chart').getContext('2d');radarChart=new Chart(ctx,{type:'radar',data:{labels,datasets:[{label:'Profile',data:values,backgroundColor:'rgba(57,208,216,.15)',borderColor:'#39d0d8',borderWidth:2,pointBackgroundColor:'#39d0d8',pointRadius:4}]},options:{responsive:true,maintainAspectRatio:true,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:gc},angleLines:{color:gc},pointLabels:{color:tc,font:{size:10,family:'Inter'}}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw}%`}}}}});}
-function updateRadarColors(){const isDark=!document.documentElement.classList.contains('light');const gc=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.08)';const tc=isDark?'#7d8590':'#656d76';radarChart.options.scales.r.grid.color=gc;radarChart.options.scales.r.angleLines.color=gc;radarChart.options.scales.r.pointLabels.color=tc;radarChart.update();}
+/* ═══ RADAR CHART ═══ */
+function buildRadar(data){
+  const dl=Math.round((data.drug_likeness_score??0)*100);
+  const logS=data.predicted_logs??-6;
+  const sol=Math.round(Math.max(0,Math.min(100,(logS+6)/6*100)));
+  const toxSafe=Math.round((1-(data.toxicity_probability??0.5))*100);
+  const ro5=Math.round((1-(data.lipinski_violations??0)/4)*100);
+  const fsp3=Math.round((data.fraction_csp3??0)*100);
+  const labels=['Drug-Like','Solubility','Safety','Ro5 Pass','Sp3 Frac','Low MW'];
+  const mw=data.molecular_weight??500;
+  const mwScore=Math.round(Math.max(0,Math.min(100,(1-mw/900)*100)));
+  const values=[dl,sol,toxSafe,ro5,fsp3,mwScore];
+  const isDark=!document.documentElement.classList.contains('light');
+  const gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.08)';
+  const textColor=isDark?'#7d8590':'#656d76';
+  if(radarChart){radarChart.destroy();}
+  const ctx=document.getElementById('radar-chart').getContext('2d');
+  radarChart=new Chart(ctx,{
+    type:'radar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Profile',
+        data:values,
+        backgroundColor:'rgba(57,208,216,.15)',
+        borderColor:'#39d0d8',
+        borderWidth:2,
+        pointBackgroundColor:'#39d0d8',
+        pointRadius:4,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:gridColor},angleLines:{color:gridColor},pointLabels:{color:textColor,font:{size:10,family:'Inter'}}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw}%`}}}
+    }
+  });
+}
+function updateRadarColors(){
+  const isDark=!document.documentElement.classList.contains('light');
+  const gc=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.08)';
+  const tc=isDark?'#7d8590':'#656d76';
+  radarChart.options.scales.r.grid.color=gc;
+  radarChart.options.scales.r.angleLines.color=gc;
+  radarChart.options.scales.r.pointLabels.color=tc;
+  radarChart.update();
+}
 
-function celebrate(){confetti({particleCount:120,spread:80,origin:{y:.55},colors:['#39d0d8','#58a6ff','#bc8cff','#3fb950','#d29922']});}
+/* ═══ CONFETTI ═══ */
+function celebrate(){
+  confetti({particleCount:120,spread:80,origin:{y:.55},colors:['#39d0d8','#58a6ff','#bc8cff','#3fb950','#d29922']});
+}
 
+/* ═══ CORE ═══ */
 function setBtn(id,disabled,text){const b=document.getElementById(id);b.disabled=disabled;b.textContent=text;}
 function showError(msg){document.getElementById('skeleton').style.display='none';const eb=document.getElementById('error-banner');eb.textContent=msg;eb.style.display='block';}
 function fillAndPredict(s){document.getElementById('smiles-input').value=s;document.getElementById('error-banner').style.display='none';document.getElementById('results').style.display='none';predictSmiles(s);}
-async function runLookup(){const name=document.getElementById('smiles-input').value.trim();if(!name)return;setBtn('lookup-btn',true,'Looking…');document.getElementById('error-banner').style.display='none';try{const r=await fetch(API+'/lookup?name='+encodeURIComponent(name));if(!r.ok)throw new Error();const d=await r.json();document.getElementById('smiles-input').value=d.smiles;toast('Found: '+d.smiles.slice(0,30));}catch{showError("Could not find '"+name+"' on PubChem.");}finally{setBtn('lookup-btn',false,'Lookup');}}
-async function runPredict(){let smiles=document.getElementById('smiles-input').value.trim();if(!smiles)return;const isName=/^[a-zA-Z0-9 '-]+$/.test(smiles)&&!/^d+$/.test(smiles);if(isName){setBtn('predict-btn',true,'Looking up…');try{const r=await fetch(API+'/lookup?name='+encodeURIComponent(smiles));if(r.ok){const d=await r.json();smiles=d.smiles;document.getElementById('smiles-input').value=smiles;}}catch{}setBtn('predict-btn',false,'Predict');}predictSmiles(smiles);}
-async function predictSmiles(smiles){document.getElementById('error-banner').style.display='none';document.getElementById('results').style.display='none';document.getElementById('skeleton').style.display='flex';document.getElementById('toolbar').style.display='none';setBtn('predict-btn',true,'Analysing…');try{const r=await fetch(API+'/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({smiles})});if(!r.ok)throw new Error();const data=await r.json();document.getElementById('skeleton').style.display='none';showResults(data,smiles);}catch{showError('Could not connect to the API. Make sure the server is running.');}finally{setBtn('predict-btn',false,'Predict');}}
-function loadStructure(smiles){const frame=document.getElementById('struct-frame');frame.innerHTML='<div class="struct-placeholder">Loading…</div>';document.getElementById('struct-label').textContent='';const img=new Image();img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';img.onload=()=>{frame.innerHTML='';frame.appendChild(img);const s=smiles.length>30?smiles.slice(0,27)+'…':smiles;document.getElementById('struct-label').textContent=s;};img.onerror=()=>{frame.innerHTML='<div class="struct-placeholder">Structure unavailable</div>';};img.src=API+'/structure?smiles='+encodeURIComponent(smiles)+'&size=300';}
+async function runLookup(){
+  const name=document.getElementById('smiles-input').value.trim();if(!name)return;
+  setBtn('lookup-btn',true,'Looking…');document.getElementById('error-banner').style.display='none';
+  try{const r=await fetch(API+'/lookup?name='+encodeURIComponent(name));if(!r.ok)throw new Error();const d=await r.json();document.getElementById('smiles-input').value=d.smiles;toast('Found: '+d.smiles.slice(0,30));}
+  catch{showError("Could not find '"+name+"' on PubChem.");}
+  finally{setBtn('lookup-btn',false,'Lookup');}
+}
+async function runPredict(){
+  let smiles=document.getElementById('smiles-input').value.trim();if(!smiles)return;
+  const isName=/^[a-zA-Z0-9 '-]+$/.test(smiles)&&!/^d+$/.test(smiles);
+  if(isName){setBtn('predict-btn',true,'Looking up…');try{const r=await fetch(API+'/lookup?name='+encodeURIComponent(smiles));if(r.ok){const d=await r.json();smiles=d.smiles;document.getElementById('smiles-input').value=smiles;}}catch{}setBtn('predict-btn',false,'Predict');}
+  predictSmiles(smiles);
+}
+async function predictSmiles(smiles){
+  document.getElementById('error-banner').style.display='none';
+  document.getElementById('results').style.display='none';
+  document.getElementById('skeleton').style.display='flex';
+  document.getElementById('toolbar').style.display='none';
+  setBtn('predict-btn',true,'Analysing…');
+  try{
+    const r=await fetch(API+'/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({smiles})});
+    if(!r.ok)throw new Error();
+    const data=await r.json();
+    document.getElementById('skeleton').style.display='none';
+    showResults(data,smiles);
+  }catch{showError('Could not connect to the API. Make sure the server is running.');}
+  finally{setBtn('predict-btn',false,'Predict');}
+}
+function loadStructure(smiles){
+  const frame=document.getElementById('struct-frame');
+  frame.innerHTML='<div class="struct-placeholder">Loading…</div>';
+  document.getElementById('struct-label').textContent='';
+  const img=new Image();img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';
+  img.onload=()=>{frame.innerHTML='';frame.appendChild(img);const s=smiles.length>30?smiles.slice(0,27)+'…':smiles;document.getElementById('struct-label').textContent=s;};
+  img.onerror=()=>{frame.innerHTML='<div class="struct-placeholder">Structure unavailable</div>';};
+  img.src=API+'/structure?smiles='+encodeURIComponent(smiles)+'&size=300';
+}
 function setCircle(id,v,cls){const el=document.getElementById(id);el.className='score-circle '+cls;el.textContent=v;}
 
 function showResults(data,smiles){
-  currentData=data;currentSmiles=smiles;
+  currentData=data; currentSmiles=smiles;
   document.querySelectorAll('.result-section,.prop-card').forEach(el=>{el.style.animation='none';void el.offsetWidth;el.style.animation='';});
   document.getElementById('results').style.display='block';
   if(!data.valid){document.getElementById('invalid-banner').style.display='block';document.getElementById('valid-results').style.display='none';return;}
-  document.getElementById('invalid-banner').style.display='none';document.getElementById('valid-results').style.display='block';document.getElementById('toolbar').style.display='flex';
+  document.getElementById('invalid-banner').style.display='none';
+  document.getElementById('valid-results').style.display='block';
+  document.getElementById('toolbar').style.display='flex';
   document.getElementById('smiles-echo').textContent=data.smiles;
+
   const viol=data.lipinski_violations??0,pass=viol===0;
-  const badge=document.getElementById('ro5-badge');badge.className='ro5-badge '+(pass?'pass':'fail');badge.innerHTML=`<span class="ro5-dot ${pass?'pass':'fail'}"></span>${pass?'Passes Rule of 5':'Fails Rule of 5 ('+viol+' violation'+(viol>1?'s':'')+')'}`;
-  const dlPct=Math.round((data.drug_likeness_score??0)*100);setCircle('dl-circle',dlPct+'%',dlPct>=75?'green':dlPct>=50?'amber':'red');document.getElementById('dl-class').textContent=data.drug_like?'Drug-Like':'Not Drug-Like';
-  const logS=data.predicted_logs;setCircle('sol-circle',logS!=null?logS.toFixed(2):'—',logS>-2?'green':logS>-4?'amber':'red');document.getElementById('sol-class').textContent=data.solubility_class??'—';
-  const toxProb=data.toxicity_probability,toxPct=toxProb!=null?Math.round(toxProb*100):null,toxCls=toxProb==null?'amber':toxProb<0.3?'green':toxProb<0.6?'amber':'red';
-  setCircle('tox-circle',toxPct!=null?toxPct+'%':'—',toxCls);setCircle('tox-big-circle',toxPct!=null?toxPct+'%':'—',toxCls);document.getElementById('tox-class').textContent=data.toxicity_class??'Unknown';document.getElementById('tox-big-class').textContent=data.toxicity_class??'Unknown';
-  if(data.drug_like&&pass)setTimeout(celebrate,400);
+  const badge=document.getElementById('ro5-badge');
+  badge.className='ro5-badge '+(pass?'pass':'fail');
+  badge.innerHTML=`<span class="ro5-dot ${pass?'pass':'fail'}"></span>${pass?'Passes Rule of 5':'Fails Rule of 5 ('+viol+' violation'+(viol>1?'s':'')+')'}`; 
+
+  const dlPct=Math.round((data.drug_likeness_score??0)*100);
+  setCircle('dl-circle',dlPct+'%',dlPct>=75?'green':dlPct>=50?'amber':'red');
+  document.getElementById('dl-class').textContent=data.drug_like?'Drug-Like':'Not Drug-Like';
+  const logS=data.predicted_logs;
+  setCircle('sol-circle',logS!=null?logS.toFixed(2):'—',logS>-2?'green':logS>-4?'amber':'red');
+  document.getElementById('sol-class').textContent=data.solubility_class??'—';
+  const toxProb=data.toxicity_probability,toxPct=toxProb!=null?Math.round(toxProb*100):null;
+  const toxCls=toxProb==null?'amber':toxProb<0.3?'green':toxProb<0.6?'amber':'red';
+  setCircle('tox-circle',toxPct!=null?toxPct+'%':'—',toxCls);
+  setCircle('tox-big-circle',toxPct!=null?toxPct+'%':'—',toxCls);
+  document.getElementById('tox-class').textContent=data.toxicity_class??'Unknown';
+  document.getElementById('tox-big-class').textContent=data.toxicity_class??'Unknown';
+
+  // Confetti if drug-like AND passes Ro5
+  if(data.drug_like && pass) setTimeout(celebrate, 400);
+
+  // Radar
   buildRadar(data);
-  document.getElementById('basic-grid').innerHTML=[{label:'Mol. Weight',value:data.molecular_weight,unit:'Da',dp:2,icon:'⚖️',color:'c-blue'},{label:'LogP',value:data.logp,unit:'',dp:3,icon:'💧',color:'c-cyan'},{label:'TPSA',value:data.tpsa,unit:'Å²',dp:1,icon:'📐',color:'c-violet'},{label:'H-Bond Donors',value:data.hbd,unit:'',dp:0,icon:'🔵',color:'c-emerald'},{label:'H-Bond Acceptors',value:data.hba,unit:'',dp:0,icon:'🔴',color:'c-rose'},{label:'Rotatable Bonds',value:data.rotatable_bonds,unit:'',dp:0,icon:'🔗',color:'c-amber'}].map((p,i)=>`<div class="prop-card ${p.color}" style="animation-delay:${i*.06+.05}s"><div class="prop-icon">${p.icon}</div><div class="prop-label">${p.label}</div><div class="prop-value">${p.dp===0?p.value:Number(p.value).toFixed(p.dp)}</div>${p.unit?`<div class="prop-unit">${p.unit}</div>`:''}</div>`).join('');
-  document.getElementById('phys-grid').innerHTML=[{label:'Boiling Point',value:data.boiling_point,unit:'°C',dp:1,icon:'🌡️',color:'c-orange'},{label:'Melting Point',value:data.melting_point,unit:'°C',dp:1,icon:'❄️',color:'c-cyan'},{label:'Density',value:data.density,unit:'g/mL',dp:3,icon:'🧊',color:'c-blue'},{label:'pKa Class',value:data.pka_class,unit:'',dp:-1,icon:'⚡',color:'c-violet'},{label:'Stereocenters',value:data.stereocenters,unit:'',dp:0,icon:'🔄',color:'c-emerald'},{label:'Formal Charge',value:data.formal_charge,unit:'e',dp:0,icon:'⚛️',color:'c-rose'}].map((p,i)=>{const v=p.dp===-1?p.value:p.dp===0?p.value:(p.value!=null?Number(p.value).toFixed(p.dp):'—');return `<div class="prop-card ${p.color}" style="animation-delay:${i*.06+.12}s"><div class="prop-icon">${p.icon}</div><div class="prop-label">${p.label}</div><div class="prop-value">${v??'—'}</div>${p.unit?`<div class="prop-unit">${p.unit}</div>`:''}</div>`;}).join('');
-  document.getElementById('ext-grid').innerHTML=[{label:'Ring Count',value:data.ring_count,unit:'',dp:0,icon:'⭕',color:'c-indigo'},{label:'Aromatic Rings',value:data.aromatic_rings,unit:'',dp:0,icon:'🌀',color:'c-violet'},{label:'Heavy Atoms',value:data.heavy_atom_count,unit:'',dp:0,icon:'🔩',color:'c-teal'},{label:'Fraction Csp3',value:data.fraction_csp3,unit:'',dp:3,icon:'📊',color:'c-amber'},{label:'Molar Refractivity',value:data.molar_refractivity,unit:'',dp:2,icon:'🔬',color:'c-cyan'}].map((p,i)=>`<div class="prop-card ${p.color}" style="animation-delay:${i*.06+.19}s"><div class="prop-icon">${p.icon}</div><div class="prop-label">${p.label}</div><div class="prop-value">${p.dp===0?p.value:Number(p.value).toFixed(p.dp)}</div>${p.unit?`<div class="prop-unit">${p.unit}</div>`:''}</div>`).join('');
-  const visc=data.viscosity;document.getElementById('visc-val').textContent=visc!=null?visc.toFixed(2):'—';document.getElementById('visc-badge').textContent=data.viscosity_class??'—';document.getElementById('visc-bar').style.width=visc?Math.min(Math.log10(visc+1)/Math.log10(501)*100,100)+'%':'0%';
-  const co2=data.co2_solubility;document.getElementById('co2-val').textContent=co2!=null?co2.toFixed(4):'—';document.getElementById('co2-badge').textContent=data.co2_class??'—';document.getElementById('co2-bar').style.width=co2?Math.min(co2/0.3*100,100)+'%':'0%';
-  const eps=data.toxicity_endpoints??[];document.getElementById('tox-endpoints').innerHTML=!eps.length?'<p style="font-size:12px;color:var(--muted)">No data.</p>':eps.map(ep=>{const pct=Math.round(ep.probability*100),t=ep.probability>0.5;return `<div class="tox-ep"><div class="tox-ep-name">${ep.endpoint}</div><div class="tox-ep-bar-track"><div class="tox-ep-bar-fill" style="width:${pct}%;background:${t?'linear-gradient(90deg,#b91c1c,#f85149)':'linear-gradient(90deg,#238636,#3fb950)'}"></div></div><div class="tox-ep-label"><span class="val">${pct}%</span><span class="cls ${t?'t':'nt'}">${t?'Toxic':'Safe'}</span></div></div>`;}).join('');
-  document.getElementById('lipinski-bars').innerHTML=[{name:'Molecular Weight',value:data.molecular_weight,max:500,limit:'≤ 500 Da'},{name:'LogP',value:data.logp,max:5,limit:'≤ 5'},{name:'H-Bond Donors',value:data.hbd,max:5,limit:'≤ 5'},{name:'H-Bond Acceptors',value:data.hba,max:10,limit:'≤ 10'}].map(b=>{const pct=Math.min((b.value/b.max)*100,100),good=b.value<=b.max;return `<div class="bar-row"><div class="bar-meta"><span class="bar-name">${b.name} <span style="color:var(--muted);font-weight:400">(${b.limit})</span></span><span class="bar-val ${good?'good':'bad'}">${typeof b.value==='number'?b.value.toFixed(2):b.value}</span></div><div class="bar-track"><div class="bar-fill ${good?'good':'bad'}" style="width:${pct}%"></div></div></div>`;}).join('');
-  loadStructure(smiles);addHistory(smiles);
+
+  // Basic
+  document.getElementById('basic-grid').innerHTML=[
+    {label:'Mol. Weight',value:data.molecular_weight,unit:'Da',dp:2,icon:'⚖️',color:'c-blue'},
+    {label:'LogP',value:data.logp,unit:'',dp:3,icon:'💧',color:'c-cyan'},
+    {label:'TPSA',value:data.tpsa,unit:'Å²',dp:1,icon:'📐',color:'c-violet'},
+    {label:'H-Bond Donors',value:data.hbd,unit:'',dp:0,icon:'🔵',color:'c-emerald'},
+    {label:'H-Bond Acceptors',value:data.hba,unit:'',dp:0,icon:'🔴',color:'c-rose'},
+    {label:'Rotatable Bonds',value:data.rotatable_bonds,unit:'',dp:0,icon:'🔗',color:'c-amber'},
+  ].map((p,i)=>`<div class="prop-card ${p.color}" style="animation-delay:${i*.06+.05}s"><div class="prop-icon">${p.icon}</div><div class="prop-label">${p.label}</div><div class="prop-value">${p.dp===0?p.value:Number(p.value).toFixed(p.dp)}</div>${p.unit?`<div class="prop-unit">${p.unit}</div>`:''}</div>`).join('');
+
+  // Physical
+  document.getElementById('phys-grid').innerHTML=[
+    {label:'Boiling Point',value:data.boiling_point,unit:'°C',dp:1,icon:'🌡️',color:'c-orange'},
+    {label:'Melting Point',value:data.melting_point,unit:'°C',dp:1,icon:'❄️',color:'c-cyan'},
+    {label:'Density',value:data.density,unit:'g/mL',dp:3,icon:'🧊',color:'c-blue'},
+    {label:'pKa Class',value:data.pka_class,unit:'',dp:-1,icon:'⚡',color:'c-violet'},
+    {label:'Stereocenters',value:data.stereocenters,unit:'',dp:0,icon:'🔄',color:'c-emerald'},
+    {label:'Formal Charge',value:data.formal_charge,unit:'e',dp:0,icon:'⚛️',color:'c-rose'},
+  ].map((p,i)=>{const v=p.dp===-1?p.value:p.dp===0?p.value:(p.value!=null?Number(p.value).toFixed(p.dp):'—');return `<div class="prop-card ${p.color}" style="animation-delay:${i*.06+.12}s"><div class="prop-icon">${p.icon}</div><div class="prop-label">${p.label}</div><div class="prop-value">${v??'—'}</div>${p.unit?`<div class="prop-unit">${p.unit}</div>`:''}</div>`;}).join('');
+
+  // Extended
+  document.getElementById('ext-grid').innerHTML=[
+    {label:'Ring Count',value:data.ring_count,unit:'',dp:0,icon:'⭕',color:'c-indigo'},
+    {label:'Aromatic Rings',value:data.aromatic_rings,unit:'',dp:0,icon:'🌀',color:'c-violet'},
+    {label:'Heavy Atoms',value:data.heavy_atom_count,unit:'',dp:0,icon:'🔩',color:'c-teal'},
+    {label:'Fraction Csp3',value:data.fraction_csp3,unit:'',dp:3,icon:'📊',color:'c-amber'},
+    {label:'Molar Refractivity',value:data.molar_refractivity,unit:'',dp:2,icon:'🔬',color:'c-cyan'},
+  ].map((p,i)=>`<div class="prop-card ${p.color}" style="animation-delay:${i*.06+.19}s"><div class="prop-icon">${p.icon}</div><div class="prop-label">${p.label}</div><div class="prop-value">${p.dp===0?p.value:Number(p.value).toFixed(p.dp)}</div>${p.unit?`<div class="prop-unit">${p.unit}</div>`:''}</div>`).join('');
+
+  const visc=data.viscosity;
+  document.getElementById('visc-val').textContent=visc!=null?visc.toFixed(2):'—';
+  document.getElementById('visc-badge').textContent=data.viscosity_class??'—';
+  document.getElementById('visc-bar').style.width=visc?Math.min(Math.log10(visc+1)/Math.log10(501)*100,100)+'%':'0%';
+  const co2=data.co2_solubility;
+  document.getElementById('co2-val').textContent=co2!=null?co2.toFixed(4):'—';
+  document.getElementById('co2-badge').textContent=data.co2_class??'—';
+  document.getElementById('co2-bar').style.width=co2?Math.min(co2/0.3*100,100)+'%':'0%';
+
+  const eps=data.toxicity_endpoints??[];
+  document.getElementById('tox-endpoints').innerHTML=!eps.length?'<p style="font-size:12px;color:var(--muted)">No data.</p>':eps.map(ep=>{const pct=Math.round(ep.probability*100),t=ep.probability>0.5;return `<div class="tox-ep"><div class="tox-ep-name">${ep.endpoint}</div><div class="tox-ep-bar-track"><div class="tox-ep-bar-fill" style="width:${pct}%;background:${t?'linear-gradient(90deg,#b91c1c,#f85149)':'linear-gradient(90deg,#238636,#3fb950)'}"></div></div><div class="tox-ep-label"><span class="val">${pct}%</span><span class="cls ${t?'t':'nt'}">${t?'Toxic':'Safe'}</span></div></div>`;}).join('');
+
+  document.getElementById('lipinski-bars').innerHTML=[
+    {name:'Molecular Weight',value:data.molecular_weight,max:500,limit:'≤ 500 Da'},
+    {name:'LogP',value:data.logp,max:5,limit:'≤ 5'},
+    {name:'H-Bond Donors',value:data.hbd,max:5,limit:'≤ 5'},
+    {name:'H-Bond Acceptors',value:data.hba,max:10,limit:'≤ 10'},
+  ].map(b=>{const pct=Math.min((b.value/b.max)*100,100),good=b.value<=b.max;return `<div class="bar-row"><div class="bar-meta"><span class="bar-name">${b.name} <span style="color:var(--muted);font-weight:400">(${b.limit})</span></span><span class="bar-val ${good?'good':'bad'}">${typeof b.value==='number'?b.value.toFixed(2):b.value}</span></div><div class="bar-track"><div class="bar-fill ${good?'good':'bad'}" style="width:${pct}%"></div></div></div>`;}).join('');
+
+  loadStructure(smiles);
+  addHistory(smiles);
 }
 
 document.getElementById('smiles-input').addEventListener('keydown',e=>{if(e.key==='Enter')runPredict();});
