@@ -65,13 +65,13 @@
     .tox-badge.safe { background: #14532d; color: #86efac; }
     .tox-badge.warn { background: #431407; color: #fdba74; }
     .tox-badge.danger { background: #450a0a; color: #fca5a5; }
-    .visc-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
-    .visc-card h3 { font-size: 1rem; font-weight: 600; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
-    .visc-main { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-    .visc-value { font-size: 1.6rem; font-weight: 700; color: #7dd3fc; }
-    .visc-unit { font-size: 0.85rem; color: #64748b; margin-top: 2px; }
-    .visc-class { font-size: 1rem; font-weight: 600; padding: 4px 14px; border-radius: 20px; background: #0f2744; color: #7dd3fc; border: 1px solid #1e3a5f; }
-    .visc-desc { color: #64748b; font-size: 0.85rem; margin-top: 8px; }
+    .info-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .info-card h3 { font-size: 1rem; font-weight: 600; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .info-main { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .info-value { font-size: 1.6rem; font-weight: 700; color: #7dd3fc; }
+    .info-unit { font-size: 0.85rem; color: #64748b; margin-top: 2px; }
+    .info-class { font-size: 1rem; font-weight: 600; padding: 4px 14px; border-radius: 20px; background: #0f2744; color: #7dd3fc; border: 1px solid #1e3a5f; }
+    .info-desc { color: #64748b; font-size: 0.85rem; margin-top: 8px; }
     .section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin: 20px 0 10px; font-weight: 600; }
     .props-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; margin-bottom: 8px; }
     .prop-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px; }
@@ -142,7 +142,7 @@
     </div>
   </div>
 
-  <p class="subtitle">Predict molecular properties, drug-likeness, toxicity, viscosity, and aqueous solubility</p>
+  <p class="subtitle">Predict molecular properties, drug-likeness, toxicity, viscosity, CO2 solubility, and more</p>
 
   <div class="input-row">
     <input type="text" id="molInput" placeholder="Type molecule name (e.g. aspirin) or paste a SMILES string" />
@@ -197,16 +197,28 @@
       </div>
     </div>
 
-    <div class="visc-card">
+    <div class="info-card">
       <h3>Predicted Viscosity</h3>
-      <div class="visc-main">
+      <div class="info-main">
         <div>
-          <div class="visc-value" id="viscValue">--</div>
-          <div class="visc-unit">cP at 25 degrees C (est.)</div>
+          <div class="info-value" id="viscValue">--</div>
+          <div class="info-unit">cP at 25 degrees C (est.)</div>
         </div>
-        <span class="visc-class" id="viscClass">--</span>
+        <span class="info-class" id="viscClass">--</span>
       </div>
-      <div class="visc-desc" id="viscDesc">--</div>
+      <div class="info-desc" id="viscDesc">--</div>
+    </div>
+
+    <div class="info-card">
+      <h3>CO2 Solubility</h3>
+      <div class="info-main">
+        <div>
+          <div class="info-value" id="co2Value">--</div>
+          <div class="info-unit">mol CO2/kg solvent at 25C, 1 atm (est.)</div>
+        </div>
+        <span class="info-class" id="co2Class">--</span>
+      </div>
+      <div class="info-desc" id="co2Desc">--</div>
     </div>
 
     <div class="section-title">Basic Properties</div>
@@ -278,9 +290,7 @@
   async function handlePredict() {
     var raw = document.getElementById('molInput').value.trim();
     if (!raw) return;
-    showError(false);
-    showLoading(true);
-    showResults(false);
+    showError(false); showLoading(true); showResults(false);
     document.getElementById('predictBtn').disabled = true;
     try {
       var smiles = raw;
@@ -327,8 +337,7 @@
     solEl.textContent = sc;
     var classMap = { 'Highly Soluble': 'highly', 'Soluble': 'soluble', 'Moderately Soluble': 'moderate', 'Poorly Soluble': 'poorly', 'Insoluble': 'insoluble' };
     solEl.className = 'sol-class ' + (classMap[sc] || 'unknown');
-    var logs = d.predicted_logs;
-    document.getElementById('solLogs').textContent = (logs !== null && logs !== undefined) ? 'logS = ' + logs : '';
+    document.getElementById('solLogs').textContent = (d.predicted_logs !== null && d.predicted_logs !== undefined) ? 'logS = ' + d.predicted_logs : '';
     var descMap = { 'Highly Soluble': 'Excellent water solubility. Easy to formulate.', 'Soluble': 'Good water solubility. Generally bioavailable.', 'Moderately Soluble': 'Moderate solubility. May need formulation aid.', 'Poorly Soluble': 'Low water solubility. Difficult to administer orally.', 'Insoluble': 'Very low water solubility. Significant formulation challenge.' };
     document.getElementById('solDesc').textContent = descMap[sc] || '';
 
@@ -344,7 +353,7 @@
       else { toxCircle.className = 'tox-circle high'; toxBadge.textContent = 'High risk — potentially harmful'; toxBadge.className = 'tox-badge danger'; }
     } else {
       document.getElementById('toxPct').textContent = '--';
-      document.getElementById('toxTitle').textContent = 'Model not available';
+      document.getElementById('toxTitle').textContent = 'Not available';
       toxBadge.textContent = 'Check server'; toxBadge.className = 'tox-badge warn';
     }
 
@@ -353,18 +362,25 @@
     if (visc !== null && visc !== undefined) {
       document.getElementById('viscValue').textContent = visc;
       document.getElementById('viscClass').textContent = viscClass;
-      var viscDescMap = {
-        'Very Low': 'Flows like water or lighter. Very easy to pour and mix.',
-        'Low': 'Flows easily. Similar to light oils or alcohols.',
-        'Moderate': 'Moderate flow resistance. Similar to vegetable oil.',
-        'High': 'Thick and slow-flowing. Similar to honey or syrup.',
-        'Very High': 'Extremely thick. Difficult to pour without heating.'
-      };
+      var viscDescMap = { 'Very Low': 'Flows like water or lighter. Very easy to pour and mix.', 'Low': 'Flows easily. Similar to light oils or alcohols.', 'Moderate': 'Moderate flow resistance. Similar to vegetable oil.', 'High': 'Thick and slow-flowing. Similar to honey or syrup.', 'Very High': 'Extremely thick. Difficult to pour without heating.' };
       document.getElementById('viscDesc').textContent = viscDescMap[viscClass] || '';
     } else {
       document.getElementById('viscValue').textContent = '--';
       document.getElementById('viscClass').textContent = 'Not available';
       document.getElementById('viscDesc').textContent = '';
+    }
+
+    var co2 = d.co2_solubility;
+    var co2Class = d.co2_class || 'Unknown';
+    if (co2 !== null && co2 !== undefined) {
+      document.getElementById('co2Value').textContent = co2;
+      document.getElementById('co2Class').textContent = co2Class;
+      var co2DescMap = { 'Very High': 'Excellent CO2 absorption. Good for carbon capture applications.', 'High': 'Good CO2 solubility. Suitable for many industrial processes.', 'Moderate': 'Moderate CO2 absorption at standard conditions.', 'Low': 'Limited CO2 solubility. May need pressure or temperature adjustment.', 'Very Low': 'Poor CO2 absorption. Not suitable for CO2 capture.' };
+      document.getElementById('co2Desc').textContent = co2DescMap[co2Class] || '';
+    } else {
+      document.getElementById('co2Value').textContent = '--';
+      document.getElementById('co2Class').textContent = 'Not available';
+      document.getElementById('co2Desc').textContent = '';
     }
 
     document.getElementById('mw').textContent = d.molecular_weight;
@@ -406,10 +422,7 @@
   function showError(show, msg) { var box = document.getElementById('errorBox'); box.style.display = show ? 'block' : 'none'; if (msg) box.textContent = msg; }
   function showLoading(show) { document.getElementById('loadingBox').style.display = show ? 'block' : 'none'; }
   function showResults(show) { document.getElementById('results').style.display = show ? 'block' : 'none'; }
-
-  document.getElementById('molInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') handlePredict();
-  });
+  document.getElementById('molInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') handlePredict(); });
 </script>
 </body>
 </html>
