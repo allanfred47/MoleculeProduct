@@ -5,7 +5,37 @@ from pydantic import BaseModel, Field
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Crippen, Lipinski, rdMolDescriptors
 
-app = FastAPI(title="Molecule Product API")
+app = FastAPI(
+    title="MoleculeProduct API",
+    description="""
+A molecular property prediction API powered by RDKit and PubChem.
+
+## Features
+- Predict molecular properties from a SMILES string
+- Look up any molecule by name using PubChem (100M+ compounds)
+- Returns Lipinski Rule of 5 properties for drug-likeness assessment
+
+## Properties Returned
+- **Molecular Weight** — mass of the molecule in Daltons
+- **LogP** — measure of lipophilicity (fat solubility)
+- **TPSA** — topological polar surface area in Å²
+- **HBD** — number of hydrogen bond donors
+- **HBA** — number of hydrogen bond acceptors
+- **Rotatable Bonds** — measure of molecular flexibility
+
+## Lipinski Rule of 5
+A molecule is considered drug-like if:
+- Molecular Weight ≤ 500 Da
+- LogP ≤ 5
+- HBD ≤ 5
+- HBA ≤ 10
+    """,
+    version="1.0.0",
+    contact={
+        "name": "MoleculeProduct",
+        "url": "https://moleculeproduct.onrender.com",
+    },
+)
 
 app.add_middleware(
     CORSMiddleware,
