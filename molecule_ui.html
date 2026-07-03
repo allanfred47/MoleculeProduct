@@ -639,8 +639,30 @@ async function runLookup(){
 }
 async function runPredict(){
   let smiles=document.getElementById('smiles-input').value.trim();if(!smiles)return;
-  const isName=/^[a-zA-Z0-9 '-]+$/.test(smiles)&&!/^d+$/.test(smiles);
-  if(isName){setBtn('predict-btn',true,'Looking up…');try{const r=await fetch(API+'/lookup?name='+encodeURIComponent(smiles));if(r.ok){const d=await r.json();smiles=d.smiles;document.getElementById('smiles-input').value=smiles;}}catch{}setBtn('predict-btn',false,'Predict');}
+  // Detect if input is a name (no SMILES special chars) rather than a SMILES string
+  const isSmiles = smiles.includes('=') || smiles.includes('(') || smiles.includes(')') || smiles.includes('#') || smiles.includes('[') || smiles.includes('%') || smiles.length <= 3;
+  if(!isSmiles){
+    // Treat as a molecule name — look it up on PubChem first
+    setBtn('predict-btn',true,'Looking up…');
+    document.getElementById('error-banner').style.display='none';
+    try{
+      const r=await fetch(API+'/lookup?name='+encodeURIComponent(smiles));
+      if(r.ok){
+        const d=await r.json();
+        smiles=d.smiles;
+        document.getElementById('smiles-input').value=smiles;
+      } else {
+        setBtn('predict-btn',false,'Predict');
+        showError("Could not find '"+document.getElementById('smiles-input').value.trim()+"' on PubChem. Try entering the SMILES directly.");
+        return;
+      }
+    } catch {
+      setBtn('predict-btn',false,'Predict');
+      showError('Lookup failed — check your connection or enter the SMILES directly.');
+      return;
+    }
+    setBtn('predict-btn',false,'Predict');
+  }
   predictSmiles(smiles);
 }
 async function predictSmiles(smiles){
@@ -682,7 +704,7 @@ function showResults(data,smiles){
   const viol=data.lipinski_violations??0,pass=viol===0;
   const badge=document.getElementById('ro5-badge');
   badge.className='ro5-badge '+(pass?'pass':'fail');
-  badge.innerHTML=`<span class="ro5-dot ${pass?'pass':'fail'}"></span>${pass?'Passes Rule of 5':'Fails Rule of 5 ('+viol+' violation'+(viol>1?'s':'')+')'}`; 
+ badge.innerHTML='<span class="ro5-dot '+(pass?'pass':'fail')+'"></span>'+(pass?'Passes Rule of 5':'Fails Rule of 5 ('+viol+' violation'+(viol>1?'s':'')+')');
 
   const dlPct=Math.round((data.drug_likeness_score??0)*100);
   setCircle('dl-circle',dlPct+'%',dlPct>=75?'green':dlPct>=50?'amber':'red');
