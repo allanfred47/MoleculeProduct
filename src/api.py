@@ -57,7 +57,7 @@ except Exception as e:
 app = FastAPI(
     title="MoleculeProduct API",
     description="Predict molecular properties and drug-likeness from SMILES strings.",
-    version="7.0.0"
+    version="8.0.0"
 )
 
 app.add_middleware(
@@ -74,19 +74,31 @@ class PredictRequest(BaseModel):
 
 
 # ─── Serve the UI HTML ────────────────────────────────────────────────────────
-# molecule_ui.html lives one folder up from src/
 UI_PATH = os.path.join(os.path.dirname(__file__), "..", "molecule_ui.html")
 
 @app.get("/ui", response_class=HTMLResponse, include_in_schema=False)
 @app.get("/app", response_class=HTMLResponse, include_in_schema=False)
 def serve_ui():
-    """Serve the MoleculeProduct web interface."""
     try:
         with open(UI_PATH, "r", encoding="utf-8") as f:
             html = f.read()
         return HTMLResponse(content=html)
     except FileNotFoundError:
         return HTMLResponse(content="<h1>UI not found</h1><p>molecule_ui.html missing.</p>", status_code=404)
+
+
+# ─── Serve the Designer HTML ──────────────────────────────────────────────────
+DESIGNER_PATH = os.path.join(os.path.dirname(__file__), "..", "molecule_designer.html")
+
+@app.get("/designer", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/design", response_class=HTMLResponse, include_in_schema=False)
+def serve_designer():
+    try:
+        with open(DESIGNER_PATH, "r", encoding="utf-8") as f:
+            html = f.read()
+        return HTMLResponse(content=html)
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Designer not found</h1><p>molecule_designer.html missing.</p>", status_code=404)
 
 
 # ─── ESOL Solubility ──────────────────────────────────────────────────────────
@@ -150,13 +162,14 @@ def estimate_bp_mp(mol):
 def root():
     return {
         "service":           "MoleculeProduct API",
-        "version":           "7.0.0",
+        "version":           "8.0.0",
         "ui":                "/ui",
+        "designer":          "/designer",
         "rdkit":             RDKIT_OK,
         "toxicity2_loaded":  TOXICITY2_MODELS is not None,
         "viscosity_loaded":  VISCOSITY_MODEL is not None,
         "co2_loaded":        CO2_MODEL is not None,
-        "endpoints":         ["/ui", "/predict", "/structure", "/lookup", "/docs"]
+        "endpoints":         ["/ui", "/designer", "/predict", "/structure", "/lookup", "/docs"]
     }
 
 
