@@ -28,10 +28,11 @@ def load_model(filename):
         return None
 
 TOXICITY_MODEL = load_model("toxicity_model.pkl")
+TOXICITY2 = load_model("toxicity2_models.pkl")
 VISCOSITY_MODEL = load_model("viscosity_model.pkl")
 CO2_MODEL = load_model("co2_model.pkl")
 
-app = FastAPI(title="MoleculeProduct API", version="5.0.0")
+app = FastAPI(title="MoleculeProduct API", version="6.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 class PredictRequest(BaseModel):
@@ -84,6 +85,43 @@ def predict_toxicity(features):
         print(f"Toxicity error: {e}")
         return None, "Prediction error"
 
+def predict_toxicity2(features):
+    if TOXICITY2 is None: return None
+    try:
+        X = np.array([features])
+        models = TOXICITY2["models"]
+        columns = TOXICITY2["columns"]
+        endpoint_labels = {
+            "NR-AR": "Androgen Receptor",
+            "NR-AR-LBD": "AR Ligand Binding",
+            "NR-AhR": "Aryl Hydrocarbon R.",
+            "NR-Aromatase": "Aromatase",
+            "NR-ER": "Estrogen Receptor",
+            "NR-ER-LBD": "ER Ligand Binding",
+            "NR-PPAR-gamma": "PPAR-gamma",
+            "SR-ARE": "Oxidative Stress",
+            "SR-ATAD5": "DNA Damage",
+            "SR-HSE": "Heat Shock",
+            "SR-MMP": "Mitochondrial",
+            "SR-p53": "p53 Pathway"
+        }
+        results = []
+        for col in columns:
+            if col not in models:
+                continue
+            proba = models[col].predict_proba(X)[0]
+            risk = round(float(proba[1]) * 100, 1)
+            results.append({
+                "endpoint": col,
+                "label": endpoint_labels.get(col, col),
+                "risk_percent": risk,
+                "risk_level": "High" if risk > 50 else "Moderate" if risk > 25 else "Low"
+            })
+        return results
+    except Exception as e:
+        print(f"Toxicity2 error: {e}")
+        return None
+
 def predict_viscosity(features):
     if VISCOSITY_MODEL is None: return None, "Model not loaded"
     try:
@@ -117,9 +155,16 @@ def predict_co2_solubility(features):
 
 @app.get("/")
 def root():
-    return {"message": "MoleculeProduct API is running", "docs": "/docs", "rdkit_ok": RDKIT_OK,
-            "toxicity_model": TOXICITY_MODEL is not None, "viscosity_model": VISCOSITY_MODEL is not None,
-            "co2_model": CO2_MODEL is not None, "version": "5.0.0"}
+    return {
+        "message": "MoleculeProduct API is running",
+        "docs": "/docs",
+        "rdkit_ok": RDKIT_OK,
+        "toxicity_model": TOXICITY_MODEL is not None,
+        "toxicity2_model": TOXICITY2 is not None,
+        "viscosity_model": VISCOSITY_MODEL is not None,
+        "co2_model": CO2_MODEL is not None,
+        "version": "6.0.0"
+    }
 
 @app.get("/lookup")
 def lookup(name: str = Query(...)):
@@ -169,6 +214,7 @@ def predict(req: PredictRequest):
 
     features = [mw, logp, tpsa, hbd, hba, rot, ring_count, aromatic_rings, heavy_atom_count, fraction_csp3, molar_refractivity]
     toxicity_probability, toxicity_class = predict_toxicity(features)
+    toxicity_endpoints = predict_toxicity2(features)
     viscosity, viscosity_class = predict_viscosity(features)
     co2_solubility, co2_class = predict_co2_solubility(features)
 
@@ -183,6 +229,7 @@ def predict(req: PredictRequest):
         "melting_point": melting_point, "density": density, "pka_class": pka_class,
         "stereocenters": stereocenters, "formal_charge": formal_charge,
         "toxicity_probability": toxicity_probability, "toxicity_class": toxicity_class,
+        "toxicity_endpoints": toxicity_endpoints,
         "viscosity": viscosity, "viscosity_class": viscosity_class,
         "co2_solubility": co2_solubility, "co2_class": co2_class
     }
