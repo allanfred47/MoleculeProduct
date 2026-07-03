@@ -12,10 +12,24 @@ except Exception as e:
     RDKIT_OK = False
     print(f"RDKit not available: {e}")
 
+# Toxicity model
+TOXICITY_MODEL = None
+try:
+    import joblib
+    import numpy as np
+    tox_path = os.path.join(os.path.dirname(__file__), "toxicity_model.pkl")
+    if os.path.exists(tox_path):
+        TOXICITY_MODEL = joblib.load(tox_path)
+        print(f"Toxicity model loaded from {tox_path}")
+    else:
+        print(f"Toxicity model not found at {tox_path}")
+except Exception as e:
+    print(f"Could not load toxicity model: {e}")
+
 app = FastAPI(
     title="MoleculeProduct API",
     description="Predict molecular properties and drug-likeness from SMILES strings.",
-    version="2.0.0"
+    version="3.0.0"
 )
 
 app.add_middleware(
@@ -53,7 +67,6 @@ def estimate_solubility(mw, logp, hbd, tpsa):
 
 
 def estimate_boiling_point(mol, mw, hbd, hba):
-    """Estimate boiling point in Celsius using a simplified Joback-style approach."""
     ring_count = rdMolDescriptors.CalcNumRings(mol)
     aromatic = rdMolDescriptors.CalcNumAromaticRings(mol)
     bp = 198.2 + 0.32 * mw + 12.5 * hbd + 5.5 * hba + 8.0 * ring_count + 10.0 * aromatic
@@ -61,13 +74,11 @@ def estimate_boiling_point(mol, mw, hbd, hba):
 
 
 def estimate_melting_point(mw, ring_count, aromatic_rings, hbd):
-    """Estimate melting point in Celsius from structural features."""
     mp = -50.0 + 0.18 * mw + 20.0 * ring_count + 15.0 * aromatic_rings + 10.0 * hbd
     return round(mp, 1)
 
 
 def estimate_density(mol, mw):
-    """Estimate density in g/cm³ from molar volume approximation."""
     heavy = mol.GetNumHeavyAtoms()
     if heavy == 0:
         return None
@@ -77,7 +88,6 @@ def estimate_density(mol, mw):
 
 
 def get_pka_class(mol):
-    """Classify molecule as Acidic, Basic, or Neutral based on functional groups."""
     smarts_acid = ["[OH][CX3](=O)", "[OH][SX4](=O)(=O)", "[OH][PX4](=O)"]
     smarts_base = ["[NX3;H2,H1;!$(NC=O)]", "[NX3;H0;!$(NC=O)]", "n"]
     for s in smarts_acid:
@@ -91,13 +101,36 @@ def get_pka_class(mol):
     return "Neutral"
 
 
+def predict_toxicity(features):
+    if TOXICITY_MODEL is None:
+        return None, "Model not loaded"
+    try:
+        import numpy as np
+        X = np.array([features])
+        pred = TOXICITY_MODEL.predict(X)[0]
+        proba = TOXICITY_MODEL.predict_proba(X)[0]
+        tox_prob = round(float(proba[1]) * 100, 1)
+        if pred == 1:
+            tox_class = "Potentially Toxic"
+        else:
+            if tox_prob > 30:
+                tox_class = "Low Toxicity Risk"
+            else:
+                tox_class = "Non-toxic"
+        return tox_prob, tox_class
+    except Exception as e:
+        print(f"Toxicity prediction error: {e}")
+        return None, "Prediction error"
+
+
 @app.get("/")
 def root():
     return {
         "message": "MoleculeProduct API is running",
         "docs": "/docs",
         "rdkit_ok": RDKIT_OK,
-        "version": "2.0.0"
+        "toxicity_model_loaded": TOXICITY_MODEL is not None,
+        "version": "3.0.0"
     }
 
 
@@ -133,7 +166,6 @@ def predict(req: PredictRequest):
     if mol is None:
         raise HTTPException(status_code=422, detail=f"Invalid SMILES string: '{smiles}'")
 
-    # Core descriptors
     mw = round(Descriptors.MolWt(mol), 3)
     logp = round(Descriptors.MolLogP(mol), 4)
     tpsa = round(Descriptors.TPSA(mol), 2)
@@ -146,7 +178,6 @@ def predict(req: PredictRequest):
     fraction_csp3 = round(rdMolDescriptors.CalcFractionCSP3(mol), 4)
     molar_refractivity = round(Descriptors.MolMR(mol), 3)
 
-    # Lipinski
     violations = 0
     if mw > 500: violations += 1
     if logp > 5: violations += 1
@@ -155,18 +186,17 @@ def predict(req: PredictRequest):
     drug_likeness_score = round(1 - (violations / 4), 2)
     drug_like = violations == 0
 
-    # Solubility
     predicted_logs, solubility_class = estimate_solubility(mw, logp, hbd, tpsa)
-
-    # New physical properties
     boiling_point = estimate_boiling_point(mol, mw, hbd, hba)
     melting_point = estimate_melting_point(mw, ring_count, aromatic_rings, hbd)
     density = estimate_density(mol, mw)
     pka_class = get_pka_class(mol)
-
-    # Stereocenters and charge
     stereocenters = len(Chem.FindMolChiralCenters(mol, includeUnassigned=True))
     formal_charge = sum(atom.GetFormalCharge() for atom in mol.GetAtoms())
+
+    features = [mw, logp, tpsa, hbd, hba, rot, ring_count, aromatic_rings,
+                heavy_atom_count, fraction_csp3, molar_refractivity]
+    toxicity_probability, toxicity_class = predict_toxicity(features)
 
     return {
         "smiles": smiles,
@@ -191,5 +221,7 @@ def predict(req: PredictRequest):
         "density": density,
         "pka_class": pka_class,
         "stereocenters": stereocenters,
-        "formal_charge": formal_charge
+        "formal_charge": formal_charge,
+        "toxicity_probability": toxicity_probability,
+        "toxicity_class": toxicity_class
     }
