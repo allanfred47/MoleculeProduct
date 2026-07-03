@@ -6,49 +6,24 @@
   <title>MoleculeProduct</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f1117;
-      color: #e0e0e0;
-      min-height: 100vh;
-      padding: 24px 16px;
-    }
-    .container { max-width: 860px; margin: 0 auto; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e0e0e0; min-height: 100vh; padding: 24px 16px; }
+    .container { max-width: 900px; margin: 0 auto; }
     h1 { text-align: center; font-size: 2rem; font-weight: 700; color: #7dd3fc; margin-bottom: 6px; }
     .subtitle { text-align: center; color: #94a3b8; margin-bottom: 28px; font-size: 0.95rem; }
     .input-row { display: flex; gap: 10px; margin-bottom: 14px; }
-    input[type="text"] {
-      flex: 1; padding: 12px 16px; border-radius: 8px;
-      border: 1px solid #334155; background: #1e293b;
-      color: #e0e0e0; font-size: 1rem; outline: none;
-    }
+    input[type="text"] { flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e0e0e0; font-size: 1rem; outline: none; }
     input[type="text"]:focus { border-color: #7dd3fc; }
-    button.predict-btn {
-      padding: 12px 24px; background: #3b82f6; color: white;
-      border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;
-    }
+    button.predict-btn { padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
     button.predict-btn:hover { background: #2563eb; }
     button.predict-btn:disabled { background: #475569; cursor: not-allowed; }
     .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
     .examples span { color: #94a3b8; font-size: 0.85rem; margin-right: 4px; line-height: 2; }
-    .example-btn {
-      padding: 5px 14px; background: #1e293b; border: 1px solid #334155;
-      border-radius: 20px; color: #7dd3fc; font-size: 0.85rem; cursor: pointer;
-    }
+    .example-btn { padding: 5px 14px; background: #1e293b; border: 1px solid #334155; border-radius: 20px; color: #7dd3fc; font-size: 0.85rem; cursor: pointer; }
     .example-btn:hover { background: #334155; }
-    .error-box {
-      background: #450a0a; border: 1px solid #dc2626; color: #fca5a5;
-      border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: none;
-    }
+    .error-box { background: #450a0a; border: 1px solid #dc2626; color: #fca5a5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: none; }
     .results { display: none; }
-    .drug-card {
-      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
-      padding: 20px; display: flex; align-items: center; gap: 24px; margin-bottom: 16px;
-    }
-    .score-circle {
-      width: 90px; height: 90px; border-radius: 50%; border: 6px solid #22c55e;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0;
-    }
+    .drug-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 24px; margin-bottom: 16px; }
+    .score-circle { width: 90px; height: 90px; border-radius: 50%; border: 6px solid #22c55e; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
     .score-circle.bad { border-color: #ef4444; }
     .score-circle.medium { border-color: #f59e0b; }
     .score-pct { font-size: 1.4rem; font-weight: 700; color: #e0e0e0; }
@@ -70,15 +45,15 @@
     .sol-class.unknown { color: #94a3b8; }
     .sol-logs { color: #94a3b8; font-size: 0.9rem; }
     .sol-desc { color: #64748b; font-size: 0.85rem; margin-top: 6px; }
-    .section-title {
-      font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;
-      color: #64748b; margin: 20px 0 10px; font-weight: 600;
-    }
-    .props-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 8px; }
+    .section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin: 20px 0 10px; font-weight: 600; }
+    .props-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; margin-bottom: 8px; }
     .prop-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px; }
     .prop-label { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; }
     .prop-value { font-size: 1.2rem; font-weight: 700; color: #7dd3fc; }
     .prop-unit { font-size: 0.7rem; color: #475569; margin-top: 2px; }
+    .prop-card.acidic .prop-value { color: #f87171; }
+    .prop-card.basic .prop-value { color: #60a5fa; }
+    .prop-card.neutral .prop-value { color: #94a3b8; }
     .lipinski-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 8px; }
     .lip-item { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px; }
     .lip-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
@@ -89,11 +64,7 @@
     .lip-bar.ok { background: #22c55e; }
     .lip-bar.warn { background: #ef4444; }
     .lip-limit { font-size: 0.7rem; color: #475569; margin-top: 4px; }
-    .smiles-box {
-      background: #1e293b; border: 1px solid #334155; border-radius: 8px;
-      padding: 12px 16px; font-family: monospace; font-size: 0.85rem;
-      color: #94a3b8; word-break: break-all; margin-top: 16px;
-    }
+    .smiles-box { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 0.85rem; color: #94a3b8; word-break: break-all; margin-top: 16px; }
     .loading { text-align: center; color: #7dd3fc; padding: 40px; display: none; font-size: 1rem; }
   </style>
 </head>
@@ -145,98 +116,52 @@
 
     <div class="section-title">Basic Properties</div>
     <div class="props-grid">
-      <div class="prop-card">
-        <div class="prop-label">Molecular Weight</div>
-        <div class="prop-value" id="mw">--</div>
-        <div class="prop-unit">Da</div>
-      </div>
-      <div class="prop-card">
-        <div class="prop-label">LogP</div>
-        <div class="prop-value" id="logp">--</div>
-        <div class="prop-unit">lipophilicity</div>
-      </div>
-      <div class="prop-card">
-        <div class="prop-label">TPSA</div>
-        <div class="prop-value" id="tpsa">--</div>
-        <div class="prop-unit">Angstrom squared</div>
-      </div>
-      <div class="prop-card">
-        <div class="prop-label">H-Bond Donors</div>
-        <div class="prop-value" id="hbd">--</div>
-        <div class="prop-unit">count</div>
-      </div>
-      <div class="prop-card">
-        <div class="prop-label">H-Bond Acceptors</div>
-        <div class="prop-value" id="hba">--</div>
-        <div class="prop-unit">count</div>
-      </div>
-      <div class="prop-card">
-        <div class="prop-label">Rotatable Bonds</div>
-        <div class="prop-value" id="rot">--</div>
-        <div class="prop-unit">count</div>
-      </div>
+      <div class="prop-card"><div class="prop-label">Molecular Weight</div><div class="prop-value" id="mw">--</div><div class="prop-unit">Da</div></div>
+      <div class="prop-card"><div class="prop-label">LogP</div><div class="prop-value" id="logp">--</div><div class="prop-unit">lipophilicity</div></div>
+      <div class="prop-card"><div class="prop-label">TPSA</div><div class="prop-value" id="tpsa">--</div><div class="prop-unit">Angstrom sq</div></div>
+      <div class="prop-card"><div class="prop-label">H-Bond Donors</div><div class="prop-value" id="hbd">--</div><div class="prop-unit">count</div></div>
+      <div class="prop-card"><div class="prop-label">H-Bond Acceptors</div><div class="prop-value" id="hba">--</div><div class="prop-unit">count</div></div>
+      <div class="prop-card"><div class="prop-label">Rotatable Bonds</div><div class="prop-value" id="rot">--</div><div class="prop-unit">count</div></div>
+    </div>
+
+    <div class="section-title">Physical Properties</div>
+    <div class="props-grid">
+      <div class="prop-card"><div class="prop-label">Boiling Point</div><div class="prop-value" id="bp">--</div><div class="prop-unit">degrees C (est.)</div></div>
+      <div class="prop-card"><div class="prop-label">Melting Point</div><div class="prop-value" id="mp">--</div><div class="prop-unit">degrees C (est.)</div></div>
+      <div class="prop-card"><div class="prop-label">Density</div><div class="prop-value" id="density">--</div><div class="prop-unit">g/cm3 (est.)</div></div>
+      <div class="prop-card" id="pkaCard"><div class="prop-label">pKa Class</div><div class="prop-value" id="pka">--</div><div class="prop-unit">acid/base/neutral</div></div>
+      <div class="prop-card"><div class="prop-label">Stereocenters</div><div class="prop-value" id="stereo">--</div><div class="prop-unit">chiral centers</div></div>
+      <div class="prop-card"><div class="prop-label">Formal Charge</div><div class="prop-value" id="charge">--</div><div class="prop-unit">total charge</div></div>
     </div>
 
     <div class="section-title">Extended Descriptors</div>
     <div class="props-grid">
-      <div class="prop-card">
-        <div class="prop-label">Ring Count</div>
-        <div class="prop-value" id="rings">--</div>
-        <div class="prop-unit">total rings</div>
-      </div>
-      <div class="prop-card">
-        <div class="prop-label">Aromatic Rings</div>
-        <div class="prop-value" id="aromatic">--</div>
-        <div class="prop-unit">count</div>
-      </div>
-      <div class="prop-card">
-        <div class="prop-label">Heavy Atoms</div>
-        <div class="prop-value" id="heavy">--</div>
-        <div class="prop-unit">count</div>
-      </div>
-      <div class="prop-card">
-        <div class="prop-label">Fraction Csp3</div>
-        <div class="prop-value" id="csp3">--</div>
-        <div class="prop-unit">sp3 character</div>
-      </div>
-      <div class="prop-card">
-        <div class="prop-label">Molar Refractivity</div>
-        <div class="prop-value" id="mr">--</div>
-        <div class="prop-unit">MR</div>
-      </div>
+      <div class="prop-card"><div class="prop-label">Ring Count</div><div class="prop-value" id="rings">--</div><div class="prop-unit">total rings</div></div>
+      <div class="prop-card"><div class="prop-label">Aromatic Rings</div><div class="prop-value" id="aromatic">--</div><div class="prop-unit">count</div></div>
+      <div class="prop-card"><div class="prop-label">Heavy Atoms</div><div class="prop-value" id="heavy">--</div><div class="prop-unit">count</div></div>
+      <div class="prop-card"><div class="prop-label">Fraction Csp3</div><div class="prop-value" id="csp3">--</div><div class="prop-unit">sp3 character</div></div>
+      <div class="prop-card"><div class="prop-label">Molar Refractivity</div><div class="prop-value" id="mr">--</div><div class="prop-unit">MR</div></div>
     </div>
 
     <div class="section-title">Lipinski Rule of 5</div>
     <div class="lipinski-grid">
       <div class="lip-item">
-        <div class="lip-header">
-          <span class="lip-name">Molecular Weight</span>
-          <span class="lip-val" id="l-mw">--</span>
-        </div>
+        <div class="lip-header"><span class="lip-name">Molecular Weight</span><span class="lip-val" id="l-mw">--</span></div>
         <div class="lip-bar-bg"><div class="lip-bar" id="b-mw"></div></div>
         <div class="lip-limit">Limit: 500 Da</div>
       </div>
       <div class="lip-item">
-        <div class="lip-header">
-          <span class="lip-name">LogP</span>
-          <span class="lip-val" id="l-logp">--</span>
-        </div>
+        <div class="lip-header"><span class="lip-name">LogP</span><span class="lip-val" id="l-logp">--</span></div>
         <div class="lip-bar-bg"><div class="lip-bar" id="b-logp"></div></div>
         <div class="lip-limit">Limit: 5</div>
       </div>
       <div class="lip-item">
-        <div class="lip-header">
-          <span class="lip-name">H-Bond Donors</span>
-          <span class="lip-val" id="l-hbd">--</span>
-        </div>
+        <div class="lip-header"><span class="lip-name">H-Bond Donors</span><span class="lip-val" id="l-hbd">--</span></div>
         <div class="lip-bar-bg"><div class="lip-bar" id="b-hbd"></div></div>
         <div class="lip-limit">Limit: 5</div>
       </div>
       <div class="lip-item">
-        <div class="lip-header">
-          <span class="lip-name">H-Bond Acceptors</span>
-          <span class="lip-val" id="l-hba">--</span>
-        </div>
+        <div class="lip-header"><span class="lip-name">H-Bond Acceptors</span><span class="lip-val" id="l-hba">--</span></div>
         <div class="lip-bar-bg"><div class="lip-bar" id="b-hba"></div></div>
         <div class="lip-limit">Limit: 10</div>
       </div>
@@ -248,7 +173,7 @@
 </div>
 
 <script>
-  const API = "https://moleculeproduct.onrender.com";
+  var API = "https://moleculeproduct.onrender.com";
 
   function useSmiles(smiles) {
     document.getElementById('molInput').value = smiles;
@@ -256,40 +181,35 @@
   }
 
   async function handlePredict() {
-    const raw = document.getElementById('molInput').value.trim();
+    var raw = document.getElementById('molInput').value.trim();
     if (!raw) return;
-
     showError(false);
     showLoading(true);
     showResults(false);
     document.getElementById('predictBtn').disabled = true;
-
     try {
-      let smiles = raw;
-      const looksLikeName = /^[a-zA-Z][a-zA-Zs-]{2,}$/.test(raw);
-
+      var smiles = raw;
+      var looksLikeName = /^[a-zA-Z][a-zA-Zs-]{2,}$/.test(raw);
       if (looksLikeName) {
-        const lookupResp = await fetch(`${API}/lookup?name=${encodeURIComponent(raw)}`);
+        var lookupResp = await fetch(API + '/lookup?name=' + encodeURIComponent(raw));
         if (!lookupResp.ok) {
           throw new Error('"' + raw + '" was not recognized. Try a different name or paste a SMILES string.');
         }
-        const lookupData = await lookupResp.json();
+        var lookupData = await lookupResp.json();
         smiles = lookupData.smiles;
         if (!smiles) throw new Error('No SMILES found for "' + raw + '".');
       }
-
-      const predResp = await fetch(`${API}/predict`, {
+      var predResp = await fetch(API + '/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ smiles: smiles })
       });
       if (!predResp.ok) {
-        const err = await predResp.json().catch(function() { return {}; });
-        throw new Error(err.detail || 'Prediction failed. Check your SMILES string.');
+        var err = await predResp.json().catch(function() { return {}; });
+        throw new Error(err.detail || 'Prediction failed.');
       }
-      const d = await predResp.json();
+      var d = await predResp.json();
       renderResults(d);
-
     } catch (e) {
       showError(true, e.message);
     } finally {
@@ -312,24 +232,11 @@
     var sc = d.solubility_class || 'Unknown';
     var solEl = document.getElementById('solClass');
     solEl.textContent = sc;
-    var classMap = {
-      'Highly Soluble': 'highly',
-      'Soluble': 'soluble',
-      'Moderately Soluble': 'moderate',
-      'Poorly Soluble': 'poorly',
-      'Insoluble': 'insoluble'
-    };
+    var classMap = { 'Highly Soluble': 'highly', 'Soluble': 'soluble', 'Moderately Soluble': 'moderate', 'Poorly Soluble': 'poorly', 'Insoluble': 'insoluble' };
     solEl.className = 'sol-class ' + (classMap[sc] || 'unknown');
-
     var logs = d.predicted_logs;
     document.getElementById('solLogs').textContent = (logs !== null && logs !== undefined) ? 'logS = ' + logs : '';
-    var descMap = {
-      'Highly Soluble': 'Excellent water solubility. Easy to formulate.',
-      'Soluble': 'Good water solubility. Generally bioavailable.',
-      'Moderately Soluble': 'Moderate solubility. May need formulation aid.',
-      'Poorly Soluble': 'Low water solubility. Difficult to administer orally.',
-      'Insoluble': 'Very low water solubility. Significant formulation challenge.'
-    };
+    var descMap = { 'Highly Soluble': 'Excellent water solubility. Easy to formulate.', 'Soluble': 'Good water solubility. Generally bioavailable.', 'Moderately Soluble': 'Moderate solubility. May need formulation aid.', 'Poorly Soluble': 'Low water solubility. Difficult to administer orally.', 'Insoluble': 'Very low water solubility. Significant formulation challenge.' };
     document.getElementById('solDesc').textContent = descMap[sc] || '';
 
     document.getElementById('mw').textContent = d.molecular_weight;
@@ -338,6 +245,17 @@
     document.getElementById('hbd').textContent = d.hbd;
     document.getElementById('hba').textContent = d.hba;
     document.getElementById('rot').textContent = d.rotatable_bonds;
+
+    document.getElementById('bp').textContent = d.boiling_point;
+    document.getElementById('mp').textContent = d.melting_point;
+    document.getElementById('density').textContent = d.density;
+    var pkaEl = document.getElementById('pka');
+    pkaEl.textContent = d.pka_class;
+    var pkaCard = document.getElementById('pkaCard');
+    pkaCard.className = 'prop-card ' + (d.pka_class || '').toLowerCase();
+    document.getElementById('stereo').textContent = d.stereocenters;
+    document.getElementById('charge').textContent = d.formal_charge >= 0 ? '+' + d.formal_charge : d.formal_charge;
+
     document.getElementById('rings').textContent = d.ring_count;
     document.getElementById('aromatic').textContent = d.aromatic_rings;
     document.getElementById('heavy').textContent = d.heavy_atom_count;
