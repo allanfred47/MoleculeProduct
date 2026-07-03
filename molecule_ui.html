@@ -5,258 +5,287 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MoleculeProduct — Property Predictor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #f1f5f9;
-      --surface: #ffffff;
-      --border:  #e2e8f0;
-      --text:    #0f172a;
-      --muted:   #64748b;
-      --primary: #2563eb;
-      --emerald: #059669;
-      --red:     #dc2626;
-      --violet:  #7c3aed;
-      --cyan:    #0891b2;
-      --radius:  14px;
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1c2333;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #7d8590;
+      --cyan:      #39d0d8;
+      --blue:      #58a6ff;
+      --green:     #3fb950;
+      --amber:     #d29922;
+      --red:       #f85149;
+      --violet:    #bc8cff;
+      --radius:    12px;
     }
 
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
     /* ── Header ── */
     header {
-      background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
-      padding: 16px 28px;
-      display: flex; align-items: center; gap: 14px;
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1c2333 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
     }
-    .header-logo { animation: spin 12s linear infinite; transform-origin: center; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .logo-text h1 { font-size: 15px; font-weight: 700; color: #fff; line-height: 1; }
-    .logo-text p  { font-size: 11px; color: rgba(255,255,255,.65); margin-top: 3px; }
+    .header-logo { animation: spin 14s linear infinite; transform-origin: center; flex-shrink: 0; }
+    .header-logo.reverse { animation: spin-reverse 14s linear infinite; }
+    @keyframes spin         { to { transform: rotate(360deg); } }
+    @keyframes spin-reverse { to { transform: rotate(-360deg); } }
+
+    .logo-text { text-align: center; }
+    .logo-text h1 { font-size: 20px; font-weight: 700; color: var(--cyan); line-height: 1; letter-spacing: .02em; }
+    .logo-text p  { font-size: 12px; color: var(--muted); margin-top: 5px; }
 
     /* ── Main ── */
-    main { max-width: 760px; margin: 0 auto; padding: 32px 20px; display: flex; flex-direction: column; gap: 18px; }
+    main { max-width: 860px; margin: 0 auto; padding: 28px 24px; display: flex; flex-direction: column; gap: 16px; }
 
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
-    label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px; }
+    /* ── Input card ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px; color: var(--text); }
     .hint { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
 
     .input-row { display: flex; gap: 8px; }
     input[type="text"] {
-      flex: 1; height: 42px; border: 1.5px solid var(--border); border-radius: 9px;
-      padding: 0 13px; font-family: 'JetBrains Mono', monospace; font-size: 13px;
-      background: #f8fafc; color: var(--text); outline: none;
+      flex: 1;
+      height: 42px;
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 0 14px; font-family: 'JetBrains Mono', monospace; font-size: 13px;
+      background: var(--bg); color: var(--text); outline: none;
       transition: border-color .15s, box-shadow .15s;
+      min-width: 0;
     }
-    input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    input[type="text"]:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(57,208,216,.15); }
 
     button.predict {
       height: 42px; padding: 0 18px;
-      background: linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff;
-      border: none; border-radius: 9px; font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: opacity .15s, transform .1s; white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(37,99,235,.3);
+      background: linear-gradient(135deg,#0e7490,#0891b2);
+      color: #fff; border: none; border-radius: 8px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: opacity .15s, transform .1s; white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(8,145,178,.4);
     }
-    button.predict.lookup { background: linear-gradient(135deg,#059669,#047857); box-shadow: 0 2px 8px rgba(5,150,105,.3); }
-    button.predict:disabled { opacity:.5; cursor:default; }
-    button.predict:not(:disabled):hover { opacity:.9; transform: translateY(-1px); }
+    button.predict.lookup { background: linear-gradient(135deg,#065f46,#059669); box-shadow: 0 2px 8px rgba(5,150,105,.4); }
+    button.predict:disabled { opacity: .4; cursor: default; }
+    button.predict:not(:disabled):hover { opacity: .88; transform: translateY(-1px); }
     button.predict:not(:disabled):active { transform: translateY(0); }
 
-    .examples { display:flex; flex-wrap:wrap; gap:7px; margin-top:13px; align-items:center; }
-    .examples span { font-size:12px; color:var(--muted); }
+    .examples { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; align-items: center; }
+    .examples span { font-size: 12px; color: var(--muted); }
     button.pill {
-      padding: 4px 13px; border: 1.5px solid var(--border); border-radius: 999px;
-      background: transparent; font-size: 12px; cursor: pointer;
+      padding: 3px 12px; border: 1px solid var(--border); border-radius: 999px;
+      background: transparent; font-size: 12px; color: var(--text); cursor: pointer;
       transition: background .12s, border-color .12s;
     }
-    button.pill:hover { background:#f1f5f9; border-color:var(--primary); }
+    button.pill:hover { background: var(--surface2); border-color: var(--cyan); color: var(--cyan); }
 
     /* ── Banners ── */
-    .banner { border-radius: var(--radius); padding: 14px 16px; font-size: 13px; }
-    .banner.error   { background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; }
-    .banner.invalid { background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; }
+    .banner { border-radius: var(--radius); padding: 12px 16px; font-size: 13px; }
+    .banner.error   { background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3); color: #f85149; }
+    .banner.invalid { background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3); color: #f85149; }
 
     /* ── Skeleton ── */
-    .skeleton { border-radius:var(--radius); border:1px solid var(--border); background:var(--surface); padding:24px; display:flex; flex-direction:column; gap:14px; }
-    .skel-line { height:14px; border-radius:6px; background:#e2e8f0; animation:pulse 1.4s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .skeleton { border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+    .skel-line { height: 14px; border-radius: 6px; background: var(--surface2); animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
     /* ── Section header ── */
-    .section-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-    .section-head h2 { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; white-space:nowrap; }
-    .section-head .line { flex:1; height:1px; background:var(--border); }
-
-    /* ── 2D Structure ── */
-    .structure-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 16px; display:flex; flex-direction:column; align-items:center; gap:10px;
-    }
-    .structure-frame {
-      width:100%; max-width:220px; aspect-ratio:1;
-      border-radius:10px; border:1.5px solid var(--border);
-      background: #f8fafc; overflow:hidden;
-      display:flex; align-items:center; justify-content:center;
-    }
-    .structure-frame img { width:100%; height:100%; object-fit:contain; display:block; }
-    .struct-placeholder { font-size:11px; color:var(--muted); text-align:center; padding:16px; }
-    .structure-label { font-size:10px; color:var(--muted); text-align:center; font-family:'JetBrains Mono',monospace; }
-
-    /* ── Score circles ── */
-    .summary-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-    @media(max-width:480px){ .summary-row { grid-template-columns:repeat(2,1fr); } }
-
-    .score-card {
-      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-      padding:16px 12px; display:flex; flex-direction:column; align-items:center; gap:7px;
-    }
-    .score-card .sc-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
-    .score-circle {
-      width:60px; height:60px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      font-size:15px; font-weight:800; font-family:'JetBrains Mono',monospace;
-      border:3px solid;
-    }
-    .score-circle.green { border-color:#10b981; color:#059669; background:#f0fdf4; }
-    .score-circle.amber { border-color:#f59e0b; color:#b45309; background:#fffbeb; }
-    .score-circle.red   { border-color:#ef4444; color:#dc2626; background:#fef2f2; }
-    .score-card .sc-class { font-size:10px; font-weight:600; color:var(--text); text-align:center; }
-
-    /* ── Ro5 badge ── */
-    .ro5-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 13px; border-radius:999px; font-size:12px; font-weight:600; border:1px solid; }
-    .ro5-badge.pass { background:#f0fdf4; border-color:#bbf7d0; color:#15803d; }
-    .ro5-badge.fail { background:#fef2f2; border-color:#fecaca; color:#b91c1c; }
-    .ro5-dot { width:8px; height:8px; border-radius:50%; }
-    .ro5-dot.pass { background:var(--emerald); }
-    .ro5-dot.fail { background:var(--red); }
-
-    /* ── Property cards ── */
-    .props-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-    @media(max-width:500px){ .props-grid { grid-template-columns:repeat(2,1fr); } }
-
-    .prop-card {
-      background:var(--surface); border:1px solid var(--border); border-radius:12px;
-      padding:13px 14px 11px; position:relative; overflow:hidden;
-      transition: box-shadow .15s, transform .15s;
-    }
-    .prop-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.08); transform:translateY(-2px); }
-    .prop-card::before {
-      content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:12px 12px 0 0;
-    }
-    .prop-card.c-blue::before    { background:linear-gradient(90deg,#2563eb,#60a5fa); }
-    .prop-card.c-emerald::before { background:linear-gradient(90deg,#059669,#34d399); }
-    .prop-card.c-violet::before  { background:linear-gradient(90deg,#7c3aed,#a78bfa); }
-    .prop-card.c-amber::before   { background:linear-gradient(90deg,#d97706,#fbbf24); }
-    .prop-card.c-cyan::before    { background:linear-gradient(90deg,#0891b2,#22d3ee); }
-    .prop-card.c-rose::before    { background:linear-gradient(90deg,#e11d48,#fb7185); }
-    .prop-card.c-indigo::before  { background:linear-gradient(90deg,#4338ca,#818cf8); }
-    .prop-card.c-teal::before    { background:linear-gradient(90deg,#0d9488,#2dd4bf); }
-    .prop-card.c-orange::before  { background:linear-gradient(90deg,#ea580c,#fb923c); }
-
-    .prop-card .prop-icon  { font-size:15px; margin-bottom:5px; }
-    .prop-card .prop-label { font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
-    .prop-card .prop-value { font-size:19px; font-weight:700; font-family:'JetBrains Mono',monospace; line-height:1; color:var(--text); }
-    .prop-card .prop-unit  { font-size:10px; color:var(--muted); margin-top:3px; }
-
-    /* ── Toxicity ── */
-    .tox-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; }
-    .tox-summary { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
-    .tox-text h3 { font-size:14px; font-weight:700; }
-    .tox-text p  { font-size:12px; color:var(--muted); margin-top:3px; }
-    .tox-endpoints { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
-    @media(max-width:500px){ .tox-endpoints { grid-template-columns:1fr; } }
-    .tox-ep { background:#f8fafc; border:1px solid var(--border); border-radius:9px; padding:9px 12px; }
-    .tox-ep-name { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; }
-    .tox-ep-bar-track { height:5px; border-radius:99px; background:#e2e8f0; overflow:hidden; margin-bottom:3px; }
-    .tox-ep-bar-fill  { height:100%; border-radius:99px; transition:width .6s ease; }
-    .tox-ep-label { display:flex; justify-content:space-between; font-size:10px; }
-    .tox-ep-label .val { font-family:'JetBrains Mono',monospace; font-weight:600; }
-    .tox-ep-label .cls.t  { color:var(--red); font-weight:600; }
-    .tox-ep-label .cls.nt { color:var(--emerald); font-weight:600; }
-
-    /* ── Viscosity / CO2 ── */
-    .special-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    @media(max-width:520px){ .special-grid { grid-template-columns:1fr; } }
-
-    .special-card {
-      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-      padding:18px; position:relative; overflow:hidden;
-    }
-    .special-card::after {
-      content:''; position:absolute; top:-30px; right:-30px;
-      width:90px; height:90px; border-radius:50%; opacity:.06;
-    }
-    .special-card.visc::after { background:var(--violet); }
-    .special-card.co2::after  { background:var(--cyan); }
-
-    .special-card .sc-top { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
-    .special-card .sc-icon {
-      width:36px; height:36px; border-radius:9px;
-      display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0;
-    }
-    .special-card.visc .sc-icon { background:#f5f3ff; }
-    .special-card.co2  .sc-icon { background:#ecfeff; }
-    .special-card .sc-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
-    .special-card .sc-val { font-size:24px; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1; }
-    .special-card.visc .sc-val { color:var(--violet); }
-    .special-card.co2  .sc-val { color:var(--cyan); }
-    .special-card .sc-unit  { font-size:10px; color:var(--muted); margin-top:2px; }
-    .special-card .sc-badge {
-      display:inline-flex; padding:3px 10px; border-radius:999px;
-      font-size:11px; font-weight:700; margin-top:4px;
-    }
-    .special-card.visc .sc-badge { background:#f5f3ff; color:var(--violet); }
-    .special-card.co2  .sc-badge { background:#ecfeff; color:var(--cyan); }
-    .special-card .sc-bar-track { height:6px; border-radius:99px; background:#e2e8f0; overflow:hidden; margin-top:10px; }
-    .special-card.visc .sc-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#7c3aed,#a78bfa); transition:width .7s ease; }
-    .special-card.co2  .sc-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#0891b2,#22d3ee); transition:width .7s ease; }
-
-    /* ── Lipinski ── */
-    .lipinski-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; }
-    .bar-row { margin-bottom:13px; }
-    .bar-row:last-child { margin-bottom:0; }
-    .bar-meta { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:5px; }
-    .bar-meta .bar-name { font-weight:500; }
-    .bar-meta .bar-val { font-weight:700; font-family:'JetBrains Mono',monospace; }
-    .bar-meta .bar-val.good { color:var(--emerald); }
-    .bar-meta .bar-val.bad  { color:var(--red); }
-    .bar-track { height:7px; border-radius:99px; background:#e2e8f0; overflow:hidden; }
-    .bar-fill   { height:100%; border-radius:99px; transition:width .7s ease; }
-    .bar-fill.good { background:linear-gradient(90deg,#059669,#34d399); }
-    .bar-fill.bad  { background:linear-gradient(90deg,#dc2626,#f87171); }
+    .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .section-head h2 { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; white-space: nowrap; }
+    .section-head .line { flex: 1; height: 1px; background: var(--border); }
 
     /* ── SMILES echo ── */
     .smiles-echo {
-      background:var(--surface); border:1px solid var(--border);
-      border-left:4px solid var(--primary); border-radius:var(--radius);
-      padding:10px 16px; display:flex; align-items:center; gap:12px; font-size:13px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-left: 3px solid var(--cyan); border-radius: var(--radius);
+      padding: 10px 14px; display: flex; align-items: center; gap: 12px;
     }
-    .smiles-echo .echo-label { color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
-    .smiles-echo .echo-val   { font-family:'JetBrains Mono',monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
+    .smiles-echo .echo-label { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+    .smiles-echo .echo-val   { font-family: 'JetBrains Mono', monospace; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cyan); }
 
-    #results { display:none; }
+    /* ── Structure card ── */
+    .structure-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      min-width: 190px; max-width: 210px;
+    }
+    .structure-frame {
+      width: 100%; aspect-ratio: 1;
+      border-radius: 10px; border: 1px solid var(--border);
+      background: #ffffff; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .structure-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .struct-placeholder { font-size: 11px; color: #999; text-align: center; padding: 12px; }
+    .structure-label { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace; text-align: center; }
+
+    /* ── Ro5 badge ── */
+    .ro5-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid; }
+    .ro5-badge.pass { background: rgba(63,185,80,.12); border-color: rgba(63,185,80,.4); color: var(--green); }
+    .ro5-badge.fail { background: rgba(248,81,73,.12); border-color: rgba(248,81,73,.4); color: var(--red); }
+    .ro5-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .ro5-dot.pass { background: var(--green); }
+    .ro5-dot.fail { background: var(--red); }
+
+    /* ── Score circles ── */
+    .summary-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    @media(max-width:480px){ .summary-row { grid-template-columns: repeat(2,1fr); } }
+
+    .score-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 7px;
+    }
+    .score-card .sc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    .score-circle {
+      width: 60px; height: 60px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; font-family: 'JetBrains Mono', monospace; border: 2px solid;
+    }
+    .score-circle.green { border-color: var(--green); color: var(--green); background: rgba(63,185,80,.1); }
+    .score-circle.amber { border-color: var(--amber); color: var(--amber); background: rgba(210,153,34,.1); }
+    .score-circle.red   { border-color: var(--red);   color: var(--red);   background: rgba(248,81,73,.1); }
+    .score-card .sc-class { font-size: 10px; font-weight: 600; color: var(--text); text-align: center; }
+
+    /* ── Property cards ── */
+    .props-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    @media(max-width:500px){ .props-grid { grid-template-columns: repeat(2,1fr); } }
+
+    .prop-card {
+      border-radius: 12px; padding: 14px 14px 12px;
+      position: relative; overflow: hidden;
+      transition: box-shadow .2s, transform .2s; border: none;
+    }
+    .prop-card:hover { box-shadow: 0 6px 22px rgba(0,0,0,.5); transform: translateY(-3px); }
+    .prop-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.09) 0%, rgba(255,255,255,0) 60%);
+      border-radius: 12px; pointer-events: none;
+    }
+    .prop-card.c-blue    { background: linear-gradient(135deg,#1e3a6e,#2563eb); }
+    .prop-card.c-emerald { background: linear-gradient(135deg,#064e3b,#059669); }
+    .prop-card.c-violet  { background: linear-gradient(135deg,#3b0764,#7c3aed); }
+    .prop-card.c-amber   { background: linear-gradient(135deg,#78350f,#d97706); }
+    .prop-card.c-cyan    { background: linear-gradient(135deg,#0c4a6e,#0891b2); }
+    .prop-card.c-rose    { background: linear-gradient(135deg,#881337,#e11d48); }
+    .prop-card.c-indigo  { background: linear-gradient(135deg,#1e1b4b,#4f46e5); }
+    .prop-card.c-teal    { background: linear-gradient(135deg,#042f2e,#0d9488); }
+    .prop-card.c-orange  { background: linear-gradient(135deg,#431407,#ea580c); }
+
+    .prop-card .prop-icon  { font-size: 17px; margin-bottom: 7px; }
+    .prop-card .prop-label { font-size: 10px; color: rgba(255,255,255,.65); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+    .prop-card .prop-value { font-size: 20px; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.3); }
+    .prop-card .prop-unit  { font-size: 10px; color: rgba(255,255,255,.55); margin-top: 3px; }
+
+    /* ── Toxicity ── */
+    .tox-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .tox-summary { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .tox-text h3 { font-size: 14px; font-weight: 700; color: var(--text); }
+    .tox-text p  { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .tox-endpoints { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+    @media(max-width:500px){ .tox-endpoints { grid-template-columns: 1fr; } }
+    .tox-ep { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 9px 12px; }
+    .tox-ep-name { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+    .tox-ep-bar-track { height: 5px; border-radius: 99px; background: var(--bg); overflow: hidden; margin-bottom: 3px; }
+    .tox-ep-bar-fill  { height: 100%; border-radius: 99px; transition: width .6s ease; }
+    .tox-ep-label { display: flex; justify-content: space-between; font-size: 10px; }
+    .tox-ep-label .val { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text); }
+    .tox-ep-label .cls.t  { color: var(--red);   font-weight: 700; }
+    .tox-ep-label .cls.nt { color: var(--green);  font-weight: 700; }
+
+    /* ── Special (Viscosity / CO2) ── */
+    .special-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media(max-width:520px){ .special-grid { grid-template-columns: 1fr; } }
+
+    .special-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px;
+      position: relative; overflow: hidden;
+    }
+    .special-card::after {
+      content: ''; position: absolute; top: -30px; right: -30px;
+      width: 90px; height: 90px; border-radius: 50%; opacity: .08;
+    }
+    .special-card.visc::after { background: var(--violet); }
+    .special-card.co2::after  { background: var(--cyan); }
+
+    .special-card .sc-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .special-card .sc-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .special-card.visc .sc-icon { background: rgba(188,140,255,.15); }
+    .special-card.co2  .sc-icon { background: rgba(57,208,216,.12); }
+    .special-card .sc-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    .special-card .sc-val { font-size: 26px; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+    .special-card.visc .sc-val { color: var(--violet); }
+    .special-card.co2  .sc-val { color: var(--cyan); }
+    .special-card .sc-unit  { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .special-card .sc-badge { display: inline-flex; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 6px; }
+    .special-card.visc .sc-badge { background: rgba(188,140,255,.15); color: var(--violet); }
+    .special-card.co2  .sc-badge { background: rgba(57,208,216,.12);  color: var(--cyan); }
+    .special-card .sc-bar-track { height: 6px; border-radius: 99px; background: var(--bg); overflow: hidden; margin-top: 10px; }
+    .special-card.visc .sc-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#7c3aed,#a78bfa); transition: width .7s ease; }
+    .special-card.co2  .sc-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#0891b2,#22d3ee); transition: width .7s ease; }
+
+    /* ── Lipinski ── */
+    .lipinski-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+    .bar-row { margin-bottom: 13px; }
+    .bar-row:last-child { margin-bottom: 0; }
+    .bar-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+    .bar-meta .bar-name { font-weight: 500; color: var(--text); }
+    .bar-meta .bar-val  { font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .bar-meta .bar-val.good { color: var(--green); }
+    .bar-meta .bar-val.bad  { color: var(--red); }
+    .bar-track { height: 7px; border-radius: 99px; background: var(--bg); overflow: hidden; }
+    .bar-fill   { height: 100%; border-radius: 99px; transition: width .7s ease; }
+    .bar-fill.good { background: linear-gradient(90deg,#238636,#3fb950); }
+    .bar-fill.bad  { background: linear-gradient(90deg,#b91c1c,#f85149); }
+
+    #results { display: none; }
   </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <header>
-  <svg class="header-logo" aria-label="MoleculeProduct" viewBox="0 0 32 32" width="34" height="34" fill="none">
-    <circle cx="16" cy="16" r="5" stroke="#fff" stroke-width="2.5"/>
-    <circle cx="4"  cy="8"  r="3" stroke="#93c5fd" stroke-width="2"/>
-    <circle cx="28" cy="8"  r="3" stroke="#93c5fd" stroke-width="2"/>
-    <circle cx="4"  cy="24" r="3" stroke="#6ee7b7" stroke-width="2"/>
-    <circle cx="28" cy="24" r="3" stroke="#6ee7b7" stroke-width="2"/>
-    <line x1="7"  y1="9.5"  x2="12" y2="13"  stroke="#93c5fd" stroke-width="1.5"/>
-    <line x1="25" y1="9.5"  x2="20" y2="13"  stroke="#93c5fd" stroke-width="1.5"/>
-    <line x1="7"  y1="22.5" x2="12" y2="19"  stroke="#6ee7b7" stroke-width="1.5"/>
-    <line x1="25" y1="22.5" x2="20" y2="19"  stroke="#6ee7b7" stroke-width="1.5"/>
+  <!-- Left rotating logo -->
+  <svg class="header-logo" aria-hidden="true" viewBox="0 0 32 32" width="40" height="40" fill="none">
+    <circle cx="16" cy="16" r="5" stroke="#39d0d8" stroke-width="2.5"/>
+    <circle cx="4"  cy="8"  r="3" stroke="#58a6ff" stroke-width="2"/>
+    <circle cx="28" cy="8"  r="3" stroke="#58a6ff" stroke-width="2"/>
+    <circle cx="4"  cy="24" r="3" stroke="#3fb950" stroke-width="2"/>
+    <circle cx="28" cy="24" r="3" stroke="#3fb950" stroke-width="2"/>
+    <line x1="7"  y1="9.5"  x2="12" y2="13"  stroke="#58a6ff" stroke-width="1.5"/>
+    <line x1="25" y1="9.5"  x2="20" y2="13"  stroke="#58a6ff" stroke-width="1.5"/>
+    <line x1="7"  y1="22.5" x2="12" y2="19"  stroke="#3fb950" stroke-width="1.5"/>
+    <line x1="25" y1="22.5" x2="20" y2="19"  stroke="#3fb950" stroke-width="1.5"/>
   </svg>
+
+  <!-- Title -->
   <div class="logo-text">
     <h1>MoleculeProduct</h1>
     <p>Molecular Property Predictor · v6.1</p>
   </div>
+
+  <!-- Right rotating logo (spins the other way) -->
+  <svg class="header-logo reverse" aria-hidden="true" viewBox="0 0 32 32" width="40" height="40" fill="none">
+    <circle cx="16" cy="16" r="5" stroke="#39d0d8" stroke-width="2.5"/>
+    <circle cx="4"  cy="8"  r="3" stroke="#3fb950" stroke-width="2"/>
+    <circle cx="28" cy="8"  r="3" stroke="#3fb950" stroke-width="2"/>
+    <circle cx="4"  cy="24" r="3" stroke="#58a6ff" stroke-width="2"/>
+    <circle cx="28" cy="24" r="3" stroke="#58a6ff" stroke-width="2"/>
+    <line x1="7"  y1="9.5"  x2="12" y2="13"  stroke="#3fb950" stroke-width="1.5"/>
+    <line x1="25" y1="9.5"  x2="20" y2="13"  stroke="#3fb950" stroke-width="1.5"/>
+    <line x1="7"  y1="22.5" x2="12" y2="19"  stroke="#58a6ff" stroke-width="1.5"/>
+    <line x1="25" y1="22.5" x2="20" y2="19"  stroke="#58a6ff" stroke-width="1.5"/>
+  </svg>
 </header>
 
 <main>
@@ -264,9 +293,9 @@
   <!-- Input card -->
   <div class="card">
     <label for="smiles-input">SMILES or Molecule Name</label>
-    <p class="hint">Enter a SMILES string and click Predict, or type a name (e.g. "Paracetamol") and click Lookup first.</p>
+    <p class="hint">Enter a SMILES string and click Predict, or type a name (e.g. "Caffeine") and click Lookup.</p>
     <div class="input-row">
-      <input id="smiles-input" type="text" placeholder="e.g. CC(=O)Nc1ccc(O)cc1" autocomplete="off" />
+      <input id="smiles-input" type="text" placeholder="e.g. CC(=O)Nc1ccc(O)cc1  or  Paracetamol" autocomplete="off" />
       <button class="predict lookup" id="lookup-btn" onclick="runLookup()">Lookup</button>
       <button class="predict" id="predict-btn" onclick="runPredict()">Predict</button>
     </div>
@@ -303,11 +332,10 @@
         <span class="echo-val" id="smiles-echo"></span>
       </div>
 
-      <!-- Structure + Summary -->
+      <!-- Structure + Quick Summary -->
       <div style="display:grid;grid-template-columns:auto 1fr;gap:14px;margin-top:14px;align-items:start">
-
         <div class="structure-card">
-          <div class="section-head" style="margin-bottom:8px"><h2>2D Structure</h2><div class="line"></div></div>
+          <div class="section-head" style="margin-bottom:6px;width:100%"><h2>2D Structure</h2><div class="line"></div></div>
           <div class="structure-frame" id="struct-frame">
             <div class="struct-placeholder">Run a prediction to see the structure</div>
           </div>
@@ -316,7 +344,7 @@
 
         <div style="display:flex;flex-direction:column;gap:10px">
           <div style="display:flex;align-items:center;justify-content:space-between">
-            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Quick Summary</span>
+            <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Quick Summary</span>
             <div id="ro5-badge" class="ro5-badge"></div>
           </div>
           <div class="summary-row">
@@ -420,24 +448,19 @@
 
   function setBtn(id, disabled, text) {
     const b = document.getElementById(id);
-    b.disabled = disabled;
-    b.textContent = text;
+    b.disabled = disabled; b.textContent = text;
   }
-
   function showError(msg) {
     document.getElementById("skeleton").style.display = "none";
     const eb = document.getElementById("error-banner");
-    eb.textContent = msg;
-    eb.style.display = "block";
+    eb.textContent = msg; eb.style.display = "block";
   }
-
-  function fillAndPredict(smiles) {
-    document.getElementById("smiles-input").value = smiles;
+  function fillAndPredict(s) {
+    document.getElementById("smiles-input").value = s;
     document.getElementById("error-banner").style.display = "none";
     document.getElementById("results").style.display = "none";
     runPredict();
   }
-
   async function runLookup() {
     const name = document.getElementById("smiles-input").value.trim();
     if (!name) return;
@@ -445,16 +468,13 @@
     document.getElementById("error-banner").style.display = "none";
     try {
       const res = await fetch(API + "/lookup?name=" + encodeURIComponent(name));
-      if (!res.ok) throw new Error("Not found");
+      if (!res.ok) throw new Error();
       const data = await res.json();
       document.getElementById("smiles-input").value = data.smiles;
     } catch {
       showError("Could not find '" + name + "' on PubChem. Try entering the SMILES directly.");
-    } finally {
-      setBtn("lookup-btn", false, "Lookup");
-    }
+    } finally { setBtn("lookup-btn", false, "Lookup"); }
   }
-
   async function runPredict() {
     const smiles = document.getElementById("smiles-input").value.trim();
     if (!smiles) return;
@@ -462,45 +482,39 @@
     document.getElementById("results").style.display = "none";
     document.getElementById("skeleton").style.display = "flex";
     setBtn("predict-btn", true, "Analysing…");
-
     try {
       const res = await fetch(API + "/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ smiles })
       });
-      if (!res.ok) throw new Error("Server error: " + res.status);
+      if (!res.ok) throw new Error();
       const data = await res.json();
       document.getElementById("skeleton").style.display = "none";
       showResults(data);
       if (data.valid) loadStructure(smiles);
-    } catch (e) {
+    } catch {
       showError("Could not connect to the API. Make sure the server is running.");
-    } finally {
-      setBtn("predict-btn", false, "Predict");
-    }
+    } finally { setBtn("predict-btn", false, "Predict"); }
   }
 
   function loadStructure(smiles) {
     const frame = document.getElementById("struct-frame");
     frame.innerHTML = '<div class="struct-placeholder">Loading…</div>';
     document.getElementById("struct-label").textContent = "";
-    const url = API + "/structure?smiles=" + encodeURIComponent(smiles) + "&size=320";
     const img = new Image();
     img.style.cssText = "width:100%;height:100%;object-fit:contain;display:block;";
     img.onload = () => {
-      frame.innerHTML = "";
-      frame.appendChild(img);
-      const s = smiles.length > 36 ? smiles.slice(0,33) + "…" : smiles;
+      frame.innerHTML = ""; frame.appendChild(img);
+      const s = smiles.length > 30 ? smiles.slice(0,27)+"…" : smiles;
       document.getElementById("struct-label").textContent = s;
     };
     img.onerror = () => { frame.innerHTML = '<div class="struct-placeholder">Structure unavailable</div>'; };
-    img.src = url;
+    img.src = API + "/structure?smiles=" + encodeURIComponent(smiles) + "&size=300";
   }
 
-  function setCircle(id, value, colorClass) {
+  function setCircle(id, value, cls) {
     const el = document.getElementById(id);
-    el.className = "score-circle " + colorClass;
+    el.className = "score-circle " + cls;
     el.textContent = value;
   }
 
@@ -516,105 +530,93 @@
 
     document.getElementById("smiles-echo").textContent = data.smiles;
 
-    // Ro5 badge
     const viol = data.lipinski_violations ?? 0;
     const pass = viol === 0;
     const badge = document.getElementById("ro5-badge");
     badge.className = "ro5-badge " + (pass ? "pass" : "fail");
     badge.innerHTML = `<span class="ro5-dot ${pass?'pass':'fail'}"></span>
-      ${pass ? "Passes Rule of 5" : "Fails Rule of 5 (" + viol + " violation" + (viol>1?"s":"") + ")"}`;
+      ${pass ? "Passes Rule of 5" : "Fails Rule of 5 ("+viol+" violation"+(viol>1?"s":"")+")"}`;
 
-    // Drug-likeness circle
     const dlPct = Math.round((data.drug_likeness_score ?? 0) * 100);
-    setCircle("dl-circle", dlPct + "%", dlPct >= 75 ? "green" : dlPct >= 50 ? "amber" : "red");
+    setCircle("dl-circle", dlPct+"%", dlPct>=75?"green":dlPct>=50?"amber":"red");
     document.getElementById("dl-class").textContent = data.drug_like ? "Drug-Like" : "Not Drug-Like";
 
-    // Solubility circle
     const logS = data.predicted_logs;
-    setCircle("sol-circle", logS !== null && logS !== undefined ? logS.toFixed(2) : "—",
-      logS > -2 ? "green" : logS > -4 ? "amber" : "red");
+    setCircle("sol-circle", logS!=null?logS.toFixed(2):"—", logS>-2?"green":logS>-4?"amber":"red");
     document.getElementById("sol-class").textContent = data.solubility_class ?? "—";
 
-    // Toxicity circle
     const toxProb = data.toxicity_probability;
-    const toxPct = toxProb !== null && toxProb !== undefined ? Math.round(toxProb * 100) : null;
-    const toxColor = toxProb === null ? "amber" : toxProb < 0.3 ? "green" : toxProb < 0.6 ? "amber" : "red";
-    setCircle("tox-circle", toxPct !== null ? toxPct + "%" : "—", toxColor);
-    document.getElementById("tox-class").textContent = data.toxicity_class ?? "Unknown";
-    setCircle("tox-big-circle", toxPct !== null ? toxPct + "%" : "—", toxColor);
+    const toxPct  = toxProb!=null ? Math.round(toxProb*100) : null;
+    const toxCls  = toxProb==null ? "amber" : toxProb<0.3 ? "green" : toxProb<0.6 ? "amber" : "red";
+    setCircle("tox-circle",     toxPct!=null?toxPct+"%":"—", toxCls);
+    setCircle("tox-big-circle", toxPct!=null?toxPct+"%":"—", toxCls);
+    document.getElementById("tox-class").textContent     = data.toxicity_class ?? "Unknown";
     document.getElementById("tox-big-class").textContent = data.toxicity_class ?? "Unknown";
 
-    // Basic properties
     document.getElementById("basic-grid").innerHTML = [
-      { label:"Mol. Weight",      value:data.molecular_weight, unit:"Da",  dp:2, icon:"⚖️",  color:"c-blue"    },
-      { label:"LogP",             value:data.logp,             unit:"",    dp:3, icon:"💧",  color:"c-cyan"    },
-      { label:"TPSA",             value:data.tpsa,             unit:"Å²", dp:1, icon:"📐",  color:"c-violet"  },
-      { label:"H-Bond Donors",    value:data.hbd,              unit:"",    dp:0, icon:"🔵",  color:"c-emerald" },
-      { label:"H-Bond Acceptors", value:data.hba,              unit:"",    dp:0, icon:"🔴",  color:"c-rose"    },
-      { label:"Rotatable Bonds",  value:data.rotatable_bonds,  unit:"",    dp:0, icon:"🔗",  color:"c-amber"   },
-    ].map(p => `<div class="prop-card ${p.color}">
+      {label:"Mol. Weight",      value:data.molecular_weight, unit:"Da",  dp:2, icon:"⚖️",  color:"c-blue"   },
+      {label:"LogP",             value:data.logp,             unit:"",    dp:3, icon:"💧",  color:"c-cyan"   },
+      {label:"TPSA",             value:data.tpsa,             unit:"Å²", dp:1, icon:"📐",  color:"c-violet" },
+      {label:"H-Bond Donors",    value:data.hbd,              unit:"",    dp:0, icon:"🔵",  color:"c-emerald"},
+      {label:"H-Bond Acceptors", value:data.hba,              unit:"",    dp:0, icon:"🔴",  color:"c-rose"   },
+      {label:"Rotatable Bonds",  value:data.rotatable_bonds,  unit:"",    dp:0, icon:"🔗",  color:"c-amber"  },
+    ].map(p=>`<div class="prop-card ${p.color}">
       <div class="prop-icon">${p.icon}</div>
       <div class="prop-label">${p.label}</div>
-      <div class="prop-value">${p.dp===0 ? p.value : Number(p.value).toFixed(p.dp)}</div>
-      ${p.unit ? `<div class="prop-unit">${p.unit}</div>` : ""}
+      <div class="prop-value">${p.dp===0?p.value:Number(p.value).toFixed(p.dp)}</div>
+      ${p.unit?`<div class="prop-unit">${p.unit}</div>`:""}
     </div>`).join("");
 
-    // Physical properties
     document.getElementById("phys-grid").innerHTML = [
-      { label:"Boiling Point",    value:data.boiling_point,  unit:"°C",   dp:1,  icon:"🌡️",  color:"c-orange"  },
-      { label:"Melting Point",    value:data.melting_point,  unit:"°C",   dp:1,  icon:"❄️",  color:"c-cyan"    },
-      { label:"Density",          value:data.density,        unit:"g/mL", dp:3,  icon:"🧊",  color:"c-blue"    },
-      { label:"pKa Class",        value:data.pka_class,      unit:"",     dp:-1, icon:"⚡",  color:"c-violet"  },
-      { label:"Stereocenters",    value:data.stereocenters,  unit:"",     dp:0,  icon:"🔄",  color:"c-emerald" },
-      { label:"Formal Charge",    value:data.formal_charge,  unit:"e",    dp:0,  icon:"⚛️",  color:"c-rose"    },
-    ].map(p => {
-      const v = p.dp===-1 ? p.value : p.dp===0 ? p.value : (p.value!==null&&p.value!==undefined ? Number(p.value).toFixed(p.dp) : "—");
+      {label:"Boiling Point",  value:data.boiling_point,  unit:"°C",   dp:1,  icon:"🌡️",  color:"c-orange" },
+      {label:"Melting Point",  value:data.melting_point,  unit:"°C",   dp:1,  icon:"❄️",  color:"c-cyan"   },
+      {label:"Density",        value:data.density,        unit:"g/mL", dp:3,  icon:"🧊",  color:"c-blue"   },
+      {label:"pKa Class",      value:data.pka_class,      unit:"",     dp:-1, icon:"⚡",  color:"c-violet" },
+      {label:"Stereocenters",  value:data.stereocenters,  unit:"",     dp:0,  icon:"🔄",  color:"c-emerald"},
+      {label:"Formal Charge",  value:data.formal_charge,  unit:"e",    dp:0,  icon:"⚛️",  color:"c-rose"   },
+    ].map(p=>{
+      const v = p.dp===-1?p.value:p.dp===0?p.value:(p.value!=null?Number(p.value).toFixed(p.dp):"—");
       return `<div class="prop-card ${p.color}">
         <div class="prop-icon">${p.icon}</div>
         <div class="prop-label">${p.label}</div>
-        <div class="prop-value">${v??'—'}</div>
-        ${p.unit ? `<div class="prop-unit">${p.unit}</div>` : ""}
+        <div class="prop-value">${v??"—"}</div>
+        ${p.unit?`<div class="prop-unit">${p.unit}</div>`:""}
       </div>`;
     }).join("");
 
-    // Extended descriptors
     document.getElementById("ext-grid").innerHTML = [
-      { label:"Ring Count",         value:data.ring_count,         unit:"", dp:0, icon:"⭕", color:"c-indigo"  },
-      { label:"Aromatic Rings",     value:data.aromatic_rings,     unit:"", dp:0, icon:"🌀", color:"c-violet"  },
-      { label:"Heavy Atoms",        value:data.heavy_atom_count,   unit:"", dp:0, icon:"🔩", color:"c-teal"    },
-      { label:"Fraction Csp3",      value:data.fraction_csp3,      unit:"", dp:3, icon:"📊", color:"c-amber"   },
-      { label:"Molar Refractivity", value:data.molar_refractivity, unit:"", dp:2, icon:"🔬", color:"c-cyan"    },
-    ].map(p => `<div class="prop-card ${p.color}">
+      {label:"Ring Count",         value:data.ring_count,         unit:"", dp:0, icon:"⭕", color:"c-indigo" },
+      {label:"Aromatic Rings",     value:data.aromatic_rings,     unit:"", dp:0, icon:"🌀", color:"c-violet" },
+      {label:"Heavy Atoms",        value:data.heavy_atom_count,   unit:"", dp:0, icon:"🔩", color:"c-teal"   },
+      {label:"Fraction Csp3",      value:data.fraction_csp3,      unit:"", dp:3, icon:"📊", color:"c-amber"  },
+      {label:"Molar Refractivity", value:data.molar_refractivity, unit:"", dp:2, icon:"🔬", color:"c-cyan"   },
+    ].map(p=>`<div class="prop-card ${p.color}">
       <div class="prop-icon">${p.icon}</div>
       <div class="prop-label">${p.label}</div>
-      <div class="prop-value">${p.dp===0 ? p.value : Number(p.value).toFixed(p.dp)}</div>
-      ${p.unit ? `<div class="prop-unit">${p.unit}</div>` : ""}
+      <div class="prop-value">${p.dp===0?p.value:Number(p.value).toFixed(p.dp)}</div>
+      ${p.unit?`<div class="prop-unit">${p.unit}</div>`:""}
     </div>`).join("");
 
-    // Viscosity
     const visc = data.viscosity;
-    document.getElementById("visc-val").textContent = visc!=null ? visc.toFixed(2) : "—";
-    document.getElementById("visc-badge").textContent = data.viscosity_class ?? "—";
-    document.getElementById("visc-bar").style.width =
-      visc ? Math.min(Math.log10(visc+1)/Math.log10(501)*100,100) + "%" : "0%";
+    document.getElementById("visc-val").textContent   = visc!=null?visc.toFixed(2):"—";
+    document.getElementById("visc-badge").textContent = data.viscosity_class??"—";
+    document.getElementById("visc-bar").style.width   = visc?Math.min(Math.log10(visc+1)/Math.log10(501)*100,100)+"%":"0%";
 
-    // CO2
     const co2 = data.co2_solubility;
-    document.getElementById("co2-val").textContent = co2!=null ? co2.toFixed(4) : "—";
-    document.getElementById("co2-badge").textContent = data.co2_class ?? "—";
-    document.getElementById("co2-bar").style.width = co2 ? Math.min(co2/0.3*100,100) + "%" : "0%";
+    document.getElementById("co2-val").textContent   = co2!=null?co2.toFixed(4):"—";
+    document.getElementById("co2-badge").textContent = data.co2_class??"—";
+    document.getElementById("co2-bar").style.width   = co2?Math.min(co2/0.3*100,100)+"%":"0%";
 
-    // Toxicity endpoints
-    const eps = data.toxicity_endpoints ?? [];
-    document.getElementById("tox-endpoints").innerHTML = eps.length === 0
+    const eps = data.toxicity_endpoints??[];
+    document.getElementById("tox-endpoints").innerHTML = eps.length===0
       ? '<p style="font-size:12px;color:var(--muted)">No endpoint data available.</p>'
-      : eps.map(ep => {
-          const pct = Math.round(ep.probability * 100);
-          const t   = ep.probability > 0.5;
+      : eps.map(ep=>{
+          const pct=Math.round(ep.probability*100);
+          const t=ep.probability>0.5;
           return `<div class="tox-ep">
             <div class="tox-ep-name">${ep.endpoint}</div>
             <div class="tox-ep-bar-track">
-              <div class="tox-ep-bar-fill" style="width:${pct}%;background:${t?'linear-gradient(90deg,#dc2626,#f87171)':'linear-gradient(90deg,#059669,#34d399)'}"></div>
+              <div class="tox-ep-bar-fill" style="width:${pct}%;background:${t?'linear-gradient(90deg,#b91c1c,#f85149)':'linear-gradient(90deg,#238636,#3fb950)'}"></div>
             </div>
             <div class="tox-ep-label">
               <span class="val">${pct}%</span>
@@ -623,18 +625,17 @@
           </div>`;
         }).join("");
 
-    // Lipinski bars
     document.getElementById("lipinski-bars").innerHTML = [
-      { name:"Molecular Weight", value:data.molecular_weight, max:500, limit:"≤ 500 Da" },
-      { name:"LogP",             value:data.logp,             max:5,   limit:"≤ 5"      },
-      { name:"H-Bond Donors",    value:data.hbd,              max:5,   limit:"≤ 5"      },
-      { name:"H-Bond Acceptors", value:data.hba,              max:10,  limit:"≤ 10"     },
-    ].map(b => {
-      const pct  = Math.min((b.value / b.max) * 100, 100);
-      const good = b.value <= b.max;
+      {name:"Molecular Weight", value:data.molecular_weight, max:500, limit:"≤ 500 Da"},
+      {name:"LogP",             value:data.logp,             max:5,   limit:"≤ 5"     },
+      {name:"H-Bond Donors",    value:data.hbd,              max:5,   limit:"≤ 5"     },
+      {name:"H-Bond Acceptors", value:data.hba,              max:10,  limit:"≤ 10"    },
+    ].map(b=>{
+      const pct=Math.min((b.value/b.max)*100,100);
+      const good=b.value<=b.max;
       return `<div class="bar-row">
         <div class="bar-meta">
-          <span class="bar-name">${b.name} <span style="font-weight:400">(${b.limit})</span></span>
+          <span class="bar-name">${b.name} <span style="color:var(--muted);font-weight:400">(${b.limit})</span></span>
           <span class="bar-val ${good?'good':'bad'}">${typeof b.value==='number'?b.value.toFixed(2):b.value}</span>
         </div>
         <div class="bar-track"><div class="bar-fill ${good?'good':'bad'}" style="width:${pct}%"></div></div>
