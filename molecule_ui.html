@@ -2,349 +2,381 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MoleculeProduct — Property Predictor</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MoleculeProduct</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #f8fafc; --surface: #ffffff; --border: #e2e8f0;
-      --text: #0f172a; --muted: #64748b; --primary: #2563eb;
-      --emerald: #10b981; --red: #ef4444; --radius: 12px;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 24px 16px;
     }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
-    .logo-text h1 { font-size: 14px; font-weight: 700; }
-    .logo-text p  { font-size: 12px; color: var(--muted); margin-top: 3px; }
-    main { max-width: 760px; margin: 0 auto; padding: 40px 24px; display: flex; flex-direction: column; gap: 20px; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
-    label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px; }
-    .hint { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
-    .input-row { display: flex; gap: 8px; }
+    .container { max-width: 860px; margin: 0 auto; }
+    h1 { text-align: center; font-size: 2rem; font-weight: 700; color: #7dd3fc; margin-bottom: 6px; }
+    .subtitle { text-align: center; color: #94a3b8; margin-bottom: 28px; font-size: 0.95rem; }
+    .input-row { display: flex; gap: 10px; margin-bottom: 14px; }
     input[type="text"] {
-      flex: 1; height: 40px; border: 1px solid var(--border); border-radius: 8px;
-      padding: 0 12px; font-family: 'Inter', sans-serif; font-size: 13px;
-      background: var(--bg); color: var(--text); outline: none;
+      flex: 1; padding: 12px 16px; border-radius: 8px;
+      border: 1px solid #334155; background: #1e293b;
+      color: #e0e0e0; font-size: 1rem; outline: none;
     }
-    input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
-    button.predict {
-      height: 40px; padding: 0 20px; background: var(--primary); color: #fff;
-      border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
-      cursor: pointer; white-space: nowrap;
+    input[type="text"]:focus { border-color: #7dd3fc; }
+    button.predict-btn {
+      padding: 12px 24px; background: #3b82f6; color: white;
+      border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;
     }
-    button.predict:disabled { opacity: .5; cursor: default; }
-    button.predict:hover:not(:disabled) { opacity: .88; }
-    .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
-    .examples span { font-size: 12px; color: var(--muted); }
-    button.pill { padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; background: transparent; font-size: 12px; cursor: pointer; }
-    button.pill:hover { background: var(--bg); }
-    .banner { border-radius: var(--radius); padding: 14px 16px; font-size: 13px; }
-    .banner.error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
-    .skeleton { border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); padding: 24px; display: flex; flex-direction: column; gap: 14px; }
-    .skel-line { height: 14px; border-radius: 6px; background: #e2e8f0; animation: pulse 1.4s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .score-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; display: flex; align-items: center; gap: 24px; }
-    .score-circle { width: 80px; height: 80px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; border: 4px solid; flex-shrink: 0; }
-    .score-circle.good { border-color: var(--emerald); color: #059669; background: #f0fdf4; }
-    .score-circle.bad  { border-color: var(--red); color: var(--red); background: #fef2f2; }
-    .score-circle .score-num { font-size: 22px; line-height: 1; }
-    .score-circle .score-label { font-size: 9px; color: var(--muted); margin-top: 2px; }
-    .score-info h3 { font-size: 14px; font-weight: 700; }
-    .score-info p  { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .violations { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-    .violation-tag { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
-    .pass-tag { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
-    .section-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
-    .props-grid   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .props-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    @media(max-width:550px){ .props-grid, .props-grid-4 { grid-template-columns: repeat(2,1fr); } }
-    .prop-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
-    .prop-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-    .prop-value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
-    .prop-unit  { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    /* Solubility card */
-    .sol-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; display: flex; align-items: center; gap: 20px; }
-    .sol-badge { padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-    .sol-high   { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
-    .sol-good   { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
-    .sol-mod    { background: #fefce8; border: 1px solid #fde68a; color: #92400e; }
-    .sol-poor   { background: #fff7ed; border: 1px solid #fed7aa; color: #c2410c; }
-    .sol-insol  { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
-    .sol-info h3 { font-size: 13px; font-weight: 700; }
-    .sol-info p  { font-size: 12px; color: var(--muted); margin-top: 3px; }
-    .lipinski-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; }
-    .bar-row { margin-bottom: 14px; }
-    .bar-row:last-child { margin-bottom: 0; }
-    .bar-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-    .bar-val.good { color: #059669; font-weight: 600; }
-    .bar-val.bad  { color: var(--red); font-weight: 600; }
-    .bar-track { height: 6px; border-radius: 99px; background: #e2e8f0; overflow: hidden; }
-    .bar-fill  { height: 100%; border-radius: 99px; transition: width .7s ease; }
-    .bar-fill.good { background: var(--emerald); }
-    .bar-fill.bad  { background: var(--red); }
-    .smiles-echo { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; display: flex; align-items: center; gap: 12px; font-size: 13px; }
-    .echo-label { color: var(--muted); font-size: 12px; white-space: nowrap; }
-    .echo-val   { font-family: 'JetBrains Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    button.predict-btn:hover { background: #2563eb; }
+    button.predict-btn:disabled { background: #475569; cursor: not-allowed; }
+    .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+    .examples span { color: #94a3b8; font-size: 0.85rem; margin-right: 4px; line-height: 2; }
+    .example-btn {
+      padding: 5px 14px; background: #1e293b; border: 1px solid #334155;
+      border-radius: 20px; color: #7dd3fc; font-size: 0.85rem; cursor: pointer;
+    }
+    .example-btn:hover { background: #334155; }
+    .error-box {
+      background: #450a0a; border: 1px solid #dc2626; color: #fca5a5;
+      border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: none;
+    }
+    .results { display: none; }
+    .drug-card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 20px; display: flex; align-items: center; gap: 24px; margin-bottom: 16px;
+    }
+    .score-circle {
+      width: 90px; height: 90px; border-radius: 50%; border: 6px solid #22c55e;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .score-circle.bad { border-color: #ef4444; }
+    .score-circle.medium { border-color: #f59e0b; }
+    .score-pct { font-size: 1.4rem; font-weight: 700; color: #e0e0e0; }
+    .score-label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; }
+    .drug-info h3 { font-size: 1.1rem; font-weight: 600; color: #e0e0e0; margin-bottom: 4px; }
+    .drug-info p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 8px; }
+    .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .badge.pass { background: #14532d; color: #86efac; }
+    .badge.fail { background: #450a0a; color: #fca5a5; }
+    .sol-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .sol-card h3 { font-size: 1rem; font-weight: 600; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .sol-main { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .sol-class { font-size: 1.3rem; font-weight: 700; }
+    .sol-class.highly { color: #22c55e; }
+    .sol-class.soluble { color: #86efac; }
+    .sol-class.moderate { color: #f59e0b; }
+    .sol-class.poorly { color: #f97316; }
+    .sol-class.insoluble { color: #ef4444; }
+    .sol-class.unknown { color: #94a3b8; }
+    .sol-logs { color: #94a3b8; font-size: 0.9rem; }
+    .sol-desc { color: #64748b; font-size: 0.85rem; margin-top: 6px; }
+    .section-title {
+      font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #64748b; margin: 20px 0 10px; font-weight: 600;
+    }
+    .props-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 8px; }
+    .prop-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px; }
+    .prop-label { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; }
+    .prop-value { font-size: 1.2rem; font-weight: 700; color: #7dd3fc; }
+    .prop-unit { font-size: 0.7rem; color: #475569; margin-top: 2px; }
+    .lipinski-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 8px; }
+    .lip-item { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px; }
+    .lip-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .lip-name { font-size: 0.8rem; color: #94a3b8; }
+    .lip-val { font-size: 0.9rem; font-weight: 600; color: #e0e0e0; }
+    .lip-bar-bg { height: 6px; background: #334155; border-radius: 3px; }
+    .lip-bar { height: 6px; border-radius: 3px; transition: width 0.4s; }
+    .lip-bar.ok { background: #22c55e; }
+    .lip-bar.warn { background: #ef4444; }
+    .lip-limit { font-size: 0.7rem; color: #475569; margin-top: 4px; }
+    .smiles-box {
+      background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+      padding: 12px 16px; font-family: monospace; font-size: 0.85rem;
+      color: #94a3b8; word-break: break-all; margin-top: 16px;
+    }
+    .loading { text-align: center; color: #7dd3fc; padding: 40px; display: none; font-size: 1rem; }
   </style>
 </head>
 <body>
+<div class="container">
+  <h1>MoleculeProduct</h1>
+  <p class="subtitle">Predict molecular properties, drug-likeness, and aqueous solubility</p>
 
-<header>
-  <svg viewBox="0 0 32 32" width="32" height="32" fill="none">
-    <circle cx="16" cy="16" r="5" stroke="#2563eb" stroke-width="2.5"/>
-    <circle cx="4"  cy="8"  r="3" stroke="#2563eb" stroke-width="2"/>
-    <circle cx="28" cy="8"  r="3" stroke="#2563eb" stroke-width="2"/>
-    <circle cx="4"  cy="24" r="3" stroke="#059669" stroke-width="2"/>
-    <circle cx="28" cy="24" r="3" stroke="#059669" stroke-width="2"/>
-    <line x1="7"  y1="9.5"  x2="12" y2="13"  stroke="#2563eb" stroke-width="1.5"/>
-    <line x1="25" y1="9.5"  x2="20" y2="13"  stroke="#2563eb" stroke-width="1.5"/>
-    <line x1="7"  y1="22.5" x2="12" y2="19"  stroke="#059669" stroke-width="1.5"/>
-    <line x1="25" y1="22.5" x2="20" y2="19"  stroke="#059669" stroke-width="1.5"/>
-  </svg>
-  <div class="logo-text">
-    <h1>MoleculeProduct</h1>
-    <p>Molecular Property Predictor v2.0</p>
-  </div>
-</header>
-
-<main>
-  <div class="card">
-    <label for="smiles-input">Molecule Name or SMILES</label>
-    <p class="hint">Type any molecule name (e.g. morphine, testosterone, ibuprofen) or a SMILES string.</p>
-    <div class="input-row">
-      <input id="smiles-input" type="text" placeholder="e.g. benzene or CCO" autocomplete="off" />
-      <button class="predict" id="predict-btn" onclick="runPredict()">Predict</button>
-    </div>
-    <div class="examples">
-      <span>Examples:</span>
-      <button class="pill" onclick="predict('CCO')">Ethanol</button>
-      <button class="pill" onclick="predict('CC(=O)Oc1ccccc1C(=O)O')">Aspirin</button>
-      <button class="pill" onclick="predict('Cn1cnc2c1c(=O)n(c(=O)n2C)C')">Caffeine</button>
-      <button class="pill" onclick="predict('CC(=O)Nc1ccc(O)cc1')">Paracetamol</button>
-      <button class="pill" onclick="predict('c1ccccc1')">Benzene</button>
-      <button class="pill" onclick="predict('OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O')">Glucose</button>
-    </div>
+  <div class="input-row">
+    <input type="text" id="molInput" placeholder="Type molecule name (e.g. aspirin) or paste a SMILES string" />
+    <button class="predict-btn" id="predictBtn" onclick="handlePredict()">Predict</button>
   </div>
 
-  <div id="error-banner" class="banner error" style="display:none"></div>
-
-  <div id="skeleton" class="skeleton" style="display:none">
-    <div class="skel-line" style="width:55%"></div>
-    <div class="skel-line" style="width:75%"></div>
-    <div class="skel-line" style="width:40%"></div>
-    <div class="skel-line" style="width:65%"></div>
+  <div class="examples">
+    <span>Examples:</span>
+    <button class="example-btn" onclick="useSmiles('CCO')">Ethanol</button>
+    <button class="example-btn" onclick="useSmiles('CC(=O)Oc1ccccc1C(=O)O')">Aspirin</button>
+    <button class="example-btn" onclick="useSmiles('Cn1cnc2c1c(=O)n(C)c(=O)n2C')">Caffeine</button>
+    <button class="example-btn" onclick="useSmiles('CC(=O)Nc1ccc(O)cc1')">Paracetamol</button>
+    <button class="example-btn" onclick="useSmiles('c1ccccc1')">Benzene</button>
+    <button class="example-btn" onclick="useSmiles('OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O')">Glucose</button>
   </div>
 
-  <div id="results" style="display:none">
-    <div id="invalid-banner" class="banner error" style="display:none">
-      <strong>Not found.</strong> This name was not recognised. Try a different name or paste a SMILES string.
-    </div>
-    <div id="valid-results" style="display:none; flex-direction:column; gap:16px;">
+  <div class="error-box" id="errorBox"></div>
+  <div class="loading" id="loadingBox">Analyzing molecule...</div>
 
-      <!-- Drug-likeness score -->
-      <div class="score-card" id="score-card"></div>
+  <div class="results" id="results">
 
-      <!-- ML Solubility -->
-      <div class="sol-card" id="sol-card"></div>
-
-      <!-- Basic properties -->
-      <div>
-        <div class="section-title">Basic Properties</div>
-        <div class="props-grid" id="basic-props"></div>
+    <div class="drug-card">
+      <div class="score-circle" id="scoreCircle">
+        <span class="score-pct" id="scorePct">--</span>
+        <span class="score-label">Score</span>
       </div>
-
-      <!-- Extended descriptors -->
-      <div>
-        <div class="section-title">Extended Descriptors</div>
-        <div class="props-grid-4" id="extended-props"></div>
-      </div>
-
-      <!-- Lipinski bars -->
-      <div class="lipinski-card">
-        <div class="section-title">Lipinski Rule of 5</div>
-        <div id="lipinski-bars"></div>
-      </div>
-
-      <!-- SMILES echo -->
-      <div class="smiles-echo">
-        <span class="echo-label">SMILES</span>
-        <span class="echo-val" id="smiles-echo"></span>
+      <div class="drug-info">
+        <h3 id="drugTitle">--</h3>
+        <p id="violationsText">--</p>
+        <span class="badge" id="drugBadge">--</span>
       </div>
     </div>
+
+    <div class="sol-card">
+      <h3>Predicted Aqueous Solubility</h3>
+      <div class="sol-main">
+        <span class="sol-class" id="solClass">--</span>
+        <span class="sol-logs" id="solLogs">--</span>
+      </div>
+      <div class="sol-desc" id="solDesc">--</div>
+    </div>
+
+    <div class="section-title">Basic Properties</div>
+    <div class="props-grid">
+      <div class="prop-card">
+        <div class="prop-label">Molecular Weight</div>
+        <div class="prop-value" id="mw">--</div>
+        <div class="prop-unit">Da</div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">LogP</div>
+        <div class="prop-value" id="logp">--</div>
+        <div class="prop-unit">lipophilicity</div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">TPSA</div>
+        <div class="prop-value" id="tpsa">--</div>
+        <div class="prop-unit">Angstrom squared</div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">H-Bond Donors</div>
+        <div class="prop-value" id="hbd">--</div>
+        <div class="prop-unit">count</div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">H-Bond Acceptors</div>
+        <div class="prop-value" id="hba">--</div>
+        <div class="prop-unit">count</div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">Rotatable Bonds</div>
+        <div class="prop-value" id="rot">--</div>
+        <div class="prop-unit">count</div>
+      </div>
+    </div>
+
+    <div class="section-title">Extended Descriptors</div>
+    <div class="props-grid">
+      <div class="prop-card">
+        <div class="prop-label">Ring Count</div>
+        <div class="prop-value" id="rings">--</div>
+        <div class="prop-unit">total rings</div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">Aromatic Rings</div>
+        <div class="prop-value" id="aromatic">--</div>
+        <div class="prop-unit">count</div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">Heavy Atoms</div>
+        <div class="prop-value" id="heavy">--</div>
+        <div class="prop-unit">count</div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">Fraction Csp3</div>
+        <div class="prop-value" id="csp3">--</div>
+        <div class="prop-unit">sp3 character</div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-label">Molar Refractivity</div>
+        <div class="prop-value" id="mr">--</div>
+        <div class="prop-unit">MR</div>
+      </div>
+    </div>
+
+    <div class="section-title">Lipinski Rule of 5</div>
+    <div class="lipinski-grid">
+      <div class="lip-item">
+        <div class="lip-header">
+          <span class="lip-name">Molecular Weight</span>
+          <span class="lip-val" id="l-mw">--</span>
+        </div>
+        <div class="lip-bar-bg"><div class="lip-bar" id="b-mw"></div></div>
+        <div class="lip-limit">Limit: 500 Da</div>
+      </div>
+      <div class="lip-item">
+        <div class="lip-header">
+          <span class="lip-name">LogP</span>
+          <span class="lip-val" id="l-logp">--</span>
+        </div>
+        <div class="lip-bar-bg"><div class="lip-bar" id="b-logp"></div></div>
+        <div class="lip-limit">Limit: 5</div>
+      </div>
+      <div class="lip-item">
+        <div class="lip-header">
+          <span class="lip-name">H-Bond Donors</span>
+          <span class="lip-val" id="l-hbd">--</span>
+        </div>
+        <div class="lip-bar-bg"><div class="lip-bar" id="b-hbd"></div></div>
+        <div class="lip-limit">Limit: 5</div>
+      </div>
+      <div class="lip-item">
+        <div class="lip-header">
+          <span class="lip-name">H-Bond Acceptors</span>
+          <span class="lip-val" id="l-hba">--</span>
+        </div>
+        <div class="lip-bar-bg"><div class="lip-bar" id="b-hba"></div></div>
+        <div class="lip-limit">Limit: 10</div>
+      </div>
+    </div>
+
+    <div class="smiles-box" id="smilesBox">SMILES: --</div>
+
   </div>
-</main>
+</div>
 
 <script>
   const API = "https://moleculeproduct.onrender.com";
 
-  function predict(smiles) {
-    document.getElementById("smiles-input").value = smiles;
-    sendToAPI(smiles);
+  function useSmiles(smiles) {
+    document.getElementById('molInput').value = smiles;
+    handlePredict();
   }
 
-  async function runPredict() {
-    const raw = document.getElementById("smiles-input").value.trim();
+  async function handlePredict() {
+    const raw = document.getElementById('molInput').value.trim();
     if (!raw) return;
 
-    document.getElementById("error-banner").style.display = "none";
-    document.getElementById("results").style.display = "none";
-    document.getElementById("skeleton").style.display = "flex";
-    document.getElementById("predict-btn").disabled = true;
-    document.getElementById("predict-btn").textContent = "Looking up…";
-
-    let smiles = raw;
-    try {
-      const resp = await fetch(`${API}/lookup?name=${encodeURIComponent(raw)}`);
-      const json = await resp.json();
-      if (json.smiles) smiles = json.smiles;
-    } catch {}
-
-    await sendToAPI(smiles);
-  }
-
-  async function sendToAPI(smiles) {
-    document.getElementById("skeleton").style.display = "flex";
-    document.getElementById("predict-btn").disabled = true;
-    document.getElementById("predict-btn").textContent = "Analysing…";
+    showError(false);
+    showLoading(true);
+    showResults(false);
+    document.getElementById('predictBtn').disabled = true;
 
     try {
-      const res = await fetch(API + "/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ smiles })
+      let smiles = raw;
+      const looksLikeName = /^[a-zA-Z][a-zA-Zs-]{2,}$/.test(raw);
+
+      if (looksLikeName) {
+        const lookupResp = await fetch(`${API}/lookup?name=${encodeURIComponent(raw)}`);
+        if (!lookupResp.ok) {
+          throw new Error('"' + raw + '" was not recognized. Try a different name or paste a SMILES string.');
+        }
+        const lookupData = await lookupResp.json();
+        smiles = lookupData.smiles;
+        if (!smiles) throw new Error('No SMILES found for "' + raw + '".');
+      }
+
+      const predResp = await fetch(`${API}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ smiles: smiles })
       });
-      if (!res.ok) throw new Error("Server error");
-      const data = await res.json();
-      showResults(data);
+      if (!predResp.ok) {
+        const err = await predResp.json().catch(function() { return {}; });
+        throw new Error(err.detail || 'Prediction failed. Check your SMILES string.');
+      }
+      const d = await predResp.json();
+      renderResults(d);
+
     } catch (e) {
-      document.getElementById("skeleton").style.display = "none";
-      const eb = document.getElementById("error-banner");
-      eb.textContent = "Could not connect to the API. Please try again.";
-      eb.style.display = "block";
+      showError(true, e.message);
     } finally {
-      document.getElementById("predict-btn").disabled = false;
-      document.getElementById("predict-btn").textContent = "Predict";
+      showLoading(false);
+      document.getElementById('predictBtn').disabled = false;
     }
   }
 
-  function solClass(label) {
-    if (label === "Highly Soluble")      return "sol-high";
-    if (label === "Soluble")             return "sol-good";
-    if (label === "Moderately Soluble")  return "sol-mod";
-    if (label === "Poorly Soluble")      return "sol-poor";
-    return "sol-insol";
+  function renderResults(d) {
+    var pct = Math.round((d.drug_likeness_score || 0) * 100);
+    var circle = document.getElementById('scoreCircle');
+    circle.className = 'score-circle ' + (pct >= 75 ? '' : pct >= 50 ? 'medium' : 'bad');
+    document.getElementById('scorePct').textContent = pct + '%';
+    document.getElementById('drugTitle').textContent = d.drug_like ? 'Drug-like Molecule' : 'Not Drug-like';
+    document.getElementById('violationsText').textContent = d.lipinski_violations + ' Lipinski violation' + (d.lipinski_violations !== 1 ? 's' : '');
+    var badge = document.getElementById('drugBadge');
+    badge.textContent = d.drug_like ? 'Passes all Rule of 5 criteria' : d.lipinski_violations + ' Rule of 5 violation' + (d.lipinski_violations !== 1 ? 's' : '');
+    badge.className = 'badge ' + (d.drug_like ? 'pass' : 'fail');
+
+    var sc = d.solubility_class || 'Unknown';
+    var solEl = document.getElementById('solClass');
+    solEl.textContent = sc;
+    var classMap = {
+      'Highly Soluble': 'highly',
+      'Soluble': 'soluble',
+      'Moderately Soluble': 'moderate',
+      'Poorly Soluble': 'poorly',
+      'Insoluble': 'insoluble'
+    };
+    solEl.className = 'sol-class ' + (classMap[sc] || 'unknown');
+
+    var logs = d.predicted_logs;
+    document.getElementById('solLogs').textContent = (logs !== null && logs !== undefined) ? 'logS = ' + logs : '';
+    var descMap = {
+      'Highly Soluble': 'Excellent water solubility. Easy to formulate.',
+      'Soluble': 'Good water solubility. Generally bioavailable.',
+      'Moderately Soluble': 'Moderate solubility. May need formulation aid.',
+      'Poorly Soluble': 'Low water solubility. Difficult to administer orally.',
+      'Insoluble': 'Very low water solubility. Significant formulation challenge.'
+    };
+    document.getElementById('solDesc').textContent = descMap[sc] || '';
+
+    document.getElementById('mw').textContent = d.molecular_weight;
+    document.getElementById('logp').textContent = d.logp;
+    document.getElementById('tpsa').textContent = d.tpsa;
+    document.getElementById('hbd').textContent = d.hbd;
+    document.getElementById('hba').textContent = d.hba;
+    document.getElementById('rot').textContent = d.rotatable_bonds;
+    document.getElementById('rings').textContent = d.ring_count;
+    document.getElementById('aromatic').textContent = d.aromatic_rings;
+    document.getElementById('heavy').textContent = d.heavy_atom_count;
+    document.getElementById('csp3').textContent = d.fraction_csp3;
+    document.getElementById('mr').textContent = d.molar_refractivity;
+
+    setBar('l-mw', 'b-mw', d.molecular_weight, 500);
+    setBar('l-logp', 'b-logp', d.logp, 5);
+    setBar('l-hbd', 'b-hbd', d.hbd, 5);
+    setBar('l-hba', 'b-hba', d.hba, 10);
+
+    document.getElementById('smilesBox').textContent = 'SMILES: ' + d.smiles;
+    showResults(true);
   }
 
-  function solDescription(label) {
-    if (label === "Highly Soluble")     return "Dissolves easily in water. Excellent for oral drugs.";
-    if (label === "Soluble")            return "Good water solubility. Suitable for oral administration.";
-    if (label === "Moderately Soluble") return "Partial water solubility. May need formulation help.";
-    if (label === "Poorly Soluble")     return "Low water solubility. Absorption challenges likely.";
-    return "Very low water solubility. Difficult to administer orally.";
+  function setBar(labelId, barId, value, limit) {
+    document.getElementById(labelId).textContent = value;
+    var pct = Math.min(100, (value / limit) * 100);
+    var bar = document.getElementById(barId);
+    bar.style.width = pct + '%';
+    bar.className = 'lip-bar ' + (value > limit ? 'warn' : 'ok');
   }
 
-  function showResults(data) {
-    document.getElementById("skeleton").style.display = "none";
-    document.getElementById("results").style.display = "block";
-
-    if (!data.valid) {
-      document.getElementById("invalid-banner").style.display = "block";
-      document.getElementById("valid-results").style.display = "none";
-      return;
-    }
-
-    document.getElementById("invalid-banner").style.display = "none";
-    document.getElementById("valid-results").style.display = "flex";
-
-    // Drug-likeness
-    const good = data.drug_like;
-    const violations = [];
-    if (data.molecular_weight > 500) violations.push("MW > 500");
-    if (data.logp > 5)               violations.push("LogP > 5");
-    if (data.hbd > 5)                violations.push("HBD > 5");
-    if (data.hba > 10)               violations.push("HBA > 10");
-
-    document.getElementById("score-card").innerHTML = `
-      <div class="score-circle ${good ? 'good' : 'bad'}">
-        <div class="score-num">${Math.round(data.drug_likeness_score * 100)}%</div>
-        <div class="score-label">SCORE</div>
-      </div>
-      <div class="score-info">
-        <h3>${good ? 'Drug-like Molecule' : 'Not Drug-like'}</h3>
-        <p>${data.lipinski_violations} Lipinski violation${data.lipinski_violations !== 1 ? 's' : ''}</p>
-        <div class="violations">
-          ${violations.length === 0
-            ? '<span class="pass-tag">Passes all Rule of 5 criteria</span>'
-            : violations.map(v => `<span class="violation-tag">${v}</span>`).join('')}
-        </div>
-      </div>`;
-
-    // Solubility
-    const sc = solClass(data.solubility_class);
-    document.getElementById("sol-card").innerHTML = `
-      <div class="sol-info">
-        <h3>Predicted Aqueous Solubility</h3>
-        <p>logS = ${data.predicted_logs} &nbsp;|&nbsp; ${solDescription(data.solubility_class)}</p>
-      </div>
-      <span class="sol-badge ${sc}">${data.solubility_class}</span>`;
-
-    // Basic properties
-    const basic = [
-      { label: "Molecular Weight", value: data.molecular_weight, unit: "Da", dp: 3 },
-      { label: "LogP",             value: data.logp,             unit: "",   dp: 4 },
-      { label: "TPSA",             value: data.tpsa,             unit: "Å²",dp: 2 },
-      { label: "H-Bond Donors",    value: data.hbd,              unit: "",   dp: 0 },
-      { label: "H-Bond Acceptors", value: data.hba,              unit: "",   dp: 0 },
-      { label: "Rotatable Bonds",  value: data.rotatable_bonds,  unit: "",   dp: 0 },
-    ];
-    document.getElementById("basic-props").innerHTML = basic.map(p => `
-      <div class="prop-card">
-        <div class="prop-label">${p.label}</div>
-        <div class="prop-value">${p.dp === 0 ? p.value : Number(p.value).toFixed(p.dp)}</div>
-        ${p.unit ? `<div class="prop-unit">${p.unit}</div>` : ""}
-      </div>`).join("");
-
-    // Extended descriptors
-    const extended = [
-      { label: "Ring Count",         value: data.ring_count,         unit: "", dp: 0 },
-      { label: "Aromatic Rings",     value: data.aromatic_rings,     unit: "", dp: 0 },
-      { label: "Heavy Atoms",        value: data.heavy_atom_count,   unit: "", dp: 0 },
-      { label: "Fraction CSP3",      value: data.fraction_csp3,      unit: "", dp: 4 },
-      { label: "Molar Refractivity", value: data.molar_refractivity, unit: "", dp: 3 },
-    ];
-    document.getElementById("extended-props").innerHTML = extended.map(p => `
-      <div class="prop-card">
-        <div class="prop-label">${p.label}</div>
-        <div class="prop-value">${p.dp === 0 ? p.value : Number(p.value).toFixed(p.dp)}</div>
-        ${p.unit ? `<div class="prop-unit">${p.unit}</div>` : ""}
-      </div>`).join("");
-
-    // Lipinski bars
-    const bars = [
-      { label: "Molecular Weight", value: data.molecular_weight, max: 500, limit: "≤ 500 Da" },
-      { label: "LogP",             value: data.logp,             max: 5,   limit: "≤ 5"      },
-      { label: "H-Bond Donors",    value: data.hbd,              max: 5,   limit: "≤ 5"      },
-      { label: "H-Bond Acceptors", value: data.hba,              max: 10,  limit: "≤ 10"     },
-    ];
-    document.getElementById("lipinski-bars").innerHTML = bars.map(b => {
-      const pct = Math.min((b.value / b.max) * 100, 100);
-      const good = b.value <= b.max;
-      return `<div class="bar-row">
-        <div class="bar-meta">
-          <span>${b.label} (${b.limit})</span>
-          <span class="bar-val ${good?'good':'bad'}">${Number(b.value).toFixed(2)}</span>
-        </div>
-        <div class="bar-track">
-          <div class="bar-fill ${good?'good':'bad'}" style="width:${pct}%"></div>
-        </div>
-      </div>`;
-    }).join("");
-
-    document.getElementById("smiles-echo").textContent = data.smiles;
+  function showError(show, msg) {
+    var box = document.getElementById('errorBox');
+    box.style.display = show ? 'block' : 'none';
+    if (msg) box.textContent = msg;
   }
 
-  document.getElementById("smiles-input").addEventListener("keydown", e => {
-    if (e.key === "Enter") runPredict();
+  function showLoading(show) {
+    document.getElementById('loadingBox').style.display = show ? 'block' : 'none';
+  }
+
+  function showResults(show) {
+    document.getElementById('results').style.display = show ? 'block' : 'none';
+  }
+
+  document.getElementById('molInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') handlePredict();
   });
 </script>
 </body>
