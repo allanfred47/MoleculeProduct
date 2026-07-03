@@ -32,6 +32,7 @@ def load_model(filename):
 
 TOXICITY_MODEL = load_model("toxicity_model.pkl")
 VISCOSITY_MODEL = load_model("viscosity_model.pkl")
+CO2_MODEL = load_model("co2_model.pkl")
 
 app = FastAPI(
     title="MoleculeProduct API",
@@ -134,6 +135,22 @@ def predict_viscosity(features):
     except Exception as e:
         print(f"Viscosity error: {e}")
         return None, "Prediction error"
+    
+def predict_co2_solubility(features):
+    if CO2_MODEL is None:
+        return None, "Model not loaded"
+    try:
+        X = np.array([features])
+        co2 = round(float(CO2_MODEL.predict(X)[0]), 4)
+        if co2 > 0.35: co2_class = "Very High"
+        elif co2 > 0.28: co2_class = "High"
+        elif co2 > 0.22: co2_class = "Moderate"
+        elif co2 > 0.15: co2_class = "Low"
+        else: co2_class = "Very Low"
+        return co2, co2_class
+    except Exception as e:
+        print(f"CO2 error: {e}")
+        return None, "Prediction error"
 
 
 @app.get("/")
@@ -211,6 +228,7 @@ def predict(req: PredictRequest):
     features = get_features(mw, logp, tpsa, hbd, hba, rot, ring_count, aromatic_rings, heavy_atom_count, fraction_csp3, molar_refractivity)
     toxicity_probability, toxicity_class = predict_toxicity(features)
     viscosity, viscosity_class = predict_viscosity(features)
+    co2_solubility, co2_class = predict_co2_solubility(features)
 
     return {
         "smiles": smiles,
@@ -239,5 +257,7 @@ def predict(req: PredictRequest):
         "toxicity_probability": toxicity_probability,
         "toxicity_class": toxicity_class,
         "viscosity": viscosity,
-        "viscosity_class": viscosity_class
+        "viscosity_class": viscosity_class,
+        "co2_solubility": co2_solubility,
+        "co2_class": co2_class
     }
