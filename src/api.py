@@ -462,8 +462,8 @@ def extract(req: ExtractRequest):
 
     if "catalysts" in options:
         pats = [
-            r'\b([A-Z][a-z]?d*(?:/[A-Z][a-z]?d*)*)s+catalyst\b',
-            r'\bcatalyzed bys+([A-Za-z0-9-/,s]+)',
+           r'\b([A-Z][a-z]?\d*(?:/[A-Z][a-z]?\d*)*)\s+catalyst\b'
+           r'\bcatalyzed by\s+([A-Za-z0-9\-/,\s]+)'
             r'\b(Pd|Pt|Rh|Ru|Ni|Cu|Fe|Au|Ag|Ir|Os|Co|Mn|Zn|Al|Ti|Zr|Ce|Mo|W|V)\b[^.]{0,40}',
             r'\b(zeolite|alumina|silica|MOF|enzyme|lipase|protease|acid|base|BINAP|chiral)\b',
         ]
@@ -481,15 +481,15 @@ def extract(req: ExtractRequest):
 
     if "reaction_conditions" in options:
         cond = {}
-        m = re.search(r'(d+)s*[°]?C\b', text)
+        m = re.search(r'(\d+)\s*[°]?C\b', text)
         if m: cond["temperature"] = m.group(0)
-        m = re.search(r'(d+(?:.d+)?)s*(MPa|bar|atm|kPa|psi)', text, re.IGNORECASE)
+        m = re.search(r'(\d+(?:\.\d+)?)\s*(MPa|bar|atm|kPa|psi)', text, re.IGNORECASE)
         if m: cond["pressure"] = m.group(0)
-        m = re.search(r'(d+(?:.d+)?)s*(h|hr|hours?|min|minutes?|s\b)', text, re.IGNORECASE)
+        m = re.search(r'(\d+(?:\.\d+)?)\s*(h|hr|hours?|min|minutes?|s\b)', text, re.IGNORECASE)
         if m: cond["time"] = m.group(0)
         m = re.search(r'\b(methanol|ethanol|water|DMF|DMSO|THF|acetone|toluene|hexane|acetonitrile|DCM|chloroform)\b', text, re.IGNORECASE)
         if m: cond["solvent"] = m.group(0)
-        m = re.search(r'\bpHs*(d+(?:.d+)?)\b', text, re.IGNORECASE)
+        m = re.search(r'\bpHs*(\d+(?:\.\d+)?)\b', text, re.IGNORECASE)
         if m: cond["pH"] = m.group(0)
         result["reaction_conditions"] = cond
 
@@ -516,17 +516,17 @@ def extract(req: ExtractRequest):
 
     if "yields" in options:
         result["yields"] = {
-            "yield": (m := re.search(r'(d+(?:.d+)?)s*%s*(?:yield|conversion|selectivity)', text, re.IGNORECASE)) and m.group(0),
-            "ee":    (m := re.search(r'(d+(?:.d+)?)s*%s*ee\b', text, re.IGNORECASE))    and m.group(0),
-            "TON":   (m := re.search(r'TONs*(?:of|=|:)?s*(d+(?:,d+)?)', text, re.IGNORECASE)) and m.group(1),
-            "TOF":   (m := re.search(r'TOFs*(?:of|=|:)?s*(d+(?:.d+)?)', text, re.IGNORECASE)) and m.group(1),
+            "yield": (m := re.search(r'(\d+(?:\.\d+)?)\s*%\s*(?:yield|conversion|selectivity)', text, re.IGNORECASE)) and m.group(0),
+            "ee":    (m := re.search(r'(\d+(?:\.\d+)?)\s*%\s*ee\b', text, re.IGNORECASE))    and m.group(0),
+            "TON":   (m := re.search(r'TON\s*(?:of|=|:)?\s*(\d+(?:,\d+)?)', text, re.IGNORECASE)) and m.group(1),
+            "TOF":   (m := re.search(r'TOF\s*(?:of|=|:)?\s*(\d+(?:\.\d+)?)', text, re.IGNORECASE)) and m.group(1),
         }
 
     if "insights" in options:
         kws      = ["novel","significant","first","demonstrate","show","report","achieve",
                     "improve","enhance","increase","decrease","exceed","outperform","selectivity"]
         insights = []
-        for sent in re.split(r'(?<=[.!?])s+', text):
+        for sent in re.split(r'(?<=[.!?])\s+', text):
             for kw in kws:
                 if kw in sent.lower() and len(sent) > 30:
                     insights.append(sent.strip()[:250])
