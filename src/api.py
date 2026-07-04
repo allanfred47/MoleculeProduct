@@ -543,7 +543,6 @@ def extract(req: ExtractRequest):
 @app.post("/extract-pdf")
 async def extract_pdf(file: UploadFile = File(...)):
     """Accept PDF or TXT upload and return extracted text."""
-    import io
     content  = await file.read()
     filename = file.filename or "upload"
 
@@ -551,29 +550,18 @@ async def extract_pdf(file: UploadFile = File(...)):
         text = content.decode("utf-8", errors="replace")
         return {"status": "ok", "filename": filename, "text": text[:50000], "method": "txt"}
 
-    text = ""
-    method = "none"
-
+    text = "  "
     try:
-        import pdfplumber
+        import io, pdfplumber
         with pdfplumber.open(io.BytesIO(content)) as pdf:
-            pages = []
-            for p in pdf.pages[:40]:
-                t = p.extract_text()
-                if t:
-                    pages.append(t)
-            text = "".join(pages)
+            text = "".join(p.extract_text() or "" for p in pdf.pages[:40])
         method = "pdfplumber"
     except Exception:
         try:
+            import io
             from PyPDF2 import PdfReader
             reader = PdfReader(io.BytesIO(content))
-            pages = []
-            for p in reader.pages[:40]:
-                t = p.extract_text()
-                if t:
-                    pages.append(t)
-            text = "".join(pages)
+            text   = "  ".join(p.extract_text() or "" for p in reader.pages[:40])
             method = "pypdf2"
         except Exception as e:
             return {"status": "error", "filename": filename, "text": "", "error": str(e), "method": "none"}
