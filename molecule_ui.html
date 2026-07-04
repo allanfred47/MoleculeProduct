@@ -637,28 +637,37 @@ async function runLookup(){
   catch{showError("Could not find '"+name+"' on PubChem.");}
   finally{setBtn('lookup-btn',false,'Lookup');}
 }
+async function pubchemLookup(name){
+  const url='https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/'+encodeURIComponent(name)+'/property/IsomericSMILES/JSON';
+  const r=await fetch(url);
+  if(!r.ok) throw new Error('Not found');
+  const d=await r.json();
+  return d.PropertyTable.Properties[0].IsomericSMILES;
+}
+async function runLookup(){
+  const name=document.getElementById('smiles-input').value.trim();if(!name)return;
+  setBtn('lookup-btn',true,'Looking…');document.getElementById('error-banner').style.display='none';
+  try{
+    const smiles=await pubchemLookup(name);
+    document.getElementById('smiles-input').value=smiles;
+    toast('Found: '+smiles.slice(0,30));
+  } catch{
+    showError("Could not find '"+name+"' — try the SMILES directly.");
+  }
+  finally{setBtn('lookup-btn',false,'Lookup');}
+}
 async function runPredict(){
   let smiles=document.getElementById('smiles-input').value.trim();if(!smiles)return;
-  // Detect if input is a name (no SMILES special chars) rather than a SMILES string
-  const isSmiles = smiles.includes('=') || smiles.includes('(') || smiles.includes(')') || smiles.includes('#') || smiles.includes('[') || smiles.includes('%') || smiles.length <= 3;
+  const isSmiles=smiles.includes('=')||smiles.includes('(')||smiles.includes(')')||smiles.includes('#')||smiles.includes('[')||smiles.includes('%')||smiles.length<=3;
   if(!isSmiles){
-    // Treat as a molecule name — look it up on PubChem first
     setBtn('predict-btn',true,'Looking up…');
     document.getElementById('error-banner').style.display='none';
     try{
-      const r=await fetch(API+'/lookup?name='+encodeURIComponent(smiles));
-      if(r.ok){
-        const d=await r.json();
-        smiles=d.smiles;
-        document.getElementById('smiles-input').value=smiles;
-      } else {
-        setBtn('predict-btn',false,'Predict');
-        showError("Could not find '"+document.getElementById('smiles-input').value.trim()+"' on PubChem. Try entering the SMILES directly.");
-        return;
-      }
-    } catch {
+      smiles=await pubchemLookup(smiles);
+      document.getElementById('smiles-input').value=smiles;
+    } catch{
       setBtn('predict-btn',false,'Predict');
-      showError('Lookup failed — check your connection or enter the SMILES directly.');
+      showError("Could not find that molecule. Try: c1ccccc1 for benzene, CCO for ethanol.");
       return;
     }
     setBtn('predict-btn',false,'Predict');
