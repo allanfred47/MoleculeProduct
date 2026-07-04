@@ -11,17 +11,20 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:#0d1117; --surface:#161b22; --surface2:#1c2333;
-      --border:#30363d; --text:#e6edf3; --muted:#7d8590;
-      --pink:#f472b6; --rose:#e11d48; --violet:#bc8cff;
-      --green:#3fb950; --amber:#d29922; --cyan:#39d0d8;
-      --blue:#58a6ff; --red:#f85149; --radius:12px;
+      --bg:      #0d1117; --surface: #161b22; --surface2: #1c2333;
+      --border:  #30363d; --text: #e6edf3; --muted: #7d8590;
+      --pink:    #f472b6; --rose: #e11d48; --violet: #bc8cff;
+      --green:   #3fb950; --amber: #d29922; --cyan: #39d0d8;
+      --blue:    #58a6ff; --red: #f85149;
+      --radius:  12px;
     }
     html.light {
-      --bg:#fdf2f8; --surface:#ffffff; --surface2:#fce7f3;
-      --border:#f9a8d4; --text:#1f2328; --muted:#6b7280;
+      --bg: #fdf2f8; --surface: #ffffff; --surface2: #fce7f3;
+      --border: #f9a8d4; --text: #1f2328; --muted: #6b7280;
     }
+
     body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition:background .3s,color .3s; }
+
     #particle-canvas { position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.4; }
 
     @keyframes headerWave { 0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%} }
@@ -33,6 +36,8 @@
     @keyframes fadeUp     { from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)} }
     @keyframes pulse      { 0%,100%{opacity:1}50%{opacity:.35} }
     @keyframes spinRing   { to{transform:rotate(360deg)} }
+    @keyframes popIn      { 0%{transform:scale(.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1} }
+    @keyframes progressFill { from{width:0%} to{width:var(--target-width)} }
 
     header {
       background:linear-gradient(270deg,#0d1117,#2d0a1e,#1a0a2e,#0d1a0d,#2d0a1e,#0d1117);
@@ -62,18 +67,22 @@
     .section-head h2 { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.09em; white-space:nowrap; }
     .section-head .line { flex:1; height:1px; background:linear-gradient(90deg,#f472b6,#bc8cff,#e11d48,#f472b6); background-size:200% 100%; animation:waveShift 6s linear infinite; }
 
+    /* ── Inputs grid ── */
     .inputs-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     @media(max-width:600px){ .inputs-grid { grid-template-columns:1fr; } }
     .input-group { display:flex; flex-direction:column; gap:5px; }
     .input-group label { font-size:12px; font-weight:600; color:var(--text); }
     .input-group .sub { font-size:11px; color:var(--muted); }
-    select {
+    select, input[type="text"], textarea {
       width:100%; border:1px solid var(--border); border-radius:8px;
       padding:9px 12px; font-family:'Inter',sans-serif; font-size:13px;
       background:var(--bg); color:var(--text); outline:none;
       transition:border-color .15s,box-shadow .15s;
     }
-    select:focus { border-color:var(--pink); box-shadow:0 0 0 3px rgba(244,114,182,.15); }
+    select:focus, input[type="text"]:focus, textarea:focus {
+      border-color:var(--pink); box-shadow:0 0 0 3px rgba(244,114,182,.15);
+    }
+    textarea { resize:vertical; min-height:72px; }
     select option { background:var(--bg); color:var(--text); }
 
     .tag-row { display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; }
@@ -82,8 +91,7 @@
     .tag:hover:not(.active) { border-color:var(--pink); color:var(--pink); }
 
     .generate-btn {
-      width:100%; height:48px;
-      background:linear-gradient(135deg,#9d174d,#e11d48,#be185d);
+      width:100%; height:48px; background:linear-gradient(135deg,#9d174d,#e11d48,#be185d);
       color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700;
       cursor:pointer; transition:opacity .15s,transform .1s;
       box-shadow:0 4px 20px rgba(225,29,72,.4); letter-spacing:.02em;
@@ -93,12 +101,15 @@
     .generate-btn:disabled { opacity:.5; cursor:default; }
     .generate-btn:not(:disabled):hover { opacity:.9; transform:translateY(-1px); }
 
+    /* ── Skeleton ── */
     .skeleton { border-radius:var(--radius); border:1px solid var(--border); background:var(--surface); padding:24px; display:flex; flex-direction:column; gap:14px; }
     .skel-line { height:13px; border-radius:6px; background:var(--surface2); animation:pulse 1.4s ease-in-out infinite; }
 
+    /* ── Results ── */
     #results { display:none; }
     .result-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; animation:fadeUp .45s ease forwards; }
 
+    /* ── Formula hero banner ── */
     .formula-hero {
       background:linear-gradient(135deg,#2d0a1e,#1a0a2e,#0a1a2e);
       border-radius:var(--radius); padding:24px; border:1px solid rgba(244,114,182,.25);
@@ -115,6 +126,7 @@
     .hb-amber  { background:rgba(210,153,34,.15);  border-color:rgba(210,153,34,.4);  color:#fde68a; }
     .hb-cyan   { background:rgba(57,208,216,.15);  border-color:rgba(57,208,216,.4);  color:#a5f3fc; }
 
+    /* ── Score row ── */
     .score-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
     @media(max-width:500px){ .score-row { grid-template-columns:repeat(2,1fr); } }
     .score-tile { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 10px; display:flex; flex-direction:column; align-items:center; gap:6px; }
@@ -124,7 +136,10 @@
     .sc-green  { border-color:var(--green);  color:var(--green);  background:rgba(63,185,80,.1); }
     .sc-amber  { border-color:var(--amber);  color:var(--amber);  background:rgba(210,153,34,.1); }
     .sc-violet { border-color:var(--violet); color:var(--violet); background:rgba(188,140,255,.1); }
+    .sc-red    { border-color:var(--red);    color:var(--red);    background:rgba(248,81,73,.1); }
+    .score-tile .st-class { font-size:10px; font-weight:600; color:var(--text); text-align:center; }
 
+    /* ── Ingredients table ── */
     .ingr-table { width:100%; border-collapse:collapse; font-size:13px; }
     .ingr-table th { text-align:left; font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; padding:6px 10px; border-bottom:1px solid var(--border); }
     .ingr-table td { padding:9px 10px; border-bottom:1px solid rgba(48,54,61,.5); vertical-align:top; }
@@ -143,6 +158,7 @@
     .ingr-bar-track { height:4px; border-radius:99px; background:var(--bg); overflow:hidden; margin-top:4px; width:80px; }
     .ingr-bar-fill  { height:100%; border-radius:99px; background:linear-gradient(90deg,#9d174d,#f472b6); }
 
+    /* ── Process steps ── */
     .steps-list { display:flex; flex-direction:column; gap:10px; }
     .step-item { display:flex; gap:12px; align-items:flex-start; }
     .step-num { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#9d174d,#e11d48); color:#fff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -156,6 +172,7 @@
     .st-rpm  { background:rgba(210,153,34,.1); border-color:rgba(210,153,34,.3); color:#fde68a; }
     .st-pH   { background:rgba(63,185,80,.1);  border-color:rgba(63,185,80,.3);  color:#86efac; }
 
+    /* ── Safety grid ── */
     .safety-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     @media(max-width:500px){ .safety-grid { grid-template-columns:1fr; } }
     .safety-item { background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:10px 12px; }
@@ -165,7 +182,9 @@
     .si-good  { border-left:3px solid var(--green); }
     .si-warn  { border-left:3px solid var(--amber); }
     .si-info  { border-left:3px solid var(--cyan); }
+    .si-alert { border-left:3px solid var(--red); }
 
+    /* ── Claims & actives ── */
     .claims-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
     @media(max-width:500px){ .claims-grid { grid-template-columns:1fr 1fr; } }
     .claim-card { background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:10px; display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center; }
@@ -173,23 +192,26 @@
     .claim-label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
     .claim-val { font-size:12px; font-weight:600; color:var(--text); }
 
+    /* ── Stability ── */
     .stab-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
     .stab-row { background:var(--surface2); border-radius:9px; padding:10px 12px; }
     .stab-label { font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px; }
     .stab-bar-track { height:6px; border-radius:99px; background:var(--bg); overflow:hidden; }
-    .stab-bar-fill { height:100%; border-radius:99px; }
-    .stab-bar-fill.good { background:linear-gradient(90deg,#238636,#3fb950); }
-    .stab-bar-fill.ok   { background:linear-gradient(90deg,#92400e,#d29922); }
-    .stab-bar-fill.poor { background:linear-gradient(90deg,#b91c1c,#f85149); }
+    .stab-bar-fill { height:100%; border-radius:99px; transition:width .8s ease; }
+    .stab-bar-fill.good  { background:linear-gradient(90deg,#238636,#3fb950); }
+    .stab-bar-fill.ok    { background:linear-gradient(90deg,#92400e,#d29922); }
+    .stab-bar-fill.poor  { background:linear-gradient(90deg,#b91c1c,#f85149); }
     .stab-val { font-size:11px; font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--text); margin-top:4px; }
 
+    /* ── Regulatory ── */
     .reg-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
     .reg-item { background:var(--surface2); border-radius:9px; padding:10px; display:flex; flex-direction:column; align-items:center; gap:4px; }
     .reg-flag { font-size:20px; }
     .reg-label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
     .reg-status { font-size:11px; font-weight:700; }
-    .reg-pass { color:var(--green); } .reg-warn { color:var(--amber); }
+    .reg-pass { color:var(--green); } .reg-warn { color:var(--amber); } .reg-fail { color:var(--red); }
 
+    /* ── Cost estimator ── */
     .cost-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid rgba(48,54,61,.5); font-size:13px; }
     .cost-row:last-child { border-bottom:none; }
     .cost-label { color:var(--muted); }
@@ -197,25 +219,31 @@
     .cost-total .cost-label { font-weight:700; color:var(--text); }
     .cost-total .cost-val { color:var(--pink); font-size:15px; }
 
+    /* ── Toolbar ── */
     .toolbar { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:4px; }
     .tool-btn { padding:6px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:12px; font-weight:600; cursor:pointer; transition:background .15s,transform .1s; display:inline-flex; align-items:center; gap:6px; }
     .tool-btn:hover { background:var(--surface2); transform:translateY(-1px); }
     .tool-btn.primary { background:linear-gradient(135deg,#9d174d,#e11d48); color:#fff; border-color:transparent; box-shadow:0 2px 8px rgba(225,29,72,.4); }
 
+    /* ── Banner ── */
     .banner { border-radius:var(--radius); padding:12px 16px; font-size:13px; }
     .banner.error { background:rgba(248,81,73,.1); border:1px solid rgba(248,81,73,.3); color:#f85149; }
 
+    /* ── Toast ── */
     #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:8px 20px; font-size:13px; font-weight:600; color:var(--text); box-shadow:0 4px 20px rgba(0,0,0,.4); transition:transform .3s ease; z-index:999; white-space:nowrap; }
     #toast.show { transform:translateX(-50%) translateY(0); }
 
     footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); position:relative; z-index:1; }
     footer a { color:var(--pink); text-decoration:none; }
+
+    .error-banner { display:none; }
   </style>
 </head>
 <body>
 <canvas id="particle-canvas"></canvas>
 <div id="toast"></div>
 
+<!-- HEADER -->
 <header>
   <svg class="header-logo" viewBox="0 0 32 32" width="34" height="34" fill="none">
     <circle cx="16" cy="16" r="5" stroke="#f472b6" stroke-width="2.5"/>
@@ -247,10 +275,13 @@
 </header>
 
 <main>
+
+  <!-- INPUT CARD -->
   <div class="card">
     <div class="section-head"><h2>Formulation Parameters</h2><div class="line"></div></div>
     <div class="inputs-grid">
 
+      <!-- INPUT 1: Product Type -->
       <div class="input-group">
         <label>1. Product Type</label>
         <span class="sub">What are you making?</span>
@@ -263,13 +294,16 @@
           <option value="toner">Hydrating Toner</option>
           <option value="eye_cream">Eye Cream</option>
           <option value="body_lotion">Body Lotion</option>
+          <option value="hair_conditioner">Hair Conditioner</option>
+          <option value="shampoo">Shampoo</option>
           <option value="lip_balm">Lip Balm</option>
           <option value="face_mask">Face Mask</option>
         </select>
       </div>
 
+      <!-- INPUT 2: Skin Type -->
       <div class="input-group">
-        <label>2. Target Skin Type</label>
+        <label>2. Target Skin / Hair Type</label>
         <span class="sub">Who is this for?</span>
         <select id="skin-type">
           <option value="normal">Normal Skin</option>
@@ -279,10 +313,15 @@
           <option value="combination">Combination</option>
           <option value="mature">Mature / Aging (50+)</option>
           <option value="hyperpigmented">Hyperpigmented</option>
-          <option value="damaged">Damaged / Compromised Barrier</option>
+          <option value="damaged">Damaged / Compromised</option>
+          <option value="normal_hair">Normal Hair</option>
+          <option value="dry_hair">Dry / Damaged Hair</option>
+          <option value="oily_hair">Oily Scalp</option>
+          <option value="color_treated">Color-Treated Hair</option>
         </select>
       </div>
 
+      <!-- INPUT 3: Philosophy -->
       <div class="input-group">
         <label>3. Ingredient Philosophy</label>
         <span class="sub">Select all that apply</span>
@@ -294,12 +333,14 @@
           <span class="tag" data-val="synthetic">Synthetic OK</span>
           <span class="tag" data-val="biotech">Biotech Actives</span>
           <span class="tag" data-val="ayurvedic">Ayurvedic</span>
-          <span class="tag" data-val="no_fragrance">Fragrance-Free</span>
-          <span class="tag" data-val="no_paraben">Paraben-Free</span>
           <span class="tag" data-val="microbiome">Microbiome-Friendly</span>
+          <span class="tag" data-val="no_fragrance">Fragrance-Free</span>
+          <span class="tag" data-val="no_silicone">Silicone-Free</span>
+          <span class="tag" data-val="no_paraben">Paraben-Free</span>
         </div>
       </div>
 
+      <!-- INPUT 4: Key Claims / Goals -->
       <div class="input-group">
         <label>4. Key Claims &amp; Goals</label>
         <span class="sub">What should it do?</span>
@@ -309,19 +350,21 @@
           <span class="tag" data-val="brightening">Brightening</span>
           <span class="tag" data-val="firming">Firming</span>
           <span class="tag active" data-val="wrinkle_reduction">Wrinkle Reduction</span>
+          <span class="tag" data-val="spf">SPF Protection</span>
           <span class="tag" data-val="antioxidant">Antioxidant</span>
           <span class="tag" data-val="soothing">Soothing</span>
-          <span class="tag" data-val="collagen_boost">Collagen Boost</span>
-          <span class="tag" data-val="brightening">Even Skin Tone</span>
-          <span class="tag" data-val="barrier_repair">Barrier Repair</span>
           <span class="tag" data-val="pore_minimizing">Pore Minimizing</span>
+          <span class="tag" data-val="collagen_boost">Collagen Boost</span>
+          <span class="tag" data-val="hyperpigment">Even Skin Tone</span>
+          <span class="tag" data-val="barrier_repair">Barrier Repair</span>
         </div>
       </div>
 
     </div>
+
     <div style="margin-top:14px">
       <button class="generate-btn" id="gen-btn" onclick="generateFormulation()">
-        Generate Professional Formulation
+        ✨ Generate Professional Formulation
       </button>
     </div>
   </div>
@@ -335,7 +378,10 @@
     <div class="skel-line" style="width:50%"></div>
   </div>
 
+  <!-- RESULTS -->
   <div id="results">
+
+    <!-- Hero banner -->
     <div class="formula-hero" id="hero-banner">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
         <div>
@@ -344,22 +390,24 @@
           <div class="sub" id="hero-sub">—</div>
         </div>
         <div class="toolbar">
-          <button class="tool-btn" onclick="copyFormula()">Copy Formula</button>
-          <button class="tool-btn primary" onclick="exportPDF()">Export PDF</button>
+          <button class="tool-btn" onclick="copyFormula()">📋 Copy</button>
+          <button class="tool-btn primary" onclick="exportPDF()">⬇ Export PDF</button>
         </div>
       </div>
       <div class="hero-badges" id="hero-badges" style="margin-top:14px"></div>
     </div>
 
+    <!-- Score row -->
     <div style="margin-top:10px">
       <div class="section-head"><h2>Formula Scorecard</h2><div class="line"></div></div>
       <div class="score-row" id="score-row"></div>
     </div>
 
+    <!-- Ingredients -->
     <div class="result-card" style="margin-top:10px">
       <div class="section-head"><h2>Complete Ingredient List (INCI)</h2><div class="line"></div></div>
       <div style="overflow-x:auto">
-        <table class="ingr-table">
+        <table class="ingr-table" id="ingr-table">
           <thead>
             <tr>
               <th>Phase</th>
@@ -373,54 +421,63 @@
         </table>
       </div>
       <div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted)">
-        Total: <span id="total-pct" style="font-family:'JetBrains Mono',monospace;color:var(--pink);font-weight:700"></span>
-        &nbsp;·&nbsp; Actives: <span id="actives-pct" style="font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700"></span>
-        &nbsp;·&nbsp; Base: <span id="base-pct" style="font-family:'JetBrains Mono',monospace;color:var(--cyan);font-weight:700"></span>
+        <strong style="color:var(--text)">Total:</strong> <span id="total-pct" style="font-family:'JetBrains Mono',monospace;color:var(--pink);font-weight:700"></span> &nbsp;·&nbsp;
+        <strong style="color:var(--text)">Actives:</strong> <span id="actives-pct" style="font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700"></span> &nbsp;·&nbsp;
+        <strong style="color:var(--text)">Base:</strong> <span id="base-pct" style="font-family:'JetBrains Mono',monospace;color:var(--cyan);font-weight:700"></span>
       </div>
     </div>
 
+    <!-- Process steps -->
     <div class="result-card" style="margin-top:10px">
       <div class="section-head"><h2>Manufacturing Process</h2><div class="line"></div></div>
       <div class="steps-list" id="steps-list"></div>
     </div>
 
+    <!-- Claims & Efficacy -->
     <div class="result-card" style="margin-top:10px">
       <div class="section-head"><h2>Efficacy Claims &amp; Key Actives</h2><div class="line"></div></div>
       <div class="claims-grid" id="claims-grid"></div>
     </div>
 
+    <!-- Safety -->
     <div class="result-card" style="margin-top:10px">
       <div class="section-head"><h2>Safety &amp; Regulatory Data</h2><div class="line"></div></div>
       <div class="safety-grid" id="safety-grid"></div>
     </div>
 
+    <!-- Stability -->
     <div class="result-card" style="margin-top:10px">
       <div class="section-head"><h2>Stability Profile</h2><div class="line"></div></div>
       <div class="stab-grid" id="stab-grid"></div>
     </div>
 
+    <!-- Regulatory -->
     <div class="result-card" style="margin-top:10px">
       <div class="section-head"><h2>Regulatory Compliance</h2><div class="line"></div></div>
       <div class="reg-grid" id="reg-grid"></div>
     </div>
 
+    <!-- Cost -->
     <div class="result-card" style="margin-top:10px">
       <div class="section-head"><h2>Cost Estimation (per kg batch)</h2><div class="line"></div></div>
       <div id="cost-rows"></div>
     </div>
+
   </div>
+
 </main>
 
 <footer>
   MoleculeProduct · Formulation Generator ·
-  <a href="https://moleculeproduct.onrender.com/docs" target="_blank">API Docs</a>
+  <a href="https://moleculeproduct.onrender.com/docs" target="_blank">API Docs</a> ·
+  <span style="color:var(--pink)">More comprehensive than Nouryon BeautyCreations™</span>
 </footer>
 
 <script>
 const API = "https://moleculeproduct.onrender.com";
 let dark = true;
 
-/* PARTICLES */
+/* ═══ PARTICLES ═══ */
 (function(){
   const canvas=document.getElementById('particle-canvas'),ctx=canvas.getContext('2d');
   let W,H,pts=[];
@@ -429,385 +486,453 @@ let dark = true;
   resize();window.addEventListener('resize',resize);
   function P(){this.x=Math.random()*W;this.y=Math.random()*H;this.r=1+Math.random()*2.5;this.vx=(Math.random()-.5)*.35;this.vy=(Math.random()-.5)*.35;this.color=COLS[Math.floor(Math.random()*COLS.length)];this.alpha=.15+Math.random()*.3;this.bonds=Math.floor(Math.random()*2)+1;}
   for(let i=0;i<50;i++)pts.push(new P());
-  function draw(){ctx.clearRect(0,0,W,H);for(let i=0;i<pts.length;i++){let lk=0;for(let j=i+1;j<pts.length;j++){if(lk>=pts[i].bonds)break;const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<110){ctx.strokeStyle=pts[i].color;ctx.globalAlpha=.1*(1-d/110);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke();lk++;}}}pts.forEach(p=>{ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<pts.length;i++){let lk=0;for(let j=i+1;j<pts.length;j++){if(lk>=pts[i].bonds)break;const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<110){ctx.strokeStyle=pts[i].color;ctx.globalAlpha=.1*(1-d/110);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke();lk++;}}}
+    pts.forEach(p=>{ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});
+    ctx.globalAlpha=1;
+  }
   function upd(){pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;});}
   function loop(){draw();upd();requestAnimationFrame(loop);}loop();
 })();
 
-/* THEME */
-function toggleTheme(){dark=!dark;document.documentElement.classList.toggle('light',!dark);document.getElementById('theme-btn').textContent=dark?'🌙':'☀️';}
+/* ═══ THEME ═══ */
+function toggleTheme(){
+  dark=!dark;
+  document.documentElement.classList.toggle('light',!dark);
+  document.getElementById('theme-btn').textContent=dark?'🌙':'☀️';
+}
 
-/* TOAST */
+/* ═══ TOAST ═══ */
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
-/* TAGS */
-document.querySelectorAll('.tag').forEach(tag=>{tag.addEventListener('click',()=>tag.classList.toggle('active'));});
-function getActiveTags(id){return Array.from(document.querySelectorAll('#'+id+' .tag.active')).map(t=>t.dataset.val);}
+/* ═══ TAGS ═══ */
+document.querySelectorAll('.tag').forEach(tag=>{
+  tag.addEventListener('click',()=>tag.classList.toggle('active'));
+});
+function getActiveTags(containerId){
+  return Array.from(document.querySelectorAll('#'+containerId+' .tag.active')).map(t=>t.dataset.val);
+}
 
-/* COPY */
+/* ═══ COPY ═══ */
 function copyFormula(){
   const rows=Array.from(document.querySelectorAll('#ingr-body tr'));
-  let txt='INCI FORMULA============';
-  rows.forEach(r=>{const c=r.querySelectorAll('td');txt+=c[2].textContent+' '+c[3].textContent+'';});
-  navigator.clipboard.writeText(txt).then(()=>toast('Formula copied!'));
+  let txt='INGREDIENT FORMULA==================';
+  rows.forEach(r=>{const cells=r.querySelectorAll('td');txt+=cells[2].textContent+' '+cells[3].textContent+'';});
+  navigator.clipboard.writeText(txt).then(()=>toast('Formula copied to clipboard'));
 }
 function exportPDF(){window.print();}
 
-/* FORMULATION DATABASE */
+/* ═══ FORMULATION DATABASE ═══ */
 const FORMULAS = {
-  anti_aging_cream:{
-    name:"Neagenics Pro-Age Renewal Cream",
-    sub:"Advanced anti-aging moisturizer with natural actives",
-    badges:[{text:"Anti-Aging",cls:"hb-pink"},{text:"Natural Origin",cls:"hb-green"},{text:"Vegan",cls:"hb-violet"},{text:"Clinically Inspired",cls:"hb-cyan"},{text:"Paraben-Free",cls:"hb-amber"}],
-    ingredients:[
-      {phase:"A",name:"Purified Water",inci:"Aqua",pct:58.4,role:"Solvent / Base",cat:"base"},
-      {phase:"A",name:"Glycerin",inci:"Glycerin",pct:5.0,role:"Humectant / Moisturizer",cat:"base"},
-      {phase:"A",name:"Niacinamide (B3)",inci:"Niacinamide",pct:4.0,role:"Active — Brightening, Barrier Repair",cat:"active"},
-      {phase:"A",name:"Hyaluronic Acid (High MW)",inci:"Sodium Hyaluronate",pct:1.0,role:"Active — Deep Hydration",cat:"active"},
-      {phase:"A",name:"Allantoin",inci:"Allantoin",pct:0.5,role:"Soothing, Cell Renewal",cat:"active"},
-      {phase:"A",name:"D-Panthenol (B5)",inci:"Panthenol",pct:1.0,role:"Active — Skin Repair",cat:"active"},
-      {phase:"B",name:"Shea Butter",inci:"Butyrospermum Parkii (Shea) Butter",pct:5.0,role:"Emollient / Occlusive",cat:"base"},
-      {phase:"B",name:"Jojoba Oil",inci:"Simmondsia Chinensis (Jojoba) Seed Oil",pct:4.0,role:"Emollient — Skin-Identical",cat:"base"},
-      {phase:"B",name:"Rosehip Seed Oil",inci:"Rosa Canina (Rosehip) Seed Oil",pct:3.0,role:"Active — Anti-aging, Retinol-like",cat:"active"},
-      {phase:"B",name:"Argan Oil",inci:"Argania Spinosa Kernel Oil",pct:2.0,role:"Emollient — Omega-9 Rich",cat:"base"},
-      {phase:"B",name:"Squalane",inci:"Squalane",pct:3.0,role:"Emollient — Non-greasy Barrier",cat:"base"},
-      {phase:"B",name:"Cetearyl Alcohol",inci:"Cetearyl Alcohol",pct:2.5,role:"Emulsifier / Thickener",cat:"base"},
-      {phase:"B",name:"Emulsifying Wax NF",inci:"Cetearyl Alcohol, Polysorbate 60",pct:3.0,role:"Emulsifier",cat:"base"},
-      {phase:"C",name:"Bakuchiol (Natural Retinol)",inci:"Psoralea Corylifolia Seed Extract",pct:1.5,role:"Active — Natural Retinol Alternative",cat:"active"},
-      {phase:"C",name:"Vitamin C (MAP)",inci:"Magnesium Ascorbyl Phosphate",pct:2.0,role:"Active — Antioxidant, Brightening",cat:"active"},
-      {phase:"C",name:"Vitamin E",inci:"Tocopherol",pct:0.5,role:"Antioxidant / Preservative Aid",cat:"active"},
-      {phase:"C",name:"Coenzyme Q10",inci:"Ubiquinone",pct:0.1,role:"Active — Energy, Anti-Aging",cat:"active"},
-      {phase:"D",name:"Phenoxyethanol",inci:"Phenoxyethanol",pct:0.8,role:"Preservative",cat:"base"},
-      {phase:"D",name:"Ethylhexylglycerin",inci:"Ethylhexylglycerin",pct:0.2,role:"Preservative Booster",cat:"base"},
-      {phase:"D",name:"Lactic Acid (50%)",inci:"Lactic Acid",pct:0.3,role:"pH Adjuster (target 5.5-6.0)",cat:"base"},
-      {phase:"E",name:"Green Tea Extract",inci:"Camellia Sinensis Leaf Extract",pct:1.0,role:"Active — Polyphenol Antioxidant",cat:"active"},
-      {phase:"E",name:"Centella Asiatica",inci:"Centella Asiatica Extract",pct:0.5,role:"Active — Collagen, Wound Healing",cat:"active"},
-      {phase:"E",name:"Chamomile Extract",inci:"Matricaria Chamomilla Flower Extract",pct:0.4,role:"Soothing / Anti-Inflammatory",cat:"active"},
-      {phase:"E",name:"Xanthan Gum",inci:"Xanthan Gum",pct:0.3,role:"Thickener / Stabilizer",cat:"base"},
+
+  anti_aging_cream: {
+    name: "Neagenics Pro-Age Renewal Cream",
+    sub: "Advanced anti-aging moisturizer with natural actives",
+    badges: [
+      {text:"Anti-Aging", cls:"hb-pink"},
+      {text:"Natural Origin", cls:"hb-green"},
+      {text:"Vegan", cls:"hb-violet"},
+      {text:"Clinically Inspired", cls:"hb-cyan"},
+      {text:"Paraben-Free", cls:"hb-amber"}
     ],
-    steps:[
-      {num:1,title:"Prepare Phase A — Water Phase",desc:"Weigh purified water into main beaker. Add glycerin, allantoin, panthenol. Stir at 500 RPM until dissolved. Add Niacinamide and stir until clear.",temp:"20-25°C",time:"10 min",rpm:"500 RPM"},
-      {num:2,title:"Heat Phase A",desc:"Heat Phase A to 75-80°C with overhead stirrer. Add Hyaluronic Acid slowly to prevent clumping.",temp:"75-80°C",time:"15 min",rpm:"600 RPM"},
-      {num:3,title:"Prepare Phase B — Oil Phase",desc:"In separate beaker, melt Cetearyl Alcohol and Emulsifying Wax. Add liquid oils once waxes are melted.",temp:"75-80°C",time:"15 min",rpm:"200 RPM"},
-      {num:4,title:"Emulsification",desc:"Slowly pour Phase B (oil) into Phase A (water) in a thin stream with high-shear mixing until creamy and homogeneous.",temp:"75-80°C",time:"10 min",rpm:"2000 RPM"},
-      {num:5,title:"Cooling",desc:"Reduce mixing speed. Allow emulsion to cool to below 40°C with gentle stirring to prevent separation.",temp:"Cool to 40°C",time:"20-30 min",rpm:"300 RPM"},
-      {num:6,title:"Add Phase C — Heat-Sensitive Actives",desc:"At 40°C or below, add Bakuchiol, Vitamin C (MAP), Tocopherol, CoQ10 one at a time. These degrade above 40°C.",temp:"Below 40°C",time:"10 min",rpm:"300 RPM"},
-      {num:7,title:"Preserve & pH Adjust",desc:"Add Phenoxyethanol and Ethylhexylglycerin. Mix well. Add Lactic Acid dropwise to reach pH 5.5-6.0. Verify with calibrated pH meter.",temp:"Below 40°C",time:"10 min",rpm:"300 RPM",ph:"5.5-6.0"},
-      {num:8,title:"Add Phase E — Botanicals",desc:"Add Green Tea, Centella Asiatica, Chamomile extracts. Pre-disperse Xanthan Gum in glycerin first to avoid lumps. Mix until smooth.",temp:"Below 35°C",time:"15 min",rpm:"400 RPM"},
-      {num:9,title:"QC & Filling",desc:"Check viscosity (target 15,000-40,000 cPs), pH (5.5-6.0), and appearance. Perform freeze-thaw test. Fill into airless pump jars.",temp:"Ambient",time:"QC then fill",rpm:"—"},
+    ingredients: [
+      // Phase A — Water Phase
+      {phase:"A", name:"Purified Water", inci:"Aqua", pct:58.4, role:"Solvent / Base", cat:"base"},
+      {phase:"A", name:"Glycerin", inci:"Glycerin", pct:5.0, role:"Humectant / Moisturizer", cat:"base"},
+      {phase:"A", name:"Niacinamide (B3)", inci:"Niacinamide", pct:4.0, role:"Active — Brightening, Barrier Repair", cat:"active"},
+      {phase:"A", name:"Hyaluronic Acid (High MW)", inci:"Sodium Hyaluronate", pct:1.0, role:"Active — Deep Hydration", cat:"active"},
+      {phase:"A", name:"Allantoin", inci:"Allantoin", pct:0.5, role:"Soothing, Cell Renewal", cat:"active"},
+      {phase:"A", name:"D-Panthenol (B5)", inci:"Panthenol", pct:1.0, role:"Active — Skin Repair, Moisture Binding", cat:"active"},
+      // Phase B — Oil Phase
+      {phase:"B", name:"Shea Butter", inci:"Butyrospermum Parkii (Shea) Butter", pct:5.0, role:"Emollient / Occlusive", cat:"base"},
+      {phase:"B", name:"Jojoba Oil", inci:"Simmondsia Chinensis (Jojoba) Seed Oil", pct:4.0, role:"Emollient — Skin-Identical Wax", cat:"base"},
+      {phase:"B", name:"Rosehip Seed Oil", inci:"Rosa Canina (Rosehip) Seed Oil", pct:3.0, role:"Active — Retinol-like, Anti-aging", cat:"active"},
+      {phase:"B", name:"Argan Oil", inci:"Argania Spinosa Kernel Oil", pct:2.0, role:"Emollient — Omega-9 Rich", cat:"base"},
+      {phase:"B", name:"Squalane", inci:"Squalane", pct:3.0, role:"Emollient — Non-greasy, Barrier", cat:"base"},
+      {phase:"B", name:"Cetearyl Alcohol", inci:"Cetearyl Alcohol", pct:2.5, role:"Emulsifier / Thickener", cat:"base"},
+      {phase:"B", name:"Emulsifying Wax NF", inci:"Cetearyl Alcohol, Polysorbate 60", pct:3.0, role:"Emulsifier", cat:"base"},
+      // Phase C — Cool-Down Actives
+      {phase:"C", name:"Retinol Equivalent (Bakuchiol)", inci:"Babchi (Psoralea Corylifolia) Seed Extract", pct:1.5, role:"Active — Natural Retinol Alternative", cat:"active"},
+      {phase:"C", name:"Vitamin C (Stabilized, MAP)", inci:"Magnesium Ascorbyl Phosphate", pct:2.0, role:"Active — Antioxidant, Brightening", cat:"active"},
+      {phase:"C", name:"Vitamin E (Tocopherol)", inci:"Tocopherol", pct:0.5, role:"Antioxidant / Preservative Aid", cat:"active"},
+      {phase:"C", name:"Coenzyme Q10", inci:"Ubiquinone", pct:0.1, role:"Active — Energy, Anti-Aging", cat:"active"},
+      // Phase D — Preservation & pH
+      {phase:"D", name:"Phenoxyethanol", inci:"Phenoxyethanol", pct:0.8, role:"Preservative", cat:"base"},
+      {phase:"D", name:"Ethylhexylglycerin", inci:"Ethylhexylglycerin", pct:0.2, role:"Preservative Booster", cat:"base"},
+      {phase:"D", name:"Lactic Acid (50% sol.)", inci:"Lactic Acid", pct:0.3, role:"pH Adjuster (target pH 5.5-6.0)", cat:"base"},
+      // Phase E — Fragrance / Botanicals
+      {phase:"E", name:"Green Tea Extract", inci:"Camellia Sinensis Leaf Extract", pct:1.0, role:"Active — Polyphenol Antioxidant", cat:"active"},
+      {phase:"E", name:"Centella Asiatica Extract", inci:"Centella Asiatica Extract", pct:0.5, role:"Active — Collagen, Wound Healing", cat:"active"},
+      {phase:"E", name:"Chamomile Extract", inci:"Matricaria Chamomilla Flower Extract", pct:0.4, role:"Soothing / Anti-Inflammatory", cat:"active"},
+      {phase:"E", name:"Xanthan Gum", inci:"Xanthan Gum", pct:0.3, role:"Thickener / Stabilizer", cat:"base"},
     ],
-    claims:[
-      {icon:"🕰️",label:"Anti-Aging",val:"Multi-pathway approach"},
-      {icon:"💧",label:"Hydration",val:"48-hour moisturizing"},
-      {icon:"✨",label:"Brightening",val:"Niacinamide + Vit C"},
-      {icon:"🌿",label:"Natural Origin",val:">85% natural"},
-      {icon:"🧬",label:"Collagen Support",val:"Bakuchiol + CICA"},
-      {icon:"🛡️",label:"Antioxidant",val:"CoQ10 + Vit E + Green Tea"},
-      {icon:"🌱",label:"Vegan",val:"100% plant-derived"},
-      {icon:"🔬",label:"Active Ingredients",val:"11 key actives"},
-      {icon:"⚗️",label:"Stability",val:"Tested to 24 months"},
+    steps: [
+      {num:1, title:"Prepare Phase A — Water Phase", desc:"Weigh purified water into main beaker. Add glycerin, allantoin, and panthenol. Mix at 500 RPM until fully dissolved. Add Niacinamide and stir until clear.", temp:"Ambient (20-25°C)", time:"10 min", rpm:"500 RPM"},
+      {num:2, title:"Heat Phase A", desc:"Heat Phase A with overhead stirrer to 75-80°C. Maintain temperature. Add Hyaluronic Acid slowly with stirring to prevent clumping.", temp:"75-80°C", time:"15 min", rpm:"600 RPM"},
+      {num:3, title:"Prepare Phase B — Oil Phase", desc:"In a separate beaker, combine Shea Butter, Cetearyl Alcohol, and Emulsifying Wax. Melt with gentle heat. Add liquid oils (Jojoba, Argan, Squalane, Rosehip) once waxes are melted.", temp:"75-80°C", time:"15 min", rpm:"200 RPM"},
+      {num:4, title:"Emulsification", desc:"Slowly add Phase B (oil phase) into Phase A (water phase) with high-shear mixing. Pour in a thin stream with constant stirring. Emulsify until homogeneous and creamy.", temp:"75-80°C", time:"10 min", rpm:"1500-2000 RPM"},
+      {num:5, title:"Cooling Phase", desc:"Reduce speed and allow emulsion to cool to below 40°C with gentle stirring. This prevents separation and ensures stable emulsion structure.", temp:"Cool to 40°C", time:"20-30 min", rpm:"300 RPM"},
+      {num:6, title:"Add Phase C — Heat-Sensitive Actives", desc:"At 40°C or below, add Bakuchiol, Stabilized Vitamin C (MAP), Tocopherol, and CoQ10 one at a time with stirring. These actives degrade above 40°C.", temp:"Below 40°C", time:"10 min", rpm:"300 RPM"},
+      {num:7, title:"Add Phase D — Preservation & pH Adjustment", desc:"Add Phenoxyethanol and Ethylhexylglycerin. Mix thoroughly. Check and adjust pH to target range 5.5-6.0 using Lactic Acid solution (50%). Test with calibrated pH meter.", temp:"Below 40°C", time:"10 min", rpm:"300 RPM", ph:"5.5-6.0"},
+      {num:8, title:"Add Phase E — Botanicals & Final Texture", desc:"Add botanical extracts (Green Tea, Centella Asiatica, Chamomile) and Xanthan Gum. Xanthan may be pre-dispersed in glycerin to avoid lumps. Mix until smooth.", temp:"Below 35°C", time:"15 min", rpm:"400 RPM"},
+      {num:9, title:"Final QC & Filling", desc:"Measure viscosity (target: 15,000-40,000 cPs), pH (5.5-6.0), and appearance. Perform freeze-thaw stability test. Fill into airless pump jars. Store at room temperature.", temp:"Ambient", time:"QC then fill", rpm:"—"},
     ],
-    safety:[
-      {label:"pH Range",val:"5.5 – 6.0",sub:"Optimal for skin barrier integrity",cls:"si-good"},
-      {label:"Phenoxyethanol",val:"0.8% (EU limit: 1.0%)",sub:"Within EU Cosmetics Regulation",cls:"si-good"},
-      {label:"Niacinamide",val:"4% — Well tolerated",sub:"Clinical studies support up to 5%",cls:"si-good"},
-      {label:"Vitamin C (MAP)",val:"2% — Stable, non-irritating",sub:"Phosphate form — pH stable",cls:"si-good"},
-      {label:"Patch Testing",val:"Recommended",sub:"Especially for sensitive skin",cls:"si-warn"},
-      {label:"Allergen Declaration",val:"No known allergens",sub:"Fragrance-free formulation",cls:"si-good"},
-      {label:"Pregnancy Safety",val:"Consult physician",sub:"Bakuchiol is safer than retinol",cls:"si-warn"},
-      {label:"EWG Score (est.)",val:"1-2 (Low Hazard)",sub:"All ingredients EWG verified safe",cls:"si-good"},
+    claims: [
+      {icon:"🕰️", label:"Anti-Aging", val:"Multi-pathway"},
+      {icon:"💧", label:"Hydration", val:"48-hour moisturizing"},
+      {icon:"✨", label:"Brightening", val:"Niacinamide + Vit C"},
+      {icon:"🌿", label:"Natural Origin", val:">85% natural"},
+      {icon:"🧬", label:"Collagen Support", val:"Bakuchiol + CICA"},
+      {icon:"🛡️", label:"Antioxidant", val:"CoQ10 + Vit E + Green Tea"},
+      {icon:"🌱", label:"Vegan", val:"100% plant-derived"},
+      {icon:"🔬", label:"Bioactive Actives", val:"11 active ingredients"},
+      {icon:"⚗️", label:"Stability", val:"Tested to 24 months"},
     ],
-    stability:[
-      {label:"Heat Stability (40°C / 3 months)",val:"98% — Excellent",cls:"good"},
-      {label:"Freeze-Thaw Cycles (x3)",val:"Passes",cls:"good"},
-      {label:"pH Stability",val:"Excellent",cls:"good"},
-      {label:"Light / UV Stability",val:"Moderate — use opaque packaging",cls:"ok"},
-      {label:"Viscosity Stability",val:"High — Xanthan gum anchor",cls:"good"},
-      {label:"Microbial Challenge",val:"Passes",cls:"good"},
-      {label:"Shelf Life (unopened)",val:"24 months",cls:"good"},
-      {label:"PAO (After Opening)",val:"12 months",cls:"good"},
+    safety: [
+      {label:"pH Range", val:"5.5 – 6.0", sub:"Optimal for skin barrier integrity", cls:"si-good"},
+      {label:"Phenoxyethanol Limit", val:"0.8% (limit: 1.0%)", sub:"Within EU Cosmetics Regulation", cls:"si-good"},
+      {label:"Niacinamide Safety", val:"4% — Well tolerated", sub:"Clinical studies support up to 5%", cls:"si-good"},
+      {label:"Vitamin C (MAP)", val:"2% — Stable, non-irritating", sub:"Phosphate form — pH stable", cls:"si-good"},
+      {label:"Patch Testing", val:"Recommended", sub:"Especially for sensitive skin types", cls:"si-warn"},
+      {label:"Allergen Declaration", val:"No known allergens", sub:"Fragrance-free formulation", cls:"si-good"},
+      {label:"Pregnancy Safety", val:"Consult physician", sub:"Bakuchiol is a safer retinol alternative", cls:"si-warn"},
+      {label:"EWG Score (est.)", val:"1-2 (Low Hazard)", sub:"All ingredients EWG verified safe", cls:"si-good"},
     ],
-    regulatory:[
-      {flag:"🇪🇺",label:"EU Cosmetics Reg.",status:"Compliant",cls:"reg-pass"},
-      {flag:"🇺🇸",label:"FDA (US)",status:"Compliant",cls:"reg-pass"},
-      {flag:"🇬🇧",label:"UK Cosm. Reg.",status:"Compliant",cls:"reg-pass"},
-      {flag:"🌿",label:"Vegan Society",status:"Certifiable",cls:"reg-pass"},
-      {flag:"🐰",label:"Cruelty-Free",status:"No animal testing",cls:"reg-pass"},
-      {flag:"🌱",label:"COSMOS Natural",status:"Partially eligible",cls:"reg-warn"},
+    stability: [
+      {label:"Heat Stability (40°C / 3 months)", val:"98%", cls:"good"},
+      {label:"Freeze-Thaw Cycles (x3)", val:"Passes", cls:"good"},
+      {label:"pH Stability", val:"Excellent", cls:"good"},
+      {label:"Light Stability (UV)", val:"Moderate — use opaque packaging", cls:"ok"},
+      {label:"Viscosity Stability", val:"High — Xanthan gum anchor", cls:"good"},
+      {label:"Microbial Challenge Test", val:"Passes", cls:"good"},
+      {label:"Shelf Life (est.)", val:"24 months unopened", cls:"good"},
+      {label:"PAO (Period After Opening)", val:"12 months", cls:"good"},
     ],
-    cost:[
-      {label:"Water & Humectants (Phase A)",val:"$1.20"},
-      {label:"Oils, Butters & Emulsifiers (Phase B)",val:"$8.50"},
-      {label:"Active Ingredients (Phase C)",val:"$12.80"},
-      {label:"Preservatives & pH (Phase D)",val:"$0.60"},
-      {label:"Botanicals & Texture (Phase E)",val:"$3.40"},
-      {label:"Packaging (airless pump jar)",val:"$1.80"},
-      {label:"Manufacturing overhead",val:"$2.50"},
+    regulatory: [
+      {flag:"🇪🇺", label:"EU Cosmetics Reg.", status:"Compliant", cls:"reg-pass"},
+      {flag:"🇺🇸", label:"FDA (US)", status:"Compliant", cls:"reg-pass"},
+      {flag:"🇬🇧", label:"UK Cosm. Reg.", status:"Compliant", cls:"reg-pass"},
+      {flag:"🌿", label:"Vegan Society", status:"Certifiable", cls:"reg-pass"},
+      {flag:"🐰", label:"Cruelty-Free", status:"No animal testing", cls:"reg-pass"},
+      {flag:"🌱", label:"COSMOS Natural", status:"Partially eligible", cls:"reg-warn"},
     ],
-    scores:[
-      {label:"Efficacy",val:"94%",cls:"sc-pink"},
-      {label:"Naturalness",val:"87%",cls:"sc-green"},
-      {label:"Stability",val:"91%",cls:"sc-violet"},
-      {label:"Safety",val:"96%",cls:"sc-green"},
+    cost: [
+      {label:"Water & Humectants (Phase A)", val:"$1.20"},
+      {label:"Oils, Butters & Emulsifiers (Phase B)", val:"$8.50"},
+      {label:"Active Ingredients (Phase C)", val:"$12.80"},
+      {label:"Preservatives & pH (Phase D)", val:"$0.60"},
+      {label:"Botanicals & Texture (Phase E)", val:"$3.40"},
+      {label:"Packaging (airless pump jar)", val:"$1.80"},
+      {label:"Manufacturing overhead (est.)", val:"$2.50"},
+    ],
+    scores: [
+      {label:"Efficacy", val:"94%", cls:"sc-pink"},
+      {label:"Naturalness", val:"87%", cls:"sc-green"},
+      {label:"Stability", val:"91%", cls:"sc-violet"},
+      {label:"Safety", val:"96%", cls:"sc-green"},
     ]
   },
-  moisturizer:{
-    name:"Neagenics Hydra-Boost Daily Moisturizer",
-    sub:"Lightweight daily hydration for all skin types",
-    badges:[{text:"Moisturizing",cls:"hb-cyan"},{text:"Lightweight",cls:"hb-green"},{text:"Natural",cls:"hb-violet"},{text:"Vegan",cls:"hb-amber"}],
-    ingredients:[
-      {phase:"A",name:"Purified Water",inci:"Aqua",pct:68.0,role:"Base Solvent",cat:"base"},
-      {phase:"A",name:"Glycerin",inci:"Glycerin",pct:6.0,role:"Humectant",cat:"base"},
-      {phase:"A",name:"Hyaluronic Acid",inci:"Sodium Hyaluronate",pct:1.5,role:"Active — Deep Hydration",cat:"active"},
-      {phase:"A",name:"Allantoin",inci:"Allantoin",pct:0.3,role:"Soothing",cat:"active"},
-      {phase:"B",name:"Jojoba Oil",inci:"Simmondsia Chinensis Seed Oil",pct:4.0,role:"Emollient",cat:"base"},
-      {phase:"B",name:"Squalane",inci:"Squalane",pct:3.0,role:"Emollient",cat:"base"},
-      {phase:"B",name:"Cetearyl Alcohol",inci:"Cetearyl Alcohol",pct:2.0,role:"Emulsifier / Thickener",cat:"base"},
-      {phase:"B",name:"Emulsifying Wax",inci:"Cetearyl Alcohol, Polysorbate 60",pct:2.5,role:"Emulsifier",cat:"base"},
-      {phase:"C",name:"Niacinamide",inci:"Niacinamide",pct:3.0,role:"Active — Barrier, Brightening",cat:"active"},
-      {phase:"C",name:"Panthenol",inci:"Panthenol",pct:1.0,role:"Active — Hydration",cat:"active"},
-      {phase:"C",name:"Aloe Vera Extract",inci:"Aloe Barbadensis Leaf Extract",pct:3.0,role:"Soothing / Hydrating",cat:"active"},
-      {phase:"D",name:"Phenoxyethanol",inci:"Phenoxyethanol",pct:0.9,role:"Preservative",cat:"base"},
-      {phase:"D",name:"Ethylhexylglycerin",inci:"Ethylhexylglycerin",pct:0.1,role:"Preservative Booster",cat:"base"},
-      {phase:"D",name:"Citric Acid",inci:"Citric Acid",pct:0.2,role:"pH Adjuster",cat:"base"},
-      {phase:"E",name:"Cucumber Extract",inci:"Cucumis Sativus Fruit Extract",pct:2.0,role:"Soothing / Cooling",cat:"active"},
-      {phase:"E",name:"Xanthan Gum",inci:"Xanthan Gum",pct:0.3,role:"Thickener",cat:"base"},
-      {phase:"E",name:"Tocopherol",inci:"Tocopherol",pct:0.2,role:"Antioxidant",cat:"active"},
+
+  moisturizer: {
+    name: "Neagenics Hydra-Boost Daily Moisturizer",
+    sub: "Lightweight daily hydration for all skin types",
+    badges: [
+      {text:"Moisturizing", cls:"hb-cyan"},
+      {text:"Lightweight", cls:"hb-green"},
+      {text:"Natural", cls:"hb-violet"},
+      {text:"Vegan", cls:"hb-amber"}
     ],
-    steps:[
-      {num:1,title:"Prepare & Heat Phase A",desc:"Dissolve glycerin, allantoin in water. Heat to 75°C with stirring. Add HA slowly.",temp:"75°C",time:"15 min",rpm:"500 RPM"},
-      {num:2,title:"Prepare Phase B",desc:"Melt Cetearyl Alcohol and Emulsifying Wax. Add liquid oils.",temp:"75°C",time:"10 min",rpm:"200 RPM"},
-      {num:3,title:"Emulsify",desc:"Add Phase B into Phase A with high-shear mixing.",temp:"75°C",time:"8 min",rpm:"1500 RPM"},
-      {num:4,title:"Cool Down",desc:"Cool emulsion to 40°C with gentle stirring.",temp:"40°C",time:"20 min",rpm:"300 RPM"},
-      {num:5,title:"Add Phase C Actives",desc:"Add Niacinamide, Panthenol, Aloe below 40°C.",temp:"Below 40°C",time:"8 min",rpm:"300 RPM"},
-      {num:6,title:"Preserve & pH Adjust",desc:"Add preservatives. Adjust pH to 5.5 with Citric Acid solution.",temp:"Below 40°C",time:"8 min",rpm:"300 RPM",ph:"5.5"},
-      {num:7,title:"Final Actives & Fill",desc:"Add Phase E extracts and Xanthan Gum. Check viscosity and pH. Fill into packaging.",temp:"Ambient",time:"10 min",rpm:"—"},
+    ingredients: [
+      {phase:"A", name:"Purified Water", inci:"Aqua", pct:68.0, role:"Base Solvent", cat:"base"},
+      {phase:"A", name:"Glycerin", inci:"Glycerin", pct:6.0, role:"Humectant", cat:"base"},
+      {phase:"A", name:"Hyaluronic Acid", inci:"Sodium Hyaluronate", pct:1.5, role:"Active — Deep Hydration", cat:"active"},
+      {phase:"A", name:"Allantoin", inci:"Allantoin", pct:0.3, role:"Soothing, Cell Renewal", cat:"active"},
+      {phase:"B", name:"Jojoba Oil", inci:"Simmondsia Chinensis Seed Oil", pct:4.0, role:"Emollient", cat:"base"},
+      {phase:"B", name:"Squalane", inci:"Squalane", pct:3.0, role:"Emollient", cat:"base"},
+      {phase:"B", name:"Cetearyl Alcohol", inci:"Cetearyl Alcohol", pct:2.0, role:"Emulsifier / Thickener", cat:"base"},
+      {phase:"B", name:"Emulsifying Wax", inci:"Cetearyl Alcohol, Polysorbate 60", pct:2.5, role:"Emulsifier", cat:"base"},
+      {phase:"C", name:"Niacinamide", inci:"Niacinamide", pct:3.0, role:"Active — Barrier, Brightening", cat:"active"},
+      {phase:"C", name:"Panthenol", inci:"Panthenol", pct:1.0, role:"Active — Hydration", cat:"active"},
+      {phase:"C", name:"Aloe Vera Extract", inci:"Aloe Barbadensis Leaf Extract", pct:3.0, role:"Soothing / Hydrating", cat:"active"},
+      {phase:"D", name:"Phenoxyethanol", inci:"Phenoxyethanol", pct:0.9, role:"Preservative", cat:"base"},
+      {phase:"D", name:"Ethylhexylglycerin", inci:"Ethylhexylglycerin", pct:0.1, role:"Preservative Booster", cat:"base"},
+      {phase:"D", name:"Citric Acid", inci:"Citric Acid", pct:0.2, role:"pH Adjuster", cat:"base"},
+      {phase:"E", name:"Cucumber Extract", inci:"Cucumis Sativus Fruit Extract", pct:2.0, role:"Soothing / Cooling", cat:"active"},
+      {phase:"E", name:"Xanthan Gum", inci:"Xanthan Gum", pct:0.3, role:"Thickener", cat:"base"},
+      {phase:"E", name:"Tocopherol", inci:"Tocopherol", pct:0.2, role:"Antioxidant", cat:"active"},
     ],
-    claims:[
-      {icon:"💧",label:"Hydration",val:"72-hour moisturizing"},
-      {icon:"🌿",label:"Natural Origin",val:">80% natural"},
-      {icon:"🌱",label:"Vegan",val:"100% plant-derived"},
-      {icon:"🛡️",label:"Barrier Support",val:"Niacinamide + Panthenol"},
-      {icon:"❄️",label:"Soothing",val:"Aloe + Cucumber"},
-      {icon:"⚗️",label:"Stability",val:"Tested to 24 months"},
+    steps: [
+      {num:1, title:"Prepare Phase A", desc:"Dissolve glycerin, allantoin in water. Heat to 75°C with stirring.", temp:"75°C", time:"10 min", rpm:"500 RPM"},
+      {num:2, title:"Prepare Phase B", desc:"Melt Cetearyl Alcohol and Emulsifying Wax. Add liquid oils.", temp:"75°C", time:"10 min", rpm:"200 RPM"},
+      {num:3, title:"Emulsify", desc:"Add Phase B into Phase A with high-shear mixing.", temp:"75°C", time:"8 min", rpm:"1500 RPM"},
+      {num:4, title:"Cool Down", desc:"Cool emulsion to 40°C with gentle stirring.", temp:"40°C", time:"20 min", rpm:"300 RPM"},
+      {num:5, title:"Add Phase C", desc:"Add Niacinamide, Panthenol, HA, Aloe below 40°C.", temp:"Below 40°C", time:"8 min", rpm:"300 RPM"},
+      {num:6, title:"Preserve & pH Adjust", desc:"Add preservatives. Adjust pH to 5.5 with Citric Acid.", temp:"Below 40°C", time:"8 min", rpm:"300 RPM", ph:"5.5"},
+      {num:7, title:"Final Actives & Filling", desc:"Add Phase E. Check viscosity and pH. Fill into packaging.", temp:"Ambient", time:"10 min", rpm:"—"},
     ],
-    safety:[
-      {label:"pH Range",val:"5.0 – 5.5",sub:"Optimal for skin barrier",cls:"si-good"},
-      {label:"Preservatives",val:"0.9% Phenoxyethanol",sub:"Within EU 1.0% limit",cls:"si-good"},
-      {label:"Allergens",val:"None declared",sub:"Fragrance-free",cls:"si-good"},
-      {label:"EWG Score (est.)",val:"1 (Low Hazard)",sub:"All safe ingredients",cls:"si-good"},
+    claims: [
+      {icon:"💧", label:"Hydration", val:"72-hour moisturizing"},
+      {icon:"🌿", label:"Natural Origin", val:">80% natural"},
+      {icon:"🌱", label:"Vegan", val:"100% plant-derived"},
+      {icon:"🛡️", label:"Barrier Support", val:"Niacinamide + Panthenol"},
+      {icon:"❄️", label:"Soothing", val:"Aloe + Cucumber"},
+      {icon:"⚗️", label:"Stability", val:"Tested to 24 months"},
     ],
-    stability:[
-      {label:"Heat Stability (40°C)",val:"Excellent",cls:"good"},
-      {label:"Freeze-Thaw",val:"Passes",cls:"good"},
-      {label:"pH Stability",val:"Excellent",cls:"good"},
-      {label:"Shelf Life",val:"24 months",cls:"good"},
+    safety: [
+      {label:"pH Range", val:"5.0 – 5.5", sub:"Optimal for skin barrier", cls:"si-good"},
+      {label:"Preservatives", val:"0.9% Phenoxyethanol", sub:"Within EU 1.0% limit", cls:"si-good"},
+      {label:"Allergens", val:"None declared", sub:"Fragrance-free", cls:"si-good"},
+      {label:"EWG Score (est.)", val:"1 (Low Hazard)", sub:"All safe ingredients", cls:"si-good"},
     ],
-    regulatory:[
-      {flag:"🇪🇺",label:"EU Reg.",status:"Compliant",cls:"reg-pass"},
-      {flag:"🇺🇸",label:"FDA",status:"Compliant",cls:"reg-pass"},
-      {flag:"🌿",label:"Vegan",status:"Certifiable",cls:"reg-pass"},
-      {flag:"🐰",label:"Cruelty-Free",status:"Yes",cls:"reg-pass"},
+    stability: [
+      {label:"Heat Stability (40°C)", val:"Excellent", cls:"good"},
+      {label:"Freeze-Thaw", val:"Passes", cls:"good"},
+      {label:"pH Stability", val:"Excellent", cls:"good"},
+      {label:"Shelf Life", val:"24 months", cls:"good"},
     ],
-    cost:[
-      {label:"Water Phase",val:"$1.50"},
-      {label:"Oil Phase",val:"$5.00"},
-      {label:"Actives",val:"$4.80"},
-      {label:"Preservation & pH",val:"$0.50"},
-      {label:"Packaging",val:"$1.50"},
+    regulatory: [
+      {flag:"🇪🇺", label:"EU Reg.", status:"Compliant", cls:"reg-pass"},
+      {flag:"🇺🇸", label:"FDA", status:"Compliant", cls:"reg-pass"},
+      {flag:"🌿", label:"Vegan", status:"Certifiable", cls:"reg-pass"},
+      {flag:"🐰", label:"Cruelty-Free", status:"Yes", cls:"reg-pass"},
     ],
-    scores:[
-      {label:"Efficacy",val:"88%",cls:"sc-pink"},
-      {label:"Naturalness",val:"82%",cls:"sc-green"},
-      {label:"Stability",val:"93%",cls:"sc-violet"},
-      {label:"Safety",val:"97%",cls:"sc-green"},
+    cost: [
+      {label:"Water Phase", val:"$1.50"},
+      {label:"Oil Phase", val:"$5.00"},
+      {label:"Actives", val:"$4.80"},
+      {label:"Preservation & pH", val:"$0.50"},
+      {label:"Packaging", val:"$1.50"},
+    ],
+    scores: [
+      {label:"Efficacy", val:"88%", cls:"sc-pink"},
+      {label:"Naturalness", val:"82%", cls:"sc-green"},
+      {label:"Stability", val:"93%", cls:"sc-violet"},
+      {label:"Safety", val:"97%", cls:"sc-green"},
     ]
   },
-  serum:{
-    name:"Neagenics Bioactive Face Serum",
-    sub:"High-potency concentrated actives treatment",
-    badges:[{text:"High Potency",cls:"hb-pink"},{text:"Brightening",cls:"hb-amber"},{text:"Anti-Aging",cls:"hb-violet"},{text:"Natural",cls:"hb-green"}],
-    ingredients:[
-      {phase:"A",name:"Purified Water",inci:"Aqua",pct:65.0,role:"Solvent Base",cat:"base"},
-      {phase:"A",name:"Glycerin",inci:"Glycerin",pct:5.0,role:"Humectant",cat:"base"},
-      {phase:"A",name:"Hyaluronic Acid (3 MW)",inci:"Sodium Hyaluronate",pct:2.0,role:"Active — Multi-depth Hydration",cat:"active"},
-      {phase:"A",name:"Niacinamide",inci:"Niacinamide",pct:5.0,role:"Active — Brightening, Pore, Barrier",cat:"active"},
-      {phase:"B",name:"Squalane",inci:"Squalane",pct:3.0,role:"Emollient",cat:"base"},
-      {phase:"B",name:"Rosehip Oil",inci:"Rosa Canina Seed Oil",pct:2.0,role:"Active — Retinol-like",cat:"active"},
-      {phase:"C",name:"Vitamin C (MAP)",inci:"Magnesium Ascorbyl Phosphate",pct:5.0,role:"Active — Antioxidant, Brightening",cat:"active"},
-      {phase:"C",name:"Argireline Peptide",inci:"Acetyl Hexapeptide-3",pct:0.5,role:"Active — Anti-Wrinkle Peptide",cat:"active"},
-      {phase:"C",name:"Bakuchiol",inci:"Psoralea Corylifolia Seed Extract",pct:1.0,role:"Active — Natural Retinol Alt.",cat:"active"},
-      {phase:"C",name:"Resveratrol",inci:"Resveratrol",pct:0.1,role:"Active — Potent Antioxidant",cat:"active"},
-      {phase:"D",name:"Phenoxyethanol",inci:"Phenoxyethanol",pct:0.8,role:"Preservative",cat:"base"},
-      {phase:"D",name:"Lactic Acid",inci:"Lactic Acid",pct:0.5,role:"pH Adjuster / mild AHA",cat:"active"},
-      {phase:"E",name:"Centella Asiatica",inci:"Centella Asiatica Extract",pct:1.0,role:"Active — Collagen, Healing",cat:"active"},
-      {phase:"E",name:"Green Tea Extract",inci:"Camellia Sinensis Leaf Extract",pct:2.0,role:"Active — Polyphenol Antioxidant",cat:"active"},
-      {phase:"E",name:"Carbomer",inci:"Carbomer",pct:0.5,role:"Thickener / Gel Former",cat:"base"},
-      {phase:"E",name:"Sodium PCA",inci:"Sodium PCA",pct:1.0,role:"NMF Humectant",cat:"active"},
+
+  serum: {
+    name: "Neagenics Bioactive Face Serum",
+    sub: "High-potency concentrated actives treatment",
+    badges: [
+      {text:"High Potency", cls:"hb-pink"},
+      {text:"Brightening", cls:"hb-amber"},
+      {text:"Anti-Aging", cls:"hb-violet"},
+      {text:"Natural", cls:"hb-green"}
     ],
-    steps:[
-      {num:1,title:"Disperse Carbomer",desc:"Sprinkle Carbomer into water slowly under high mixing. Allow to fully hydrate.",temp:"Ambient",time:"15 min",rpm:"800 RPM"},
-      {num:2,title:"Dissolve Phase A Actives",desc:"Add glycerin, Niacinamide, HA, Sodium PCA. Mix until clear.",temp:"Ambient",time:"10 min",rpm:"500 RPM"},
-      {num:3,title:"Add Phase B Oils",desc:"Slowly add Squalane and Rosehip Oil under high-shear.",temp:"Ambient",time:"5 min",rpm:"1000 RPM"},
-      {num:4,title:"Neutralize Carbomer",desc:"Add NaOH solution (10%) dropwise to neutralize. Build gel structure. Target pH 5.5-6.5.",temp:"Ambient",time:"5 min",rpm:"400 RPM",ph:"5.5-6.5"},
-      {num:5,title:"Add Phase C Actives",desc:"Add Vitamin C (MAP), Argireline, Bakuchiol, Resveratrol one at a time with gentle mixing.",temp:"Ambient",time:"10 min",rpm:"300 RPM"},
-      {num:6,title:"Preserve & Botanicals",desc:"Add Phenoxyethanol, Lactic Acid, botanical extracts. Final pH check.",temp:"Ambient",time:"10 min",rpm:"300 RPM"},
-      {num:7,title:"QC & Fill",desc:"Check clarity, pH (5.0-5.5), viscosity. Fill into opaque airless bottles.",temp:"Ambient",time:"QC + fill",rpm:"—"},
+    ingredients: [
+      {phase:"A", name:"Purified Water", inci:"Aqua", pct:65.0, role:"Solvent Base", cat:"base"},
+      {phase:"A", name:"Glycerin", inci:"Glycerin", pct:5.0, role:"Humectant", cat:"base"},
+      {phase:"A", name:"Hyaluronic Acid (3 MW)", inci:"Sodium Hyaluronate", pct:2.0, role:"Active — Multi-depth Hydration", cat:"active"},
+      {phase:"A", name:"Niacinamide", inci:"Niacinamide", pct:5.0, role:"Active — Brightening, Pore, Barrier", cat:"active"},
+      {phase:"B", name:"Squalane", inci:"Squalane", pct:3.0, role:"Emollient", cat:"base"},
+      {phase:"B", name:"Rosehip Oil", inci:"Rosa Canina Seed Oil", pct:2.0, role:"Active — Retinol-like", cat:"active"},
+      {phase:"C", name:"Vitamin C (MAP)", inci:"Magnesium Ascorbyl Phosphate", pct:5.0, role:"Active — Antioxidant, Brightening", cat:"active"},
+      {phase:"C", name:"Peptide Complex (Argireline)", inci:"Acetyl Hexapeptide-3", pct:0.5, role:"Active — Muscle Relaxing, Anti-Wrinkle", cat:"active"},
+      {phase:"C", name:"Bakuchiol", inci:"Psoralea Corylifolia Seed Extract", pct:1.0, role:"Active — Natural Retinol Alt.", cat:"active"},
+      {phase:"C", name:"Resveratrol", inci:"Resveratrol", pct:0.1, role:"Active — Potent Antioxidant", cat:"active"},
+      {phase:"D", name:"Phenoxyethanol", inci:"Phenoxyethanol", pct:0.8, role:"Preservative", cat:"base"},
+      {phase:"D", name:"Lactic Acid", inci:"Lactic Acid", pct:0.5, role:"pH Adjuster / AHA exfoliant", cat:"active"},
+      {phase:"E", name:"Centella Asiatica", inci:"Centella Asiatica Extract", pct:1.0, role:"Active — Collagen, Healing", cat:"active"},
+      {phase:"E", name:"Green Tea", inci:"Camellia Sinensis Leaf Extract", pct:2.0, role:"Active — Polyphenol Antioxidant", cat:"active"},
+      {phase:"E", name:"Carbomer", inci:"Carbomer", pct:0.5, role:"Thickener / Gel Former", cat:"base"},
+      {phase:"E", name:"Sodium PCA", inci:"Sodium PCA", pct:1.0, role:"NMF Humectant", cat:"active"},
     ],
-    claims:[
-      {icon:"✨",label:"Brightening",val:"Clinical-grade MAP Vit C"},
-      {icon:"🔬",label:"Peptide Active",val:"Argireline muscle relaxer"},
-      {icon:"💧",label:"Multi-Depth HA",val:"3 molecular weights"},
-      {icon:"🧬",label:"Retinol Alternative",val:"Bakuchiol + Rosehip"},
-      {icon:"🛡️",label:"Antioxidant",val:"Resveratrol + Green Tea"},
-      {icon:"🌿",label:"Natural Origin",val:">75% natural"},
+    steps: [
+      {num:1, title:"Disperse Carbomer in Water", desc:"Slowly sprinkle Carbomer into water under high-speed mixing. Allow to fully hydrate.", temp:"Ambient", time:"15 min", rpm:"800 RPM"},
+      {num:2, title:"Dissolve Phase A Actives", desc:"Add Glycerin, Niacinamide, HA, Sodium PCA. Mix until clear.", temp:"Ambient", time:"10 min", rpm:"500 RPM"},
+      {num:3, title:"Add Phase B Oils", desc:"Slowly incorporate Squalane and Rosehip Oil with high-shear.", temp:"Ambient", time:"5 min", rpm:"1000 RPM"},
+      {num:4, title:"Neutralize Carbomer", desc:"Slowly add Triethanolamine or NaOH (10%) to neutralize and build gel structure. pH target 5.5-6.5.", temp:"Ambient", time:"5 min", rpm:"400 RPM", ph:"5.5-6.5"},
+      {num:5, title:"Add Phase C Actives", desc:"Add Vitamin C (MAP), Peptide, Bakuchiol, Resveratrol one by one with gentle mixing.", temp:"Ambient", time:"10 min", rpm:"300 RPM"},
+      {num:6, title:"Preserve & Add Botanicals", desc:"Add Phenoxyethanol, Lactic Acid, botanical extracts. Final pH check.", temp:"Ambient", time:"10 min", rpm:"300 RPM"},
+      {num:7, title:"Final QC & Filling", desc:"Check clarity, pH (5.0-5.5), viscosity. Fill into opaque airless bottles.", temp:"Ambient", time:"QC + fill", rpm:"—"},
     ],
-    safety:[
-      {label:"pH Range",val:"5.0 – 5.5",sub:"AHA activity range",cls:"si-good"},
-      {label:"Niacinamide 5%",val:"Max therapeutic dose",sub:"Well-tolerated",cls:"si-good"},
-      {label:"Peptide Safety",val:"Acetyl Hexapeptide-3",sub:"EWG Score 1 — safe",cls:"si-good"},
-      {label:"Allergens",val:"None declared",sub:"Fragrance-free",cls:"si-good"},
+    claims: [
+      {icon:"✨", label:"Brightening", val:"Clinical-grade MAP Vit C"},
+      {icon:"🔬", label:"Peptide Active", val:"Argireline muscle relaxer"},
+      {icon:"💧", label:"Multi-Depth HA", val:"3 molecular weights"},
+      {icon:"🧬", label:"Retinol Alternative", val:"Bakuchiol + Rosehip"},
+      {icon:"🛡️", label:"Antioxidant", val:"Resveratrol + Green Tea"},
+      {icon:"🌿", label:"Natural Origin", val:">75% natural"},
     ],
-    stability:[
-      {label:"Vitamin C Stability",val:"MAP form — excellent",cls:"good"},
-      {label:"Heat Stability (40°C)",val:"Good",cls:"good"},
-      {label:"Light Stability",val:"Use opaque packaging",cls:"ok"},
-      {label:"Shelf Life",val:"18 months",cls:"good"},
+    safety: [
+      {label:"pH Range", val:"5.0 – 5.5", sub:"AHA activity range", cls:"si-good"},
+      {label:"Niacinamide", val:"5% — Max therapeutic", sub:"Well-tolerated at this level", cls:"si-good"},
+      {label:"Peptide Safety", val:"Acetyl Hexapeptide-3", sub:"EWG Score 1 — safe", cls:"si-good"},
+      {label:"Allergens", val:"None declared", sub:"No fragrance allergens", cls:"si-good"},
     ],
-    regulatory:[
-      {flag:"🇪🇺",label:"EU Reg.",status:"Compliant",cls:"reg-pass"},
-      {flag:"🇺🇸",label:"FDA",status:"Compliant",cls:"reg-pass"},
-      {flag:"🌿",label:"Vegan",status:"Yes",cls:"reg-pass"},
-      {flag:"🐰",label:"Cruelty-Free",status:"Yes",cls:"reg-pass"},
+    stability: [
+      {label:"Vitamin C Stability", val:"MAP form — excellent", cls:"good"},
+      {label:"Heat Stability (40°C)", val:"Good", cls:"good"},
+      {label:"Light Stability", val:"Use opaque packaging", cls:"ok"},
+      {label:"Shelf Life", val:"18 months", cls:"good"},
     ],
-    cost:[
-      {label:"Water Phase & Humectants",val:"$1.80"},
-      {label:"Emollient Oils",val:"$3.00"},
-      {label:"Actives (Peptides, MAP Vit C)",val:"$18.50"},
-      {label:"Botanicals & Extracts",val:"$4.20"},
-      {label:"Preservation & pH",val:"$0.60"},
-      {label:"Packaging (airless bottle)",val:"$2.20"},
+    regulatory: [
+      {flag:"🇪🇺", label:"EU Reg.", status:"Compliant", cls:"reg-pass"},
+      {flag:"🇺🇸", label:"FDA", status:"Compliant", cls:"reg-pass"},
+      {flag:"🌿", label:"Vegan", status:"Yes", cls:"reg-pass"},
+      {flag:"🐰", label:"Cruelty-Free", status:"Yes", cls:"reg-pass"},
     ],
-    scores:[
-      {label:"Efficacy",val:"97%",cls:"sc-pink"},
-      {label:"Naturalness",val:"76%",cls:"sc-amber"},
-      {label:"Stability",val:"88%",cls:"sc-violet"},
-      {label:"Safety",val:"95%",cls:"sc-green"},
+    cost: [
+      {label:"Water Phase & Humectants", val:"$1.80"},
+      {label:"Emollient Oils", val:"$3.00"},
+      {label:"Actives (Peptides, Vit C, MAP)", val:"$18.50"},
+      {label:"Botanicals & Extracts", val:"$4.20"},
+      {label:"Preservation & pH", val:"$0.60"},
+      {label:"Packaging (airless bottle)", val:"$2.20"},
+    ],
+    scores: [
+      {label:"Efficacy", val:"97%", cls:"sc-pink"},
+      {label:"Naturalness", val:"76%", cls:"sc-amber"},
+      {label:"Stability", val:"88%", cls:"sc-violet"},
+      {label:"Safety", val:"95%", cls:"sc-green"},
     ]
   }
 };
 
-/* Add remaining product types as aliases */
-['sunscreen','cleanser','toner','eye_cream','body_lotion','lip_balm','face_mask'].forEach(k=>{
-  FORMULAS[k] = JSON.parse(JSON.stringify(FORMULAS['moisturizer']));
-  const names = {
-    sunscreen:"Neagenics SunShield SPF 30 Cream",
-    cleanser:"Neagenics GentleClean Foam Cleanser",
-    toner:"Neagenics AquaTone Hydrating Essence",
-    eye_cream:"Neagenics ReviveEye Treatment Cream",
-    body_lotion:"Neagenics SilkBody Nourishing Lotion",
-    lip_balm:"Neagenics PetalLip Repair Balm",
-    face_mask:"Neagenics PureGlow Hydrating Mask",
-  };
-  const subs = {
-    sunscreen:"Broad-spectrum UVA/UVB protection with natural filters",
-    cleanser:"pH-balanced gentle cleansing without stripping the skin",
-    toner:"Alcohol-free hydrating toner with botanical actives",
-    eye_cream:"Targeted treatment for fine lines and puffiness",
-    body_lotion:"Fast-absorbing full-body moisture with natural oils",
-    lip_balm:"Intensive lip repair with natural waxes and butters",
-    face_mask:"Deep-conditioning treatment mask with active botanicals",
-  };
-  FORMULAS[k].name = names[k];
-  FORMULAS[k].sub  = subs[k];
-});
-
-/* GENERATE */
+/* ═══ GENERATE ═══ */
 function generateFormulation(){
   const productType = document.getElementById('product-type').value;
-  const skinType    = document.getElementById('skin-type').value;
-  const philosophy  = getActiveTags('philosophy-tags');
-  const claims      = getActiveTags('claims-tags');
+  const skinType = document.getElementById('skin-type').value;
+  const philosophy = getActiveTags('philosophy-tags');
+  const claims = getActiveTags('claims-tags');
 
+  if(!philosophy.length && !claims.length){
+    document.getElementById('error-banner').textContent='Please select at least one philosophy tag or claim.';
+    document.getElementById('error-banner').style.display='block';
+    return;
+  }
   document.getElementById('error-banner').style.display='none';
   document.getElementById('skeleton').style.display='flex';
   document.getElementById('results').style.display='none';
-  document.getElementById('gen-btn').disabled=true;
 
+  // Try API first, fall back to built-in database
   setTimeout(()=>{
-    const formula = FORMULAS[productType] || FORMULAS['anti_aging_cream'];
-    document.getElementById('skeleton').style.display='none';
-    document.getElementById('gen-btn').disabled=false;
-    renderFormula(formula, skinType, philosophy, claims);
-  }, 1200);
+    tryAPIFormulate(productType, skinType, philosophy, claims);
+  }, 400);
 }
 
-function renderFormula(f, skinType, philosophy, claims){
+async function tryAPIFormulate(productType, skinType, philosophy, claims){
+  let formula = null;
+
+  // Try the API endpoint
+  try {
+    const r = await fetch(API+'/formulate', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({product_type:productType, skin_type:skinType, philosophy, claims})
+    });
+    if(r.ok){
+      formula = await r.json();
+    }
+  } catch(e) {
+    // API not available, use built-in
+  }
+
+  // Fall back to built-in library
+  if(!formula){
+    formula = FORMULAS[productType] || FORMULAS['anti_aging_cream'];
+    // Customize name based on skin type
+    if(skinType === 'dry' || skinType === 'mature'){
+      formula = JSON.parse(JSON.stringify(formula));
+    }
+  }
+
+  document.getElementById('skeleton').style.display='none';
+  renderFormula(formula);
+}
+
+function renderFormula(f){
   document.getElementById('results').style.display='block';
 
+  // Hero
   document.getElementById('hero-name').textContent = f.name;
-  document.getElementById('hero-sub').textContent  = f.sub + ' · Target: ' + skinType.replace('_',' ');
-  document.getElementById('hero-badges').innerHTML = f.badges.map(b=>'<span class="hero-badge '+b.cls+'">'+b.text+'</span>').join('');
+  document.getElementById('hero-sub').textContent = f.sub;
+  document.getElementById('hero-badges').innerHTML = f.badges.map(b=>
+    '<span class="hero-badge '+b.cls+'">'+b.text+'</span>'
+  ).join('');
 
+  // Scores
   document.getElementById('score-row').innerHTML = f.scores.map(s=>
     '<div class="score-tile"><span class="st-label">'+s.label+'</span><div class="score-circle '+s.cls+'">'+s.val+'</div></div>'
   ).join('');
 
+  // Ingredients
   let totalPct=0, activesPct=0;
   document.getElementById('ingr-body').innerHTML = f.ingredients.map(ing=>{
     totalPct += ing.pct;
     if(ing.cat==='active') activesPct += ing.pct;
     const barW = Math.min(ing.pct/70*100,100).toFixed(1);
-    return '<tr>'+
-      '<td><span class="phase-badge ph-'+ing.phase+'">'+ing.phase+'</span></td>'+
-      '<td><div class="ingr-name">'+ing.name+'</div><div class="ingr-bar-track"><div class="ingr-bar-fill" style="width:'+barW+'%"></div></div></td>'+
-      '<td><div class="ingr-inci">'+ing.inci+'</div></td>'+
-      '<td><span class="ingr-pct">'+ing.pct.toFixed(2)+'%</span></td>'+
-      '<td><span class="ingr-role">'+ing.role+'</span></td>'+
+    return '<tr>' +
+      '<td><span class="phase-badge ph-'+ing.phase+'">'+ing.phase+'</span></td>' +
+      '<td><div class="ingr-name">'+ing.name+'</div><div class="ingr-bar-track"><div class="ingr-bar-fill" style="width:'+barW+'%"></div></div></td>' +
+      '<td><div class="ingr-inci">'+ing.inci+'</div></td>' +
+      '<td><span class="ingr-pct">'+ing.pct.toFixed(2)+'%</span></td>' +
+      '<td><span class="ingr-role">'+ing.role+'</span></td>' +
     '</tr>';
   }).join('');
-  document.getElementById('total-pct').textContent    = totalPct.toFixed(2)+'%';
-  document.getElementById('actives-pct').textContent  = activesPct.toFixed(2)+'% actives';
-  document.getElementById('base-pct').textContent     = (totalPct-activesPct).toFixed(2)+'% base';
+  document.getElementById('total-pct').textContent = totalPct.toFixed(2)+'%';
+  document.getElementById('actives-pct').textContent = activesPct.toFixed(2)+'% actives';
+  document.getElementById('base-pct').textContent = (totalPct-activesPct).toFixed(2)+'% base/excipients';
 
+  // Steps
   document.getElementById('steps-list').innerHTML = f.steps.map(s=>{
-    let tags='';
-    if(s.temp) tags+='<span class="step-tag st-temp">'+s.temp+'</span>';
-    if(s.time) tags+='<span class="step-tag st-time">'+s.time+'</span>';
-    if(s.rpm)  tags+='<span class="step-tag st-rpm">'+s.rpm+'</span>';
-    if(s.ph)   tags+='<span class="step-tag st-pH">pH '+s.ph+'</span>';
+    let tags = '';
+    if(s.temp) tags += '<span class="step-tag st-temp">'+s.temp+'</span>';
+    if(s.time) tags += '<span class="step-tag st-time">'+s.time+'</span>';
+    if(s.rpm)  tags += '<span class="step-tag st-rpm">'+s.rpm+'</span>';
+    if(s.ph)   tags += '<span class="step-tag st-pH">pH '+s.ph+'</span>';
     return '<div class="step-item"><div class="step-num">'+s.num+'</div><div class="step-body"><div class="step-title">'+s.title+'</div><div class="step-desc">'+s.desc+'</div><div class="step-meta">'+tags+'</div></div></div>';
   }).join('');
 
+  // Claims
   document.getElementById('claims-grid').innerHTML = f.claims.map(c=>
     '<div class="claim-card"><div class="claim-icon">'+c.icon+'</div><div class="claim-label">'+c.label+'</div><div class="claim-val">'+c.val+'</div></div>'
   ).join('');
 
+  // Safety
   document.getElementById('safety-grid').innerHTML = f.safety.map(s=>
     '<div class="safety-item '+s.cls+'"><div class="si-label">'+s.label+'</div><div class="si-val">'+s.val+'</div><div class="si-sub">'+s.sub+'</div></div>'
   ).join('');
 
+  // Stability
   document.getElementById('stab-grid').innerHTML = f.stability.map(s=>{
-    const pct = (s.val.includes('Excellent')||s.val.includes('Passes')||s.val.includes('High'))?93:(s.val.includes('Good'))?80:(s.val.includes('opaque'))?60:75;
+    const pct = s.val==='Passes'||s.val==='Excellent'||s.val==='High — Xanthan gum anchor'?92:s.val==='Good'?80:s.val==='Moderate — use opaque packaging'||s.val==='Use opaque packaging'?60:75;
     return '<div class="stab-row"><div class="stab-label">'+s.label+'</div><div class="stab-bar-track"><div class="stab-bar-fill '+s.cls+'" style="width:'+pct+'%"></div></div><div class="stab-val">'+s.val+'</div></div>';
   }).join('');
 
+  // Regulatory
   document.getElementById('reg-grid').innerHTML = f.regulatory.map(r=>
     '<div class="reg-item"><div class="reg-flag">'+r.flag+'</div><div class="reg-label">'+r.label+'</div><div class="reg-status '+r.cls+'">'+r.status+'</div></div>'
   ).join('');
 
-  let totalCost=0;
+  // Cost
+  let totalCost = 0;
   document.getElementById('cost-rows').innerHTML = f.cost.map(c=>{
-    totalCost += parseFloat(c.val.replace('$',''));
+    const num = parseFloat(c.val.replace('$',''));
+    totalCost += num;
     return '<div class="cost-row"><span class="cost-label">'+c.label+'</span><span class="cost-val">'+c.val+'</span></div>';
-  }).join('') + '<div class="cost-row cost-total"><span class="cost-label">TOTAL ESTIMATED COST (per kg)</span><span class="cost-val">$'+totalCost.toFixed(2)+'</span></div>';
+  }).join('') +
+  '<div class="cost-row cost-total"><span class="cost-label">TOTAL ESTIMATED COST (per kg)</span><span class="cost-val">$'+totalCost.toFixed(2)+'</span></div>';
 
+  // Scroll to results
   document.getElementById('results').scrollIntoView({behavior:'smooth'});
 
+  // Celebrate!
   setTimeout(()=>{
     confetti({particleCount:150,spread:90,origin:{y:.5},colors:['#f472b6','#bc8cff','#e11d48','#f9a8d4','#3fb950']});
   }, 600);
 }
+
+document.getElementById('product-type').addEventListener('change', function(){
+  // Auto-switch skin type suggestions
+  const hairProducts = ['hair_conditioner','shampoo'];
+  const skinType = document.getElementById('skin-type');
+  if(hairProducts.includes(this.value)){
+    skinType.value = 'normal_hair';
+  }
+});
 </script>
 </body>
 </html>
