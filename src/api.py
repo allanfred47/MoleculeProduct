@@ -264,6 +264,7 @@ def lookup(name: str = Query(..., description="Common molecule name e.g. benzene
         smiles = (
             properties[0].get("IsomericSMILES")
             or properties[0].get("CanonicalSMILES")
+            or properties[0].get("ConnectivitySMILES")
         )
 
         if not smiles:
