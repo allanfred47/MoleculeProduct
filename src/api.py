@@ -315,6 +315,9 @@ def get_structure(smiles: str = Query(...), size: int = 400):
 def predict(req: PredictRequest):
     if not RDKIT_OK:
         raise HTTPException(status_code=503, detail="RDKit not available")
+    print("=" * 60)
+    print("Received SMILES:", repr(req.smiles))
+    print("=" * 60)
 
     mol = Chem.MolFromSmiles(req.smiles)
     if mol is None:
