@@ -453,7 +453,7 @@
 </footer>
 
 <script>
-const API = "https://moleculeproduct.onrender.com";
+const API = "https://moleculeproduct.onrender.com/ui";
 let radarChart = null;
 let currentData = null;
 let currentSmiles = "";
@@ -630,13 +630,7 @@ function celebrate(){
 function setBtn(id,disabled,text){const b=document.getElementById(id);b.disabled=disabled;b.textContent=text;}
 function showError(msg){document.getElementById('skeleton').style.display='none';const eb=document.getElementById('error-banner');eb.textContent=msg;eb.style.display='block';}
 function fillAndPredict(s){document.getElementById('smiles-input').value=s;document.getElementById('error-banner').style.display='none';document.getElementById('results').style.display='none';predictSmiles(s);}
-async function runLookup(){
-  const name=document.getElementById('smiles-input').value.trim();if(!name)return;
-  setBtn('lookup-btn',true,'Looking…');document.getElementById('error-banner').style.display='none';
-  try{const r=await fetch(API+'/lookup?name='+encodeURIComponent(name));if(!r.ok)throw new Error();const d=await r.json();document.getElementById('smiles-input').value=d.smiles;toast('Found: '+d.smiles.slice(0,30));}
-  catch{showError("Could not find '"+name+"' on PubChem.");}
-  finally{setBtn('lookup-btn',false,'Lookup');}
-}
+
 async function pubchemLookup(name){
   const url='https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/'+encodeURIComponent(name)+'/property/IsomericSMILES/JSON';
   const r=await fetch(url);
