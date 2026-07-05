@@ -152,11 +152,11 @@ def root():
         "version": "11.0.0",
         "brand":   "Neagenics",
         "modules": {
-            "1_predictor":  "/ui",
-            "2_designer":   "/designer",
-            "3_optimizer":  "/process",
-            "4_formulator": "/formulation",
-            "5_extractor":  "/literature",
+            "1_predictor":   "/ui",
+            "2_designer":    "/designer",
+            "3_optimizer":   "/process",
+            "4_formulator":  "/formulation",
+            "5_extractor":   "/literature",
         },
         "rdkit":            RDKIT_OK,
         "toxicity2_loaded": TOXICITY2_MODELS is not None,
@@ -233,54 +233,18 @@ def estimate_bp_mp(mol):
 def lookup(name: str = Query(..., description="Common molecule name e.g. benzene, aspirin")):
     """Look up a molecule by common name and return its SMILES from PubChem."""
     try:
-        encoded = urllib.parse.quote(name.strip())
-
-        url = (
-            f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/"
-            f"compound/name/{encoded}/property/"
-            f"IsomericSMILES,CanonicalSMILES/JSON"
-        )
-
+        encoded = urllib.parse.quote(name)
+        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{encoded}/property/IsomericSMILES,CanonicalSMILES/JSON"
         r = requests.get(url, timeout=12)
-
-        if r.status_code == 404:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Molecule '{name}' not found in PubChem."
-            )
-
-        r.raise_for_status()
-
-        data = r.json()
-
-        properties = data.get("PropertyTable", {}).get("Properties", [])
-
-        if not properties:
-            raise HTTPException(
-                status_code=404,
-                detail="No molecule information returned."
-            )
-
-        smiles = (
-            properties[0].get("IsomericSMILES")
-            or properties[0].get("CanonicalSMILES")
-            or properties[0].get("ConnectivitySMILES")
-        )
-
+        if r.status_code != 200:
+            raise HTTPException(status_code=404, detail=f"Molecule '{name}' not found on PubChem")
+        props = r.json()["PropertyTable"]["Properties"][0]
+        smiles = props.get("IsomericSMILES") or props.get("CanonicalSMILES")
         if not smiles:
-            raise HTTPException(
-                status_code=404,
-                detail="No SMILES found."
-            )
-
-        return {
-            "name": name,
-            "smiles": smiles
-        }
-
+            raise HTTPException(status_code=404, detail="No SMILES found")
+        return {"name": name, "smiles": smiles}
     except HTTPException:
         raise
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -315,9 +279,6 @@ def get_structure(smiles: str = Query(...), size: int = 400):
 def predict(req: PredictRequest):
     if not RDKIT_OK:
         raise HTTPException(status_code=503, detail="RDKit not available")
-    print("=" * 60)
-    print("Received SMILES:", repr(req.smiles))
-    print("=" * 60)
 
     mol = Chem.MolFromSmiles(req.smiles)
     if mol is None:
@@ -335,8 +296,8 @@ def predict(req: PredictRequest):
     fcsp3 = round(Descriptors.FractionCSP3(mol), 4)
     mr    = round(Descriptors.MolMR(mol), 3)
 
-    viol      = sum([mw > 500, logp > 5, hbd > 5, hba > 10])
-    dl_score  = max(0.0, round(1.0 - viol*0.25, 2))
+    viol     = sum([mw > 500, logp > 5, hbd > 5, hba > 10])
+    dl_score = max(0.0, round(1.0 - viol*0.25, 2))
     drug_like = viol == 0
 
     log_s, sol_class = esol_solubility(mol)
@@ -430,10 +391,12 @@ REACTION_EA = {
     "fermentation": 35000, "condensation": 50000, "reforming": 90000,
     "general": 55000,
 }
+
 CATALYST_BOOST = {
     "none": 1.0, "acid": 1.25, "base": 1.20, "metal": 1.35,
     "enzyme": 1.45, "zeolite": 1.30, "platinum": 1.50, "palladium": 1.48,
 }
+
 REACTOR_EFFICIENCY = {
     "batch": 0.80, "cstr": 0.85, "pfr": 0.92, "fluidized_bed": 0.88,
     "packed_bed": 0.90, "microreactor": 0.95, "membrane": 0.87, "autoclave": 0.82,
@@ -446,26 +409,31 @@ def process_calc(req: ProcessRequest):
     R = 8.314
     T = req.temperature + 273.15
     Ea = REACTION_EA.get(req.reaction_type.lower(), 55000)
-    k = 1e10 * math.exp(-Ea / (R * T))
+    A = 1e10
+    k = A * math.exp(-Ea / (R * T))
     base_conv = 1 - math.exp(-k * req.residence_time / 3600)
     base_conv = max(0.0, min(base_conv, 1.0))
 
-    cat_boost       = CATALYST_BOOST.get(req.catalyst.lower(), 1.0)
-    reactor_eff     = REACTOR_EFFICIENCY.get(req.reactor_type.lower(), 0.85)
+    cat_boost    = CATALYST_BOOST.get(req.catalyst.lower(), 1.0)
+    reactor_eff  = REACTOR_EFFICIENCY.get(req.reactor_type.lower(), 0.85)
     pressure_factor = 1 + 0.02 * (req.pressure - 1)
 
     yield_pct = round(base_conv * cat_boost * reactor_eff * pressure_factor * 100, 1)
     yield_pct = max(0.0, min(yield_pct, 99.9))
 
+    selectivity = round(min(95, 70 + yield_pct * 0.25), 1)
+    e_factor    = round(max(1, 50 - yield_pct * 0.4), 2)
+    toc         = round(max(5, 200 - yield_pct * 1.8), 1)
+
     return {
-        "yield_percent":          yield_pct,
-        "selectivity":            round(min(95, 70 + yield_pct * 0.25), 1),
-        "e_factor":               round(max(1, 50 - yield_pct * 0.4), 2),
-        "toc_ppm":                round(max(5, 200 - yield_pct * 1.8), 1),
-        "conversion":             round(base_conv * 100, 1),
-        "catalyst_boost":         cat_boost,
-        "reactor_efficiency":     reactor_eff,
-        "temperature_K":          round(T, 1),
+        "yield_percent":       yield_pct,
+        "selectivity":         selectivity,
+        "e_factor":            e_factor,
+        "toc_ppm":             toc,
+        "conversion":          round(base_conv * 100, 1),
+        "catalyst_boost":      cat_boost,
+        "reactor_efficiency":  reactor_eff,
+        "temperature_K":       round(T, 1),
         "activation_energy_J_mol": Ea,
     }
 
@@ -475,9 +443,8 @@ def process_calc(req: ProcessRequest):
 @app.post("/formulate")
 def formulate(req: FormulateRequest):
     """
-    Acknowledges the request — full formulation logic lives client-side
-    in formulation_generator.html. Returning 200 tells the HTML the
-    server is alive so it proceeds with its built-in database.
+    Returns an acknowledgment — the full formulation logic lives in
+    formulation_generator.html (client-side FORMULAS database).
     """
     return {
         "status":       "ok",
@@ -486,7 +453,7 @@ def formulate(req: FormulateRequest):
         "skin_type":    req.skin_type,
         "philosophy":   req.philosophy,
         "claims":       req.claims,
-        "source":       "client_db",
+        "source":       "client_db"
     }
 
 
@@ -495,50 +462,52 @@ def formulate(req: FormulateRequest):
 @app.post("/extract")
 def extract(req: ExtractRequest):
     """Extract catalysts, conditions, synthesis steps, molecules, yields from scientific text."""
-    text    = req.text
+    text = req.text
     options = req.options or ["catalysts","reaction_conditions","synthesis_steps","molecules","yields","insights"]
-    result  = {}
+
+    result = {}
 
     if "catalysts" in options:
-        pats = [
-           r'\b([A-Z][a-z]?\d*(?:/[A-Z][a-z]?\d*)*)\s+catalyst\b'
-           r'\bcatalyzed by\s+([A-Za-z0-9\-/,\s]+)'
+        catalyst_patterns = [
+            r'\b([A-Z][a-z]?d*(?:/[A-Z][a-z]?d*)*)s+catalyst\b',
+            r'\bcatalyzed bys+([A-Za-z0-9-/,s]+)',
             r'\b(Pd|Pt|Rh|Ru|Ni|Cu|Fe|Au|Ag|Ir|Os|Co|Mn|Zn|Al|Ti|Zr|Ce|Mo|W|V)\b[^.]{0,40}',
             r'\b(zeolite|alumina|silica|MOF|enzyme|lipase|protease|acid|base|BINAP|chiral)\b',
         ]
-        found = set()
-        for pat in pats:
+        found_cats = set()
+        for pat in catalyst_patterns:
             for m in re.finditer(pat, text, re.IGNORECASE):
-                v = m.group(0).strip()
-                if 3 < len(v) < 60:
-                    found.add(v[:50])
+                val = m.group(0).strip()
+                if 3 < len(val) < 60:
+                    found_cats.add(val[:50])
         result["catalysts"] = [
             {"name": c, "type": "Heterogeneous" if "/" in c else "Homogeneous",
              "activity": round(70 + hash(c) % 30, 1)}
-            for c in list(found)[:8]
+            for c in list(found_cats)[:8]
         ]
 
     if "reaction_conditions" in options:
-        cond = {}
-        m = re.search(r'(\d+)\s*[°]?C\b', text)
-        if m: cond["temperature"] = m.group(0)
-        m = re.search(r'(\d+(?:\.\d+)?)\s*(MPa|bar|atm|kPa|psi)', text, re.IGNORECASE)
-        if m: cond["pressure"] = m.group(0)
-        m = re.search(r'(\d+(?:\.\d+)?)\s*(h|hr|hours?|min|minutes?|s\b)', text, re.IGNORECASE)
-        if m: cond["time"] = m.group(0)
-        m = re.search(r'\b(methanol|ethanol|water|DMF|DMSO|THF|acetone|toluene|hexane|acetonitrile|DCM|chloroform)\b', text, re.IGNORECASE)
-        if m: cond["solvent"] = m.group(0)
-        m = re.search(r'\bpHs*(\d+(?:\.\d+)?)\b', text, re.IGNORECASE)
-        if m: cond["pH"] = m.group(0)
-        result["reaction_conditions"] = cond
+        conditions = {}
+        temp_m  = re.search(r'(d+)s*[°]?C\b', text)
+        if temp_m:  conditions["temperature"] = temp_m.group(0)
+        press_m = re.search(r'(d+(?:.d+)?)s*(MPa|bar|atm|kPa|psi)', text, re.IGNORECASE)
+        if press_m: conditions["pressure"] = press_m.group(0)
+        time_m  = re.search(r'(d+(?:.d+)?)s*(h|hr|hours?|min|minutes?|s\b)', text, re.IGNORECASE)
+        if time_m:  conditions["time"] = time_m.group(0)
+        solv_m  = re.search(r'\b(methanol|ethanol|water|DMF|DMSO|THF|acetone|toluene|hexane|acetonitrile|DCM|chloroform)\b', text, re.IGNORECASE)
+        if solv_m:  conditions["solvent"] = solv_m.group(0)
+        ph_m    = re.search(r'\bpHs*(d+(?:.d+)?)\b', text, re.IGNORECASE)
+        if ph_m:    conditions["pH"] = ph_m.group(0)
+        result["reaction_conditions"] = conditions
 
     if "synthesis_steps" in options:
-        kws   = ["dissolve","heat","stir","add","filter","wash","dry","evaporate","reflux",
-                 "cool","mix","centrifuge","purify","recrystallize","neutralize","extract",
-                 "separate","concentrate","precipitate","calcine","reduce","oxidize"]
+        step_kws = ["dissolve","heat","stir","add","filter","wash","dry","evaporate",
+                    "reflux","cool","mix","centrifuge","purify","recrystallize","neutralize",
+                    "extract","separate","concentrate","precipitate","calcine","reduce","oxidize"]
         steps = []
-        for sent in re.split(r'(?<=[.!?])s+', text):
-            for kw in kws:
+        sentences = re.split(r'(?<=[.!?])s+', text)
+        for sent in sentences:
+            for kw in step_kws:
                 if kw in sent.lower() and len(sent) > 20:
                     steps.append({"step": len(steps)+1, "action": kw.capitalize(), "description": sent.strip()[:200]})
                     break
@@ -547,26 +516,34 @@ def extract(req: ExtractRequest):
         result["synthesis_steps"] = steps
 
     if "molecules" in options:
-        names = re.findall(r'\b([A-Z][a-z]{2,}s*(?:acid|oxide|hydroxide|chloride|bromide|sulfate|nitrate|phosphate|amine|ether|ester|aldehyde|ketone|alcohol)?)\b', text)
-        smis  = re.findall(r'\b([CNOSPFClBrI][a-zA-Z0-9@+-[]()=#%]{4,})\b', text)
-        mols  = [{"name": n.strip(), "smiles": None, "source": "text"} for n in list(set(names))[:5]]
-        mols += [{"name": s[:20],    "smiles": s,    "source": "pattern"} for s in list(set(smis))[:5]]
+        mol_names = re.findall(r'\b([A-Z][a-z]{2,}s*(?:acid|oxide|hydroxide|chloride|bromide|sulfate|nitrate|phosphate|amine|ether|ester|aldehyde|ketone|alcohol)?)\b', text)
+        smiles_patterns = re.findall(r'\b([CNOSPFClBrI][a-zA-Z0-9@+-[]()=#%]{4,})\b', text)
+        mols = []
+        for name in list(set(mol_names))[:5]:
+            mols.append({"name": name.strip(), "smiles": None, "source": "text"})
+        for smi in list(set(smiles_patterns))[:5]:
+            mols.append({"name": smi[:20], "smiles": smi, "source": "pattern"})
         result["molecules"] = mols[:8]
 
     if "yields" in options:
+        yield_m = re.search(r'(d+(?:.d+)?)s*%s*(?:yield|conversion|selectivity)', text, re.IGNORECASE)
+        ee_m    = re.search(r'(d+(?:.d+)?)s*%s*ee\b', text, re.IGNORECASE)
+        ton_m   = re.search(r'TONs*(?:of|=|:)?s*(d+(?:,d+)?)', text, re.IGNORECASE)
+        tof_m   = re.search(r'TOFs*(?:of|=|:)?s*(d+(?:.d+)?)', text, re.IGNORECASE)
         result["yields"] = {
-            "yield": (m := re.search(r'(\d+(?:\.\d+)?)\s*%\s*(?:yield|conversion|selectivity)', text, re.IGNORECASE)) and m.group(0),
-            "ee":    (m := re.search(r'(\d+(?:\.\d+)?)\s*%\s*ee\b', text, re.IGNORECASE))    and m.group(0),
-            "TON":   (m := re.search(r'TON\s*(?:of|=|:)?\s*(\d+(?:,\d+)?)', text, re.IGNORECASE)) and m.group(1),
-            "TOF":   (m := re.search(r'TOF\s*(?:of|=|:)?\s*(\d+(?:\.\d+)?)', text, re.IGNORECASE)) and m.group(1),
+            "yield": yield_m.group(0) if yield_m else None,
+            "ee":    ee_m.group(0)    if ee_m    else None,
+            "TON":   ton_m.group(1)   if ton_m   else None,
+            "TOF":   tof_m.group(1)   if tof_m   else None,
         }
 
     if "insights" in options:
-        kws      = ["novel","significant","first","demonstrate","show","report","achieve",
-                    "improve","enhance","increase","decrease","exceed","outperform","selectivity"]
+        insight_kws = ["novel","significant","first","demonstrate","show","report","achieve",
+                       "improve","enhance","increase","decrease","exceed","outperform","selectivity"]
         insights = []
-        for sent in re.split(r'(?<=[.!?])\s+', text):
-            for kw in kws:
+        sentences = re.split(r'(?<=[.!?])s+', text)
+        for sent in sentences:
+            for kw in insight_kws:
                 if kw in sent.lower() and len(sent) > 30:
                     insights.append(sent.strip()[:250])
                     break
@@ -574,33 +551,52 @@ def extract(req: ExtractRequest):
                 break
         result["insights"] = insights
 
-    return {"status": "ok", "filename": req.filename or "uploaded_text", "char_count": len(text), "extraction": result}
+    return {
+        "status":     "ok",
+        "filename":   req.filename or "uploaded_text",
+        "char_count": len(text),
+        "extraction": result,
+    }
 
 
 # ─── /extract-pdf ─────────────────────────────────────────────────────────────
 
 @app.post("/extract-pdf")
 async def extract_pdf(file: UploadFile = File(...)):
-    """Accept PDF or TXT upload and return extracted text."""
-    content  = await file.read()
+    """Accept a PDF or TXT upload and return extracted text."""
+    content = await file.read()
     filename = file.filename or "upload"
 
     if filename.lower().endswith(".txt"):
-        text = content.decode("utf-8", errors="replace")
+        try:
+            text = content.decode("utf-8", errors="replace")
+        except Exception:
+            text = content.decode("latin-1", errors="replace")
         return {"status": "ok", "filename": filename, "text": text[:50000], "method": "txt"}
 
-    text = "  "
+    text = ""
     try:
-        import io, pdfplumber
+        import io
+        import pdfplumber
         with pdfplumber.open(io.BytesIO(content)) as pdf:
-            text = "".join(p.extract_text() or "" for p in pdf.pages[:40])
+            pages = []
+            for page in pdf.pages[:40]:
+                t = page.extract_text()
+                if t:
+                    pages.append(t)
+            text = "".join(pages)
         method = "pdfplumber"
     except Exception:
         try:
             import io
             from PyPDF2 import PdfReader
             reader = PdfReader(io.BytesIO(content))
-            text   = "  ".join(p.extract_text() or "" for p in reader.pages[:40])
+            pages = []
+            for page in reader.pages[:40]:
+                t = page.extract_text()
+                if t:
+                    pages.append(t)
+            text = "".join(pages)
             method = "pypdf2"
         except Exception as e:
             return {"status": "error", "filename": filename, "text": "", "error": str(e), "method": "none"}
