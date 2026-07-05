@@ -7,3 +7,6 @@ scikit-learn==1.9.0
 pandas
 joblib
 numpy
+python-multipart
+PyPDF2
+pdfplumber
