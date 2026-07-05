@@ -236,8 +236,13 @@ def lookup(name: str = Query(..., description="Common molecule name e.g. benzene
         encoded = urllib.parse.quote(name)
         url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{encoded}/property/IsomericSMILES,CanonicalSMILES/JSON"
         r = requests.get(url, timeout=12)
-        if r.status_code != 200:
-            raise HTTPException(status_code=404, detail=f"Molecule '{name}' not found on PubChem")
+    
+        if not r.ok:
+            return {
+                "status": r.status_code,
+                "url": url,
+                "response": r.text[:500]
+    }
         props = r.json()["PropertyTable"]["Properties"][0]
         smiles = props.get("IsomericSMILES") or props.get("CanonicalSMILES")
         if not smiles:
