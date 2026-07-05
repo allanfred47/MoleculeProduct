@@ -654,8 +654,13 @@ async function runPredict(){
   let smiles = document.getElementById('smiles-input').value.trim();
   if(!smiles) return;
 
-  const isSmiles =
-    /^[A-Za-z0-9@+\-\[\]\(\)=#$\\/%.]+$/.test(smiles);
+ const isSmiles =
+    smiles.includes("=") ||
+    smiles.includes("(") ||
+    smiles.includes(")") ||
+    smiles.includes("[") ||
+    smiles.includes("#") ||
+    /^[cnospCNOSP0-9@+\-\[\]\(\)=#$\\/%.]+$/.test(smiles);
 
   if(!isSmiles){
     setBtn('predict-btn', true, 'Looking up...');
