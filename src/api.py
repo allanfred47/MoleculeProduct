@@ -233,23 +233,53 @@ def estimate_bp_mp(mol):
 def lookup(name: str = Query(..., description="Common molecule name e.g. benzene, aspirin")):
     """Look up a molecule by common name and return its SMILES from PubChem."""
     try:
-        encoded = urllib.parse.quote(name)
-        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{encoded}/property/IsomericSMILES,CanonicalSMILES/JSON"
+        encoded = urllib.parse.quote(name.strip())
+
+        url = (
+            f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/"
+            f"compound/name/{encoded}/property/"
+            f"IsomericSMILES,CanonicalSMILES/JSON"
+        )
+
         r = requests.get(url, timeout=12)
-    
-        if not r.ok:
-            return {
-                "status": r.status_code,
-                "url": url,
-                "response": r.text[:500]
-    }
-        props = r.json()["PropertyTable"]["Properties"][0]
-        smiles = props.get("IsomericSMILES") or props.get("CanonicalSMILES")
+
+        if r.status_code == 404:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Molecule '{name}' not found in PubChem."
+            )
+
+        r.raise_for_status()
+
+        data = r.json()
+
+        properties = data.get("PropertyTable", {}).get("Properties", [])
+
+        if not properties:
+            raise HTTPException(
+                status_code=404,
+                detail="No molecule information returned."
+            )
+
+        smiles = (
+            properties[0].get("IsomericSMILES")
+            or properties[0].get("CanonicalSMILES")
+        )
+
         if not smiles:
-            raise HTTPException(status_code=404, detail="No SMILES found")
-        return {"name": name, "smiles": smiles}
+            raise HTTPException(
+                status_code=404,
+                detail="No SMILES found."
+            )
+
+        return {
+            "name": name,
+            "smiles": smiles
+        }
+
     except HTTPException:
         raise
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
