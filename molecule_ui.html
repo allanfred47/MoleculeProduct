@@ -630,55 +630,44 @@ function celebrate(){
 function setBtn(id,disabled,text){const b=document.getElementById(id);b.disabled=disabled;b.textContent=text;}
 function showError(msg){document.getElementById('skeleton').style.display='none';const eb=document.getElementById('error-banner');eb.textContent=msg;eb.style.display='block';}
 function fillAndPredict(s){document.getElementById('smiles-input').value=s;document.getElementById('error-banner').style.display='none';document.getElementById('results').style.display='none';predictSmiles(s);}
-
-async function pubchemLookup(name){
-  const url='https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/'+encodeURIComponent(name)+'/property/IsomericSMILES/JSON';
-  const r=await fetch(url);
-  if(!r.ok) throw new Error('Not found');
-  const d=await r.json();
-  return d.PropertyTable.Properties[0].IsomericSMILES;
-}
 async function runLookup(){
   const name=document.getElementById('smiles-input').value.trim();if(!name)return;
   setBtn('lookup-btn',true,'Looking…');document.getElementById('error-banner').style.display='none';
-  try{
-    const smiles=await pubchemLookup(name);
-    document.getElementById('smiles-input').value=smiles;
-    toast('Found: '+smiles.slice(0,30));
-  } catch{
-    showError("Could not find '"+name+"' — try the SMILES directly.");
-  }
+  try{const r=await fetch(API+'/lookup?name='+encodeURIComponent(name));if(!r.ok)throw new Error();const d=await r.json();document.getElementById('smiles-input').value=d.smiles;toast('Found: '+d.smiles.slice(0,30));}
+  catch{showError("Could not find '"+name+"' on PubChem.");}
   finally{setBtn('lookup-btn',false,'Lookup');}
 }
 async function runPredict(){
-  let smiles = document.getElementById('smiles-input').value.trim();
-  if(!smiles) return;
-
- const isSmiles =
-    smiles.includes("=") ||
-    smiles.includes("(") ||
-    smiles.includes(")") ||
-    smiles.includes("[") ||
-    smiles.includes("#") ||
-    /^[cnospCNOSP0-9@+\-\[\]\(\)=#$\\/%.]+$/.test(smiles);
-
+  let smiles=document.getElementById('smiles-input').value.trim();if(!smiles)return;
+  // Detect if input is a name (no SMILES special chars) rather than a SMILES string
+  const isSmiles =
+    /[=()#@+\-\[\]\/\\%]/.test(smiles) ||
+    /^[Cc]\d/.test(smiles) ||
+    smiles.length <= 3;
   if(!isSmiles){
-    setBtn('predict-btn', true, 'Looking up...');
-    document.getElementById('error-banner').style.display = 'none';
-
+    // Treat as a molecule name — look it up on PubChem first
+    setBtn('predict-btn',true,'Looking up…');
+    document.getElementById('error-banner').style.display='none';
     try{
-      smiles = await pubchemLookup(smiles);
-      document.getElementById('smiles-input').value = smiles;
-    }catch{
-      setBtn('predict-btn', false, 'Predict');
-      showError("Could not find that molecule.");
+      const r=await fetch(API+'/lookup?name='+encodeURIComponent(smiles));
+      if(r.ok){
+        const d=await r.json();
+        smiles=d.smiles;
+        document.getElementById('smiles-input').value=smiles;
+      } else {
+        setBtn('predict-btn',false,'Predict');
+        showError("Could not find '"+document.getElementById('smiles-input').value.trim()+"' on PubChem. Try entering the SMILES directly.");
+        return;
+      }
+    } catch {
+      setBtn('predict-btn',false,'Predict');
+      showError('Lookup failed — check your connection or enter the SMILES directly.');
       return;
     }
+    setBtn('predict-btn',false,'Predict');
   }
-
   predictSmiles(smiles);
 }
-
 async function predictSmiles(smiles){
   document.getElementById('error-banner').style.display='none';
   document.getElementById('results').style.display='none';
@@ -718,8 +707,7 @@ function showResults(data,smiles){
   const viol=data.lipinski_violations??0,pass=viol===0;
   const badge=document.getElementById('ro5-badge');
   badge.className='ro5-badge '+(pass?'pass':'fail');
- badge.innerHTML='<span class="ro5-dot '+(pass?'pass':'fail')+'"></span>'+(pass?'Passes Rule of 5':'Fails Rule of 5 ('+viol+' violation'+(viol>1?'s':'')+')');
-
+ badge.innerHTML = `<span class="ro5-dot ${pass ? 'pass' : 'fail'}"></span>${pass ? 'Passes Rule of 5' : 'Fails Rule of 5 (' + viol + ' violation' + (viol > 1 ? 's' : '') + ')'}`;
   const dlPct=Math.round((data.drug_likeness_score??0)*100);
   setCircle('dl-circle',dlPct+'%',dlPct>=75?'green':dlPct>=50?'amber':'red');
   document.getElementById('dl-class').textContent=data.drug_like?'Drug-Like':'Not Drug-Like';
