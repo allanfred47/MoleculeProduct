@@ -651,23 +651,29 @@ async function runLookup(){
   finally{setBtn('lookup-btn',false,'Lookup');}
 }
 async function runPredict(){
-  let smiles=document.getElementById('smiles-input').value.trim();if(!smiles)return;
-  const isSmiles=smiles.includes('=')||smiles.includes('(')||smiles.includes(')')||smiles.includes('#')||smiles.includes('[')||smiles.includes('%')||smiles.length<=3;
+  let smiles = document.getElementById('smiles-input').value.trim();
+  if(!smiles) return;
+
+  const isSmiles =
+    /^[A-Za-z0-9@+\-\[\]\(\)=#$\\/%.]+$/.test(smiles);
+
   if(!isSmiles){
-    setBtn('predict-btn',true,'Looking up…');
-    document.getElementById('error-banner').style.display='none';
+    setBtn('predict-btn', true, 'Looking up...');
+    document.getElementById('error-banner').style.display = 'none';
+
     try{
-      smiles=await pubchemLookup(smiles);
-      document.getElementById('smiles-input').value=smiles;
-    } catch{
-      setBtn('predict-btn',false,'Predict');
-      showError("Could not find that molecule. Try: c1ccccc1 for benzene, CCO for ethanol.");
+      smiles = await pubchemLookup(smiles);
+      document.getElementById('smiles-input').value = smiles;
+    }catch{
+      setBtn('predict-btn', false, 'Predict');
+      showError("Could not find that molecule.");
       return;
     }
-    setBtn('predict-btn',false,'Predict');
   }
+
   predictSmiles(smiles);
 }
+
 async function predictSmiles(smiles){
   document.getElementById('error-banner').style.display='none';
   document.getElementById('results').style.display='none';
